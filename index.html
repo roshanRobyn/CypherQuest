@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CypherQuest - An immersive virtual treasure hunt web application.">
+  <title>CypherQuest — Virtual Treasure Hunt</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================
+       CSS Variables & Design System
+       ========================================== */
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 24, 38, 0.85);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+      --error-red: #ef4444;
+      --error-bg: rgba(239, 68, 68, 0.12);
+      --success-green: #10b981;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --shadow-glow: 0 10px 30px -10px rgba(99, 102, 241, 0.35);
+    }
+
+    /* Reset & Core Setup */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Background Grid Effect */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Canvas for Victory Confetti */
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* ==========================================
+       Main App Card Container
+       ========================================== */
+    .app-container {
+      width: 100%;
+      max-width: 580px;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Card Top Neon Glow Accent */
+    .app-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--accent-cyan), transparent);
+    }
+
+    /* Header Bar */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: linear-gradient(90deg, #ffffff, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    /* Sound Toggle Control */
+    .sound-toggle {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-card);
+      color: var(--text-muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .sound-toggle:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Progress Tracker Bar */
+    .progress-wrapper {
+      margin-bottom: 30px;
+      display: none; /* hidden on login/victory screens by JS */
+    }
+
+    .progress-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent-cyan));
+      border-radius: 10px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dots Tracker */
+    .dots-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .dot.active {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      transform: scale(1.2);
+    }
+
+    .dot.completed {
+      background: var(--primary);
+    }
+
+    /* ==========================================
+       Screens & Fade Animation
+       ========================================== */
+    .screen {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .screen.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Screen Typography */
+    .screen-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .level-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .puzzle-box {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px dashed rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    .puzzle-box p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .puzzle-hint {
+      margin-top: 10px;
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ==========================================
+       Forms, Inputs & Buttons
+       ========================================== */
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(10, 14, 23, 0.9);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.25s ease;
+    }
+
+    .input-field::placeholder {
+      color: var(--text-subtle);
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      background: rgba(15, 22, 36, 1);
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      padding: 15px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      box-shadow: var(--shadow-glow);
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px -8px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    /* Error Banner & Shake Effect */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--error-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error-red);
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-top: 14px;
+      animation: fadeIn 0.2s ease forwards;
+    }
+
+    .error-msg.show {
+      display: flex;
+    }
+
+    .shake-target {
+      animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translate3d(-2px, 0, 0); }
+      20%, 80% { transform: translate3d(4px, 0, 0); }
+      30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+      40%, 60% { transform: translate3d(6px, 0, 0); }
+    }
+
+    /* ==========================================
+       Victory Screen Unique Styles
+       ========================================== */
+    .victory-container {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .trophy-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px auto;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+      50% { transform: scale(1.06); box-shadow: 0 0 45px rgba(245, 158, 11, 0.7); }
+    }
+
+    .victory-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #f59e0b, #fbbf24, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .team-highlight {
+      font-weight: 700;
+      color: var(--accent-cyan);
+      font-size: 1.25rem;
+      word-break: break-word;
+    }
+
+    .stats-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin: 24px 0;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Footer Credits */
+    .app-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+    }
+
+    /* Admin Link Button */
+    .admin-link-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      color: var(--accent-cyan);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .admin-link-btn:hover {
+      background: rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+      transform: translateY(-1px);
+    }
+
+    /* Helper SVG Styling */
+    .icon {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Confetti Canvas for Victory Celebration -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="header-bar">
+      <div class="brand">
+        <div class="brand-icon">CQ</div>
+        <span class="brand-title">CypherQuest</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <a href="admin.html" target="_blank" class="admin-link-btn" title="Open Admin Monitoring Dashboard">
+          <svg class="icon" viewBox="0 0 24 24" style="stroke: #06b6d4;">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+          <span>Admin</span>
+        </a>
+        <button class="sound-toggle" id="sound-btn" title="Toggle Sound FX">
+          <svg class="icon" id="sound-icon-on" viewBox="0 0 24 24">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Progress Tracker (Levels 1-7) -->
+    <div class="progress-wrapper" id="progress-wrapper">
+      <div class="progress-header-info">
+        <span id="progress-level-label">Level 1 of 7</span>
+        <span id="progress-percent">14%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="dots-container" id="dots-container">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       SCREEN 0: LOGIN SCREEN
+       ========================================== -->
+    <div id="screen-login" class="screen active">
+      <h1 class="screen-title">Welcome, Agent</h1>
+      <div class="puzzle-box">
+        <p>Enter your <strong>Team Name</strong> to initiate authentication and gain access to the CypherQuest vault grid. Prepare your mind for 7 levels of cryptic challenges.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-team-input">Team Name</label>
+        <input type="text" id="login-team-input" class="input-field" placeholder="e.g. Cyber Prowlers" autocomplete="off" autofocus>
+      </div>
+
+      <button id="btn-start-hunt" class="btn-primary">
+        <span>Start Hunt</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="login-error" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        <span>Please enter a valid Team Name to proceed.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 1 SCREEN
+       ========================================== -->
+    <div id="screen-level-1" class="screen">
+      <div class="screen-title">
+        <span>Level 1</span>
+        <span class="level-badge">Gateway</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <div class="puzzle-hint">💡 Hint: Enter master passkey to unlock stage.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-1">Enter Answer</label>
+        <input type="text" id="ans-level-1" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-1" class="btn-primary btn-submit" data-level="1">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-1" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect answer! Please try again.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 2 SCREEN
+       ========================================== -->
+    <div id="screen-level-2" class="screen">
+      <div class="screen-title">
+        <span>Level 2</span>
+        <span class="level-badge">Cipher Core</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        <div class="puzzle-hint">💡 Hint: System requires administrative credentials.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-2">Enter Answer</label>
+        <input type="text" id="ans-level-2" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-2" class="btn-primary btn-submit" data-level="2">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-2" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect answer! Access denied.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 3 SCREEN
+       ========================================== -->
+    <div id="screen-level-3" class="screen">
+      <div class="screen-title">
+        <span>Level 3</span>
+        <span class="level-badge">Neural Grid</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Curabitur pretium tiddunt lacus. Nulla gravida orci a odio. Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris. Integer in mauris eu nibh euismod gravida.</p>
+        <div class="puzzle-hint">💡 Hint: The key remains constant across all firewall layers.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-3">Enter Answer</label>
+        <input type="text" id="ans-level-3" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-3" class="btn-primary btn-submit" data-level="3">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-3" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect key! Verification failed.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 4 SCREEN
+       ========================================== -->
+    <div id="screen-level-4" class="screen">
+      <div class="screen-title">
+        <span>Level 4</span>
+        <span class="level-badge">Quantum Matrix</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Mauris ut ultrices justo. Phasellus id hendrerit libero. In hac habitasse platea dictumst.</p>
+        <div class="puzzle-hint">💡 Hint: Case-insensitive key phrase verification active.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-4">Enter Answer</label>
+        <input type="text" id="ans-level-4" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-4" class="btn-primary btn-submit" data-level="4">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-4" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect code! Decryption failed.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 5 SCREEN
+       ========================================== -->
+    <div id="screen-level-5" class="screen">
+      <div class="screen-title">
+        <span>Level 5</span>
+        <span class="level-badge">Sub-Zero Node</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Fusce aliquet mollis sem. Quisque id odio. Suspendisse potenti. Mauris nec massa nisl. Cras sollicitudin libero vel ante. Vivamus elementum semper nisi. Aenean vulputate eleifend tellus.</p>
+        <div class="puzzle-hint">💡 Hint: The system administrator password unlocks all doors.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-5">Enter Answer</label>
+        <input type="text" id="ans-level-5" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-5" class="btn-primary btn-submit" data-level="5">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-5" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect token! Node locked.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 6 SCREEN
+       ========================================== -->
+    <div id="screen-level-6" class="screen">
+      <div class="screen-title">
+        <span>Level 6</span>
+        <span class="level-badge">Vortex Protocol</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Aenean leo ligula, porttitor eu, consequat vitae, eleifend ac, enim. Aliquam lorem ante, dapibus in, viverra quis, feugiat a, tellus. Phasellus viverra nulla ut metus varius laoreet.</p>
+        <div class="puzzle-hint">💡 Hint: You are almost at the vault. Provide root clearance.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-6">Enter Answer</label>
+        <input type="text" id="ans-level-6" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-6" class="btn-primary btn-submit" data-level="6">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-6" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect answer! Override rejected.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       LEVEL 7 SCREEN
+       ========================================== -->
+    <div id="screen-level-7" class="screen">
+      <div class="screen-title">
+        <span>Level 7</span>
+        <span class="level-badge">Final Vault</span>
+      </div>
+
+      <div class="puzzle-box">
+        <p>Quisque rutrum. Aenean imperdiet. Etiam ultricies nisi vel augue. Curabitur ullamcorper ultricies nisi. Nam eget dui. Etiam rhoncus. Maecenas tempus, tellus eget condimentum rhoncus.</p>
+        <div class="puzzle-hint">💡 Hint: Enter the final authorization override code.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="ans-level-7">Enter Answer</label>
+        <input type="text" id="ans-level-7" class="input-field" placeholder="Type answer..." autocomplete="off">
+      </div>
+
+      <button id="btn-level-7" class="btn-primary btn-submit" data-level="7">
+        <span>Submit Answer</span>
+        <svg class="icon" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+      </button>
+
+      <div id="err-level-7" class="error-msg">
+        <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        <span>Incorrect master key! Vault breach blocked.</span>
+      </div>
+    </div>
+
+    <!-- ==========================================
+       VICTORY SCREEN
+       ========================================== -->
+    <div id="screen-victory" class="screen">
+      <div class="victory-container">
+        <div class="trophy-icon">
+          <svg style="width:40px;height:40px;fill:none;stroke:#fff;stroke-width:2;" viewBox="0 0 24 24">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"></path>
+          </svg>
+        </div>
+
+        <h1 class="victory-title">Congratulations!</h1>
+        <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 8px;">
+          Vault Security Breached Successfully.
+        </p>
+        <p style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 20px;">
+          Team <span id="victory-team-name" class="team-highlight"></span> has completed the hunt!
+        </p>
+
+        <div class="stats-card">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-time">00:00</div>
+            <div class="stat-label">Total Time</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-levels">7 / 7</div>
+            <div class="stat-label">Levels Cleared</div>
+          </div>
+        </div>
+
+        <button id="btn-restart" class="btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          <span>Play Again</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      CypherQuest SPA Engine • Single File Architecture
+    </footer>
+
+  </div>
+
+  <!-- ==========================================
+     JavaScript Logic
+     ========================================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // Global State
+      let teamName = '';
+      let currentLevel = 0; // 0 = Login, 1-7 = Levels, 8 = Victory
+      let isSoundMuted = false;
+      let startTime = null;
+      let timerInterval = null;
+
+      // DOM Element Selectors
+      const screens = {
+        login: document.getElementById('screen-login'),
+        level1: document.getElementById('screen-level-1'),
+        level2: document.getElementById('screen-level-2'),
+        level3: document.getElementById('screen-level-3'),
+        level4: document.getElementById('screen-level-4'),
+        level5: document.getElementById('screen-level-5'),
+        level6: document.getElementById('screen-level-6'),
+        level7: document.getElementById('screen-level-7'),
+        victory: document.getElementById('screen-victory')
+      };
+
+      const screenArray = [
+        screens.login,
+        screens.level1,
+        screens.level2,
+        screens.level3,
+        screens.level4,
+        screens.level5,
+        screens.level6,
+        screens.level7,
+        screens.victory
+      ];
+
+      const progressWrapper = document.getElementById('progress-wrapper');
+      const progressFill = document.getElementById('progress-fill');
+      const progressLevelLabel = document.getElementById('progress-level-label');
+      const progressPercent = document.getElementById('progress-percent');
+      const dotsContainer = document.getElementById('dots-container');
+      const dots = dotsContainer.querySelectorAll('.dot');
+      
+      const loginTeamInput = document.getElementById('login-team-input');
+      const btnStartHunt = document.getElementById('btn-start-hunt');
+      const loginError = document.getElementById('login-error');
+      
+      const victoryTeamName = document.getElementById('victory-team-name');
+      const statTime = document.getElementById('stat-time');
+      const btnRestart = document.getElementById('btn-restart');
+
+      const soundBtn = document.getElementById('sound-btn');
+      const soundIconOn = document.getElementById('sound-icon-on');
+
+      // Web Audio API Synthesizer for Audio Feedback
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      function playSound(type) {
+        if (isSoundMuted || !audioCtx) return;
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          const now = audioCtx.currentTime;
+
+          if (type === 'success') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+          } else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, now);
+            osc.frequency.setValueAtTime(130, now + 0.08);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+          } else if (type === 'victory') {
+            // Fanfare sequence
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+              const o = audioCtx.createOscillator();
+              const g = audioCtx.createGain();
+              o.connect(g);
+              g.connect(audioCtx.destination);
+              o.type = 'triangle';
+              o.frequency.setValueAtTime(freq, now + idx * 0.12);
+              g.gain.setValueAtTime(0.2, now + idx * 0.12);
+              g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+              o.start(now + idx * 0.12);
+              o.stop(now + idx * 0.12 + 0.3);
+            });
+          }
+        } catch (e) {
+          console.warn('Audio play prevented', e);
+        }
+      }
+
+      // Toggle Sound Mute
+      soundBtn.addEventListener('click', () => {
+        isSoundMuted = !isSoundMuted;
+        soundBtn.style.opacity = isSoundMuted ? '0.4' : '1';
+      });
+
+      // Switch Screen Handler
+      function showScreen(levelIndex) {
+        currentLevel = levelIndex;
+
+        // Hide all screens
+        screenArray.forEach(scr => {
+          scr.classList.remove('active');
+        });
+
+        // Show target screen
+        const activeScr = screenArray[levelIndex];
+        if (activeScr) {
+          activeScr.classList.add('active');
+          
+          // Focus first input field in active screen if available
+          setTimeout(() => {
+            const input = activeScr.querySelector('input');
+            if (input) input.focus();
+          }, 100);
+        }
+
+        // Update Progress Tracker (Levels 1 to 7)
+        if (levelIndex >= 1 && levelIndex <= 7) {
+          progressWrapper.style.display = 'block';
+          const pct = Math.round((levelIndex / 7) * 100);
+          progressFill.style.width = pct + '%';
+          progressLevelLabel.textContent = `Level ${levelIndex} of 7`;
+          progressPercent.textContent = `${pct}%`;
+
+          // Update Dots
+          dots.forEach((dot, idx) => {
+            dot.classList.remove('active', 'completed');
+            if (idx < levelIndex - 1) {
+              dot.classList.add('completed');
+            } else if (idx === levelIndex - 1) {
+              dot.classList.add('active');
+            }
+          });
+        } else {
+          progressWrapper.style.display = 'none';
+        }
+
+        // Victory Screen Setup
+        if (levelIndex === 8) {
+          victoryTeamName.textContent = teamName || 'Unknown Hunters';
+          stopTimer();
+          playSound('victory');
+          triggerConfetti();
+        }
+      }
+
+      // Timer Functions
+      function startTimer() {
+        startTime = new Date();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+        updateTimerDisplay();
+      }
+
+      function stopTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+      }
+
+      function updateTimerDisplay() {
+        if (!startTime) return;
+        const now = new Date();
+        const diffMs = now - startTime;
+        const totalSec = Math.floor(diffMs / 1000);
+        const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const secs = String(totalSec % 60).padStart(2, '0');
+        statTime.textContent = `${mins}:${secs}`;
+      }
+
+      // Broadcast & Local Storage Event Logger for Admin Monitoring
+      const adminChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('cypherquest_admin_channel') : null;
+
+      function logAdminEvent(eventType, payload = {}) {
+        const nowObj = new Date();
+        const event = {
+          id: 'evt_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+          timestamp: nowObj.toISOString(),
+          formattedTime: nowObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          eventType: eventType, // 'HUNT_STARTED', 'LEVEL_CLEARED', 'VICTORY_REACHED'
+          teamName: teamName || 'Anonymous Agent',
+          ...payload
+        };
+
+        try {
+          // Update Event Logs list
+          const existingEvents = JSON.parse(localStorage.getItem('cypherquest_events') || '[]');
+          existingEvents.unshift(event);
+          if (existingEvents.length > 300) existingEvents.pop();
+          localStorage.setItem('cypherquest_events', JSON.stringify(existingEvents));
+
+          // Update Teams Aggregate State
+          const teams = JSON.parse(localStorage.getItem('cypherquest_teams') || '{}');
+          if (!teams[event.teamName]) {
+            teams[event.teamName] = {
+              teamName: event.teamName,
+              startTime: event.timestamp,
+              currentLevel: 1,
+              levelsCleared: {},
+              status: 'ACTIVE',
+              totalTime: '00:00',
+              lastUpdated: event.timestamp
+            };
+          }
+
+          const tObj = teams[event.teamName];
+          tObj.lastUpdated = event.timestamp;
+
+          if (eventType === 'HUNT_STARTED') {
+            tObj.status = 'ACTIVE';
+            tObj.startTime = event.timestamp;
+            tObj.currentLevel = 1;
+          } else if (eventType === 'LEVEL_CLEARED') {
+            const lvl = payload.levelCleared;
+            tObj.currentLevel = Math.max(tObj.currentLevel, lvl + 1);
+            tObj.levelsCleared[lvl] = {
+              timestamp: event.timestamp,
+              formattedTime: event.formattedTime,
+              elapsedTotal: payload.elapsedTotal || '00:00'
+            };
+          } else if (eventType === 'VICTORY_REACHED') {
+            tObj.status = 'COMPLETED';
+            tObj.victoryTime = event.timestamp;
+            tObj.totalTime = payload.elapsedTotal || '00:00';
+            tObj.currentLevel = 8;
+          }
+
+          localStorage.setItem('cypherquest_teams', JSON.stringify(teams));
+        } catch (err) {
+          console.warn('LocalStorage admin sync warning:', err);
+        }
+
+        // Post broadcast message to admin tab
+        if (adminChannel) {
+          try {
+            adminChannel.postMessage(event);
+          } catch (e) {
+            console.warn('BroadcastChannel error:', e);
+          }
+        }
+      }
+
+      // Login Logic
+      function handleLogin() {
+        const val = loginTeamInput.value.trim();
+        if (val.length === 0) {
+          loginError.classList.add('show');
+          triggerShake(loginTeamInput.parentElement);
+          playSound('error');
+          return;
+        }
+
+        loginError.classList.remove('show');
+        teamName = val;
+        startTimer();
+        playSound('success');
+        logAdminEvent('HUNT_STARTED', { level: 1 });
+        showScreen(1); // Advance to Level 1
+      }
+
+      btnStartHunt.addEventListener('click', handleLogin);
+      loginTeamInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleLogin();
+      });
+
+      // Level Validation Logic
+      function handleLevelSubmit(levelNum) {
+        const inputEl = document.getElementById(`ans-level-${levelNum}`);
+        const errorEl = document.getElementById(`err-level-${levelNum}`);
+        const userVal = inputEl ? inputEl.value.trim() : '';
+
+        // Validation Requirement: Case-insensitive check for "admin"
+        if (userVal.toLowerCase() === 'admin') {
+          if (errorEl) errorEl.classList.remove('show');
+          playSound('success');
+          
+          const timeElapsed = statTime ? statTime.textContent : '00:00';
+          logAdminEvent('LEVEL_CLEARED', { levelCleared: levelNum, elapsedTotal: timeElapsed });
+
+          if (levelNum < 7) {
+            showScreen(levelNum + 1);
+          } else {
+            logAdminEvent('VICTORY_REACHED', { elapsedTotal: timeElapsed });
+            showScreen(8); // Victory Screen
+          }
+        } else {
+          if (errorEl) errorEl.classList.add('show');
+          if (inputEl) triggerShake(inputEl.parentElement);
+          playSound('error');
+        }
+      }
+
+      // Attach Event Listeners to Level Submit Buttons & Inputs
+      for (let i = 1; i <= 7; i++) {
+        const btn = document.getElementById(`btn-level-${i}`);
+        const input = document.getElementById(`ans-level-${i}`);
+
+        if (btn) {
+          btn.addEventListener('click', () => handleLevelSubmit(i));
+        }
+        if (input) {
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleLevelSubmit(i);
+          });
+        }
+      }
+
+      // Restart / Play Again Handler
+      btnRestart.addEventListener('click', () => {
+        teamName = '';
+        currentLevel = 0;
+        loginTeamInput.value = '';
+        
+        // Reset all level inputs and error messages
+        for (let i = 1; i <= 7; i++) {
+          const input = document.getElementById(`ans-level-${i}`);
+          const err = document.getElementById(`err-level-${i}`);
+          if (input) input.value = '';
+          if (err) err.classList.remove('show');
+        }
+        
+        showScreen(0);
+      });
+
+      // Shake Helper
+      function triggerShake(element) {
+        if (!element) return;
+        element.classList.remove('shake-target');
+        // Force reflow
+        void element.offsetWidth;
+        element.classList.add('shake-target');
+        setTimeout(() => element.classList.remove('shake-target'), 500);
+      }
+
+      // Lightweight Canvas Confetti Engine for Victory Screen
+      function triggerConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const pieces = [];
+        const colors = ['#6366f1', '#06b6d4', '#a855f7', '#10b981', '#f59e0b', '#ec4899'];
+
+        for (let i = 0; i < 120; i++) {
+          pieces.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height - canvas.height,
+            size: Math.random() * 8 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            speedY: Math.random() * 3 + 2,
+            speedX: Math.random() * 2 - 1,
+            rotation: Math.random() * 360,
+            rotSpeed: Math.random() * 6 - 3
+          });
+        }
+
+        let animationFrame;
+        let opacity = 1;
+
+        function render() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          let active = false;
+
+          pieces.forEach(p => {
+            p.y += p.speedY;
+            p.x += p.speedX;
+            p.rotation += p.rotSpeed;
+
+            if (p.y < canvas.height) active = true;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rotation * Math.PI) / 180);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+            ctx.restore();
+          });
+
+          if (active) {
+            animationFrame = requestAnimationFrame(render);
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+
+        render();
+
+        window.addEventListener('resize', () => {
+          canvas.width = window.innerWidth;
+          canvas.height = window.innerHeight;
+        });
+      }
+
+      // Initialize default screen
+      showScreen(0);
+
+    })();
+  </script>
+</body>
+</html>

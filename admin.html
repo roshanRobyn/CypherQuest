@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CypherQuest Admin Command Center - Real-time monitoring dashboard for tracking team progress and level clearances.">
+  <title>CypherQuest — Admin Command Center</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       Design System & Variables
+       ========================================== */
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(18, 24, 38, 0.88);
+      --bg-card-hover: rgba(28, 36, 56, 0.95);
+      --border-card: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+      --error-red: #ef4444;
+      --success-green: #10b981;
+      --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius-lg: 16px;
+      --radius-md: 10px;
+      --radius-sm: 6px;
+      --shadow-glow: 0 10px 30px -10px rgba(99, 102, 241, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.06) 0%, transparent 60%);
+      background-attachment: fixed;
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Ambient Grid */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       Header & Control Bar
+       ========================================== */
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 16px 24px;
+      margin-bottom: 24px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .admin-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: var(--accent-cyan);
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      color: var(--success-green);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--success-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success-green);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-card);
+      color: var(--text-main);
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+      border: none;
+      box-shadow: var(--shadow-glow);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--primary-hover), #3730a3);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-accent {
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: var(--accent-cyan);
+    }
+
+    .btn-accent:hover {
+      background: rgba(6, 182, 212, 0.25);
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error-red);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* ==========================================
+       KPI Summary Cards Grid
+       ========================================== */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary);
+    }
+
+    .kpi-card.cyan::before { background: var(--accent-cyan); }
+    .kpi-card.purple::before { background: var(--accent-purple); }
+    .kpi-card.amber::before { background: var(--accent-amber); }
+    .kpi-card.green::before { background: var(--success-green); }
+
+    .kpi-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .kpi-sub {
+      font-size: 0.76rem;
+      color: var(--text-subtle);
+    }
+
+    /* ==========================================
+       Main Dashboard Split Layout
+       ========================================== */
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card-panel {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .panel-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Filters Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      background: rgba(10, 14, 23, 0.8);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      outline: none;
+      width: 220px;
+      transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+    }
+
+    .filter-select {
+      background: rgba(10, 14, 23, 0.8);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 0.88rem;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* ==========================================
+       Table & Matrix Styling
+       ========================================== */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .matrix-table th {
+      background: rgba(10, 14, 23, 0.9);
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.6px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-card);
+      white-space: nowrap;
+    }
+
+    .matrix-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .matrix-table tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    .matrix-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .team-name-cell {
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .team-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* Level Badges in Matrix */
+    .lvl-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .lvl-badge.cleared {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--success-green);
+    }
+
+    .lvl-badge.active {
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.4);
+      color: var(--accent-cyan);
+      animation: pulseActive 2s infinite;
+    }
+
+    @keyframes pulseActive {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4); }
+      50% { box-shadow: 0 0 8px 2px rgba(6, 182, 212, 0.6); }
+    }
+
+    .lvl-badge.locked {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      color: var(--text-subtle);
+    }
+
+    .status-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .status-pill.ACTIVE {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+    }
+
+    .status-pill.COMPLETED {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success-green);
+    }
+
+    /* ==========================================
+       Live Event Audit Feed Section
+       ========================================== */
+    .feed-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .feed-container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .feed-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .feed-item {
+      background: rgba(10, 14, 23, 0.7);
+      border: 1px solid var(--border-card);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.2s ease;
+    }
+
+    .feed-item:hover {
+      background: rgba(15, 22, 36, 0.9);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .feed-time {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-subtle);
+    }
+
+    .feed-event-tag {
+      font-size: 0.68rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .feed-event-tag.HUNT_STARTED {
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--primary);
+    }
+
+    .feed-event-tag.LEVEL_CLEARED {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success-green);
+    }
+
+    .feed-event-tag.VICTORY_REACHED {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--accent-amber);
+    }
+
+    .feed-body {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .feed-team {
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-subtle);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Admin Navigation & Command Header -->
+  <header class="admin-header">
+    <div class="brand-group">
+      <div class="brand-icon">CQ</div>
+      <div>
+        <div class="brand-title">
+          CypherQuest <span class="admin-tag">Admin Command</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-badge">
+      <span class="pulse-dot"></span>
+      <span>LIVE MONITORING ACTIVE</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-accent" id="btn-simulate" title="Simulate realistic team level clearance activity">
+        ⚡ Simulate Event
+      </button>
+      <button class="btn" id="btn-export" title="Export CSV audit log of team clearances">
+        📥 Export CSV
+      </button>
+      <button class="btn btn-danger" id="btn-clear" title="Clear all team tracking logs">
+        🗑️ Reset Logs
+      </button>
+      <a href="index.html" target="_blank" class="btn btn-primary" title="Launch Player Game Page">
+        🚀 Launch Game
+      </a>
+    </div>
+  </header>
+
+  <!-- Key Metrics KPI Overview Bar -->
+  <div class="kpi-grid">
+    <div class="kpi-card cyan">
+      <div class="kpi-title">Registered Teams</div>
+      <div class="kpi-value" id="kpi-teams">0</div>
+      <div class="kpi-sub">Active hunters in grid</div>
+    </div>
+
+    <div class="kpi-card green">
+      <div class="kpi-title">Total Level Breaches</div>
+      <div class="kpi-value" id="kpi-clears">0</div>
+      <div class="kpi-sub">Cleared puzzle checkpoints</div>
+    </div>
+
+    <div class="kpi-card purple">
+      <div class="kpi-title">Fastest Level Breach</div>
+      <div class="kpi-value" id="kpi-fastest">--:--</div>
+      <div class="kpi-sub">Record speed benchmark</div>
+    </div>
+
+    <div class="kpi-card amber">
+      <div class="kpi-title">Completed Hunts (Victories)</div>
+      <div class="kpi-value" id="kpi-victories">0</div>
+      <div class="kpi-sub">Teams breaching Level 7</div>
+    </div>
+  </div>
+
+  <!-- Dashboard Split View -->
+  <div class="dashboard-layout">
+    
+    <!-- Left Main Panel: Team Leaderboard & Level Matrix -->
+    <div class="card-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>🏆 Team Progress & Level Matrix</span>
+        </div>
+        
+        <div class="filter-bar">
+          <input type="text" id="search-team" class="search-input" placeholder="🔍 Search Team Name...">
+          <select id="filter-level" class="filter-select">
+            <option value="ALL">All Levels (1 - 7)</option>
+            <option value="1">Level 1 Cleared</option>
+            <option value="2">Level 2 Cleared</option>
+            <option value="3">Level 3 Cleared</option>
+            <option value="4">Level 4 Cleared</option>
+            <option value="5">Level 5 Cleared</option>
+            <option value="6">Level 6 Cleared</option>
+            <option value="7">Level 7 Cleared</option>
+            <option value="COMPLETED">Completed Hunt</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Matrix Table -->
+      <div class="table-container">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Rank & Team</th>
+              <th>Status</th>
+              <th>L1</th>
+              <th>L2</th>
+              <th>L3</th>
+              <th>L4</th>
+              <th>L5</th>
+              <th>L6</th>
+              <th>L7</th>
+              <th>Total Time</th>
+              <th>Last Active</th>
+            </tr>
+          </thead>
+          <tbody id="matrix-tbody">
+            <!-- Dynamic Rows populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right Side Panel: Live Real-Time Audit Feed -->
+    <div class="card-panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span>⚡ Live Clearance Stream</span>
+        </div>
+      </div>
+
+      <div class="feed-container" id="feed-container">
+        <!-- Dynamic event cards -->
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // State References
+      let eventsLog = [];
+      let teamsMap = {};
+      let soundEnabled = true;
+
+      // DOM Elements
+      const kpiTeams = document.getElementById('kpi-teams');
+      const kpiClears = document.getElementById('kpi-clears');
+      const kpiFastest = document.getElementById('kpi-fastest');
+      const kpiVictories = document.getElementById('kpi-victories');
+
+      const matrixTbody = document.getElementById('matrix-tbody');
+      const feedContainer = document.getElementById('feed-container');
+
+      const searchTeamInput = document.getElementById('search-team');
+      const filterLevelSelect = document.getElementById('filter-level');
+
+      const btnSimulate = document.getElementById('btn-simulate');
+      const btnExport = document.getElementById('btn-export');
+      const btnClear = document.getElementById('btn-clear');
+
+      // Audio Chime Generator using Web Audio API
+      function playAlertChime() {
+        if (!soundEnabled) return;
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          const ctx = new AudioContext();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          const now = ctx.currentTime;
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(660, now); // E5
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } catch (e) {
+          console.warn('Audio play failed', e);
+        }
+      }
+
+      // Load Data from LocalStorage
+      function loadData() {
+        try {
+          eventsLog = JSON.parse(localStorage.getItem('cypherquest_events') || '[]');
+          teamsMap = JSON.parse(localStorage.getItem('cypherquest_teams') || '{}');
+        } catch (e) {
+          console.warn('Error reading localStorage data', e);
+          eventsLog = [];
+          teamsMap = {};
+        }
+        renderDashboard();
+      }
+
+      // Save Data to LocalStorage & Broadcast
+      function saveData() {
+        try {
+          localStorage.setItem('cypherquest_events', JSON.stringify(eventsLog));
+          localStorage.setItem('cypherquest_teams', JSON.stringify(teamsMap));
+        } catch (e) {
+          console.warn('Error saving data', e);
+        }
+      }
+
+      // Setup Real-Time Listeners
+      const adminChannel = ('BroadcastChannel' in window) ? new BroadcastChannel('cypherquest_admin_channel') : null;
+      if (adminChannel) {
+        adminChannel.onmessage = (msgEvent) => {
+          if (msgEvent && msgEvent.data) {
+            playAlertChime();
+            loadData();
+          }
+        };
+      }
+
+      // Storage event listener fallback
+      window.addEventListener('storage', (e) => {
+        if (e.key === 'cypherquest_events' || e.key === 'cypherquest_teams') {
+          loadData();
+        }
+      });
+
+      // Render All Dashboard Components
+      function renderDashboard() {
+        renderKPIs();
+        renderMatrixTable();
+        renderLiveFeed();
+      }
+
+      // Render KPIs
+      function renderKPIs() {
+        const teamKeys = Object.keys(teamsMap);
+        kpiTeams.textContent = teamKeys.length;
+
+        let totalClears = 0;
+        let victories = 0;
+        let fastestTimeSec = Infinity;
+
+        teamKeys.forEach(tName => {
+          const tObj = teamsMap[tName];
+          const clearedCount = Object.keys(tObj.levelsCleared || {}).length;
+          totalClears += clearedCount;
+          if (tObj.status === 'COMPLETED' || clearedCount >= 7) {
+            victories++;
+          }
+
+          // Calculate fastest level clear if recorded
+          Object.values(tObj.levelsCleared || {}).forEach(info => {
+            if (info.elapsedTotal && info.elapsedTotal !== '00:00') {
+              const parts = info.elapsedTotal.split(':');
+              if (parts.length === 2) {
+                const sec = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+                if (sec > 0 && sec < fastestTimeSec) {
+                  fastestTimeSec = sec;
+                }
+              }
+            }
+          });
+        });
+
+        kpiClears.textContent = totalClears;
+        kpiVictories.textContent = victories;
+
+        if (fastestTimeSec !== Infinity) {
+          const m = String(Math.floor(fastestTimeSec / 60)).padStart(2, '0');
+          const s = String(fastestTimeSec % 60).padStart(2, '0');
+          kpiFastest.textContent = `${m}:${s}`;
+        } else {
+          kpiFastest.textContent = '--:--';
+        }
+      }
+
+      // Render Leaderboard & Matrix Table
+      function renderMatrixTable() {
+        matrixTbody.innerHTML = '';
+
+        const searchVal = searchTeamInput.value.trim().toLowerCase();
+        const filterLvl = filterLevelSelect.value;
+
+        // Convert teamsMap to Array & Sort by highest level reached & total elapsed time
+        let teamsArray = Object.values(teamsMap);
+
+        // Filter Teams
+        teamsArray = teamsArray.filter(team => {
+          const nameMatches = team.teamName.toLowerCase().includes(searchVal);
+          if (!nameMatches) return false;
+
+          if (filterLvl === 'ALL') return true;
+          if (filterLvl === 'COMPLETED') return team.status === 'COMPLETED' || Object.keys(team.levelsCleared || {}).length >= 7;
+
+          const lvlNum = parseInt(filterLvl, 10);
+          return team.levelsCleared && team.levelsCleared[lvlNum];
+        });
+
+        // Sort teams: completed first, then highest level, then fastest total time
+        teamsArray.sort((a, b) => {
+          const countA = Object.keys(a.levelsCleared || {}).length;
+          const countB = Object.keys(b.levelsCleared || {}).length;
+          if (countA !== countB) return countB - countA;
+          return a.teamName.localeCompare(b.teamName);
+        });
+
+        if (teamsArray.length === 0) {
+          matrixTbody.innerHTML = `
+            <tr>
+              <td colspan="11" class="empty-state">
+                No active teams match the current filters. Start a game in <a href="index.html" target="_blank" style="color:var(--accent-cyan);">index.html</a> or click "Simulate Event"!
+              </td>
+            </tr>`;
+          return;
+        }
+
+        teamsArray.forEach((team, idx) => {
+          const tr = document.createElement('tr');
+
+          // Team Cell
+          const teamInitials = team.teamName.substring(0, 2).toUpperCase();
+          const teamTd = `
+            <td>
+              <div class="team-name-cell">
+                <div class="team-avatar">${teamInitials}</div>
+                <div>
+                  <div>#${idx + 1} ${escapeHTML(team.teamName)}</div>
+                </div>
+              </div>
+            </td>`;
+
+          // Status Cell
+          const statusTd = `
+            <td>
+              <span class="status-pill ${team.status}">
+                ${team.status}
+              </span>
+            </td>`;
+
+          // Level Columns L1 - L7
+          let levelsTds = '';
+          for (let lvl = 1; lvl <= 7; lvl++) {
+            const clearData = team.levelsCleared ? team.levelsCleared[lvl] : null;
+            if (clearData) {
+              levelsTds += `
+                <td>
+                  <span class="lvl-badge cleared" title="Cleared at ${clearData.formattedTime} (${clearData.elapsedTotal})">
+                    ✓ ${clearData.formattedTime || 'Cleared'}
+                  </span>
+                </td>`;
+            } else if (team.currentLevel === lvl) {
+              levelsTds += `
+                <td>
+                  <span class="lvl-badge active">
+                    ● Active
+                  </span>
+                </td>`;
+            } else {
+              levelsTds += `
+                <td>
+                  <span class="lvl-badge locked">
+                    🔒 Locked
+                  </span>
+                </td>`;
+            }
+          }
+
+          // Total Time Cell
+          const totalTimeTd = `
+            <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-cyan);">
+              ${team.totalTime || 'In Progress'}
+            </td>`;
+
+          // Last Active Cell
+          const lastActiveStr = team.lastUpdated ? new Date(team.lastUpdated).toLocaleTimeString() : '--:--';
+          const lastActiveTd = `
+            <td style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted);">
+              ${lastActiveStr}
+            </td>`;
+
+          tr.innerHTML = teamTd + statusTd + levelsTds + totalTimeTd + lastActiveTd;
+          matrixTbody.appendChild(tr);
+        });
+      }
+
+      // Render Real-time Event Stream Feed
+      function renderLiveFeed() {
+        feedContainer.innerHTML = '';
+
+        if (eventsLog.length === 0) {
+          feedContainer.innerHTML = `
+            <div class="empty-state">
+              No activity logs recorded yet.<br>Events will appear here in real-time as teams clear levels.
+            </div>`;
+          return;
+        }
+
+        eventsLog.slice(0, 30).forEach(evt => {
+          const item = document.createElement('div');
+          item.className = 'feed-item';
+
+          let msg = '';
+          if (evt.eventType === 'HUNT_STARTED') {
+            msg = `Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> initiated authentication and started Level 1.`;
+          } else if (evt.eventType === 'LEVEL_CLEARED') {
+            msg = `Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> successfully breached <strong style="color:var(--success-green)">Level ${evt.levelCleared}</strong> (Elapsed: ${evt.elapsedTotal || 'N/A'}).`;
+          } else if (evt.eventType === 'VICTORY_REACHED') {
+            msg = `🏆 Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> completed the entire hunt! Final Time: <strong style="color:var(--accent-amber)">${evt.elapsedTotal}</strong>.`;
+          }
+
+          item.innerHTML = `
+            <div class="feed-header">
+              <span class="feed-event-tag ${evt.eventType}">${evt.eventType.replace('_', ' ')}</span>
+              <span class="feed-time">${evt.formattedTime || new Date(evt.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div class="feed-body">${msg}</div>`;
+
+          feedContainer.appendChild(item);
+        });
+      }
+
+      // Simulation Engine to test real-time monitoring
+      const demoTeams = ['Cyber_Prowlers', 'Binary_Bandits', 'Quantum_Phantoms', 'Neo_Hackers', 'Cipher_Squad'];
+      btnSimulate.addEventListener('click', () => {
+        const randomTeam = demoTeams[Math.floor(Math.random() * demoTeams.length)];
+        const nowObj = new Date();
+        const formattedTime = nowObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        if (!teamsMap[randomTeam]) {
+          // Start Hunt for new demo team
+          teamsMap[randomTeam] = {
+            teamName: randomTeam,
+            startTime: nowObj.toISOString(),
+            currentLevel: 1,
+            levelsCleared: {},
+            status: 'ACTIVE',
+            totalTime: '00:00',
+            lastUpdated: nowObj.toISOString()
+          };
+
+          const event = {
+            id: 'evt_' + Date.now(),
+            timestamp: nowObj.toISOString(),
+            formattedTime,
+            eventType: 'HUNT_STARTED',
+            teamName: randomTeam,
+            level: 1
+          };
+
+          eventsLog.unshift(event);
+        } else {
+          // Advance Level for existing demo team
+          const tObj = teamsMap[randomTeam];
+          const nextLvl = tObj.currentLevel;
+
+          if (nextLvl <= 7) {
+            const fakeSec = nextLvl * 45 + Math.floor(Math.random() * 30);
+            const m = String(Math.floor(fakeSec / 60)).padStart(2, '0');
+            const s = String(fakeSec % 60).padStart(2, '0');
+            const elapsed = `${m}:${s}`;
+
+            tObj.levelsCleared[nextLvl] = {
+              timestamp: nowObj.toISOString(),
+              formattedTime,
+              elapsedTotal: elapsed
+            };
+
+            tObj.currentLevel = nextLvl + 1;
+            tObj.lastUpdated = nowObj.toISOString();
+
+            if (nextLvl === 7) {
+              tObj.status = 'COMPLETED';
+              tObj.totalTime = elapsed;
+            }
+
+            const event = {
+              id: 'evt_' + Date.now(),
+              timestamp: nowObj.toISOString(),
+              formattedTime,
+              eventType: nextLvl === 7 ? 'VICTORY_REACHED' : 'LEVEL_CLEARED',
+              teamName: randomTeam,
+              levelCleared: nextLvl,
+              elapsedTotal: elapsed
+            };
+
+            eventsLog.unshift(event);
+          } else {
+            // Reset demo team to allow fresh simulation
+            delete teamsMap[randomTeam];
+            btnSimulate.click();
+            return;
+          }
+        }
+
+        saveData();
+        playAlertChime();
+        renderDashboard();
+      });
+
+      // CSV Export Functionality
+      btnExport.addEventListener('click', () => {
+        const teamKeys = Object.keys(teamsMap);
+        if (teamKeys.length === 0) {
+          alert('No team data available to export.');
+          return;
+        }
+
+        let csvContent = 'data:text/csv;charset=utf-8,';
+        csvContent += 'Team Name,Status,Level 1 Cleared,Level 2 Cleared,Level 3 Cleared,Level 4 Cleared,Level 5 Cleared,Level 6 Cleared,Level 7 Cleared,Total Elapsed Time,Last Active\n';
+
+        teamKeys.forEach(tName => {
+          const t = teamsMap[tName];
+          const l = t.levelsCleared || {};
+          const row = [
+            `"${t.teamName}"`,
+            t.status,
+            l[1] ? `"${l[1].formattedTime} (${l[1].elapsedTotal})"` : 'N/A',
+            l[2] ? `"${l[2].formattedTime} (${l[2].elapsedTotal})"` : 'N/A',
+            l[3] ? `"${l[3].formattedTime} (${l[3].elapsedTotal})"` : 'N/A',
+            l[4] ? `"${l[4].formattedTime} (${l[4].elapsedTotal})"` : 'N/A',
+            l[5] ? `"${l[5].formattedTime} (${l[5].elapsedTotal})"` : 'N/A',
+            l[6] ? `"${l[6].formattedTime} (${l[6].elapsedTotal})"` : 'N/A',
+            l[7] ? `"${l[7].formattedTime} (${l[7].elapsedTotal})"` : 'N/A',
+            t.totalTime || 'In Progress',
+            t.lastUpdated ? `"${new Date(t.lastUpdated).toLocaleString()}"` : 'N/A'
+          ];
+          csvContent += row.join(',') + '\n';
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', `cypherquest_admin_report_${Date.now()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // Clear Activity Logs
+      btnClear.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset all team progress logs and activity events?')) {
+          eventsLog = [];
+          teamsMap = {};
+          localStorage.removeItem('cypherquest_events');
+          localStorage.removeItem('cypherquest_teams');
+          renderDashboard();
+        }
+      });
+
+      // Search & Filter Listeners
+      searchTeamInput.addEventListener('input', renderMatrixTable);
+      filterLevelSelect.addEventListener('change', renderMatrixTable);
+
+      // Utility HTML Escape
+      function escapeHTML(str) {
+        if (!str) return '';
+        return str.replace(/[&<>'"]/g, 
+          tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+          }[tag] || tag)
+        );
+      }
+
+      // Initial Load & Fallback Polling every 1.5s
+      loadData();
+      setInterval(loadData, 1500);
+
+    })();
+  </script>
+</body>
+</html>
