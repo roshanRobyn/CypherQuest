@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import "./App.css";
 
 import outsideImage from "./assets/outside.png";
+import GameplayScreen from "./components/gameplay/GameplayScreen";
 
 function App() {
   const [scene, setScene] = useState("home");
@@ -298,44 +299,7 @@ function App() {
           GAME SCREEN
       ===================================================== */}
 
-      {scene === "game" && (
-        <section className="game-screen">
-
-          <div className="game-panel">
-
-            <p className="game-label">
-              CYPHER QUEST
-            </p>
-
-            <h1>
-              THE HUNT BEGINS
-            </h1>
-
-            <div className="game-divider"></div>
-
-            <p className="team-display">
-              TEAM: <strong>{teamName}</strong>
-            </p>
-
-            <p className="game-text">
-              Your journey has begun.
-              <br />
-              Solve the clues. Follow the path.
-              <br />
-              Find the lost treasure.
-            </p>
-
-            <button
-              type="button"
-              className="begin-hunt-button"
-            >
-              BEGIN HUNT →
-            </button>
-
-          </div>
-
-        </section>
-      )}
+      {scene === "game" && <GameplayScreen teamName={teamName} />}
 
     </main>
   );
