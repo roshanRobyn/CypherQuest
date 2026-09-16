@@ -53,22 +53,25 @@ function App() {
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
     >
-      <div ref={cursorRef} className="cursor-orb">
-        <span className="cursor-compass-ring"></span>
-        <span className="cursor-cross cursor-cross-top"></span>
-        <span className="cursor-cross cursor-cross-right"></span>
-        <span className="cursor-cross cursor-cross-bottom"></span>
-        <span className="cursor-cross cursor-cross-left"></span>
-        <span className="cursor-diamond"></span>
-      </div>
+      {scene !== "game" && (
+        <div ref={cursorRef} className="cursor-orb">
+          <span className="cursor-compass-ring"></span>
+          <span className="cursor-cross cursor-cross-top"></span>
+          <span className="cursor-cross cursor-cross-right"></span>
+          <span className="cursor-cross cursor-cross-bottom"></span>
+          <span className="cursor-cross cursor-cross-left"></span>
+          <span className="cursor-diamond"></span>
+        </div>
+      )}
 
-      {ripples.map((ripple) => (
-        <span
-          key={ripple.id}
-          className="cursor-ripple"
-          style={{ left: ripple.x, top: ripple.y }}
-        ></span>
-      ))}
+      {scene !== "game" &&
+        ripples.map((ripple) => (
+          <span
+            key={ripple.id}
+            className="cursor-ripple"
+            style={{ left: ripple.x, top: ripple.y }}
+          ></span>
+        ))}
 
       {/* =====================================================
           HOME SCREEN

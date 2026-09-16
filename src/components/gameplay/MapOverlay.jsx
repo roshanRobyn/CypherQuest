@@ -17,8 +17,14 @@ function MapOverlay({ isOpen, onClose }) {
         </button>
 
         <p className="gp-map-title">THE MAP</p>
-        <div className="gp-map-placeholder">
-          <span>No territory charted yet</span>
+        <div className="gp-map-frame">
+          {isOpen && (
+            <iframe
+              src="/Maps/izuhara_reference.html"
+              title="Izuhara Map"
+              className="gp-map-iframe"
+            />
+          )}
         </div>
       </div>
     </div>
