@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Shredded Clue</title>
+  <style>
+    :root { --ink:#211c16; --wine:#853136; --paper:#fffdf6; --line:#cfc0a8; --gold:#b68a3d; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; color:var(--ink); font-family:Georgia, "Times New Roman", serif; background:radial-gradient(circle at 15% 5%,#fffefb 0,transparent 32rem),repeating-linear-gradient(0deg,rgba(92,68,37,.025) 0 1px,transparent 1px 5px),#e7dece; }
+    .page { width:min(1200px,100%); margin:auto; padding:30px 22px 40px; }
+    header { text-align:center; }
+    .eyebrow { margin:0 0 8px; color:var(--wine); font:700 11px/1.2 system-ui,sans-serif; letter-spacing:.22em; text-transform:uppercase; }
+    h1 { margin:0; font-size:clamp(29px,4vw,48px); font-weight:500; letter-spacing:.035em; }
+    .rule { width:min(390px,70%); height:1px; margin:15px auto 12px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+    .intro { max-width:610px; margin:0 auto; color:#65594c; font-size:16px; line-height:1.5; }
+    .tools { display:flex; align-items:center; justify-content:center; gap:12px; margin:20px 0 15px; }
+    button { border:1px solid #896d4d; border-radius:3px; padding:10px 15px; cursor:pointer; color:#fffdf7; background:#704931; box-shadow:0 2px 0 #482c1c,0 4px 10px rgba(64,42,22,.15); font:700 12px/1 system-ui,sans-serif; letter-spacing:.09em; text-transform:uppercase; transition:transform .15s,background .15s; }
+    button:hover { background:#85583b; transform:translateY(-1px); } button:active { transform:translateY(1px); box-shadow:0 1px 0 #482c1c; }
+    #counter { min-width:136px; color:#675846; font:700 12px/1 system-ui,sans-serif; letter-spacing:.08em; text-align:left; }
+    #playfield { position:relative; isolation:isolate; height:640px; max-width:1110px; margin:auto; overflow:hidden; border:1px solid var(--line); border-radius:9px; background:linear-gradient(115deg,transparent 42%,rgba(104,77,42,.055) 42.1% 42.4%,transparent 42.5%),repeating-linear-gradient(90deg,rgba(93,71,42,.018) 0 1px,transparent 1px 7px),#d9cfbd; box-shadow:inset 0 0 42px rgba(69,49,24,.16),0 14px 30px rgba(64,48,28,.14); }
+    #playfield::after { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; background:radial-gradient(ellipse at center,transparent 48%,rgba(77,51,25,.13)); }
+    #target { position:absolute; z-index:1; border:1px dashed rgba(80,57,32,.4); background:rgba(255,253,246,.24); box-shadow:0 2px 12px rgba(67,46,25,.08); }
+    #target::before { content:"REASSEMBLE THE TORN CLUE"; position:absolute; top:-23px; width:100%; color:rgba(83,61,36,.55); font:700 10px/1 system-ui,sans-serif; letter-spacing:.19em; text-align:center; }
+    .fragment { position:absolute; z-index:3; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none; filter:drop-shadow(2px 5px 3px rgba(52,35,19,.34)) drop-shadow(0 1px .4px rgba(255,255,255,.75)); transition:left .18s ease,top .18s ease,filter .16s ease; }
+    .fragment:hover { filter:drop-shadow(2px 8px 6px rgba(52,35,19,.4)) drop-shadow(0 1px .5px rgba(255,255,255,.85)) brightness(1.01); }
+    .fragment.dragging { z-index:20; cursor:grabbing; transition:none; filter:drop-shadow(5px 13px 8px rgba(43,27,13,.45)) drop-shadow(0 1px .6px rgba(255,255,255,.9)); }
+    .fragment.locked { z-index:4; cursor:default; filter:drop-shadow(1px 2px 1.8px rgba(52,35,19,.24)); }
+    .note { position:absolute; z-index:2; bottom:14px; left:20px; color:rgba(69,47,26,.54); font:italic 14px/1 Georgia,serif; transform:rotate(-2deg); pointer-events:none; }
+    .seal { position:absolute; z-index:2; right:17px; bottom:15px; width:54px; height:54px; display:grid; place-items:center; border:2px solid rgba(124,45,43,.45); border-radius:50%; color:rgba(124,45,43,.68); font:700 9px/1.1 system-ui,sans-serif; letter-spacing:.08em; text-align:center; text-transform:uppercase; transform:rotate(12deg); pointer-events:none; }
+    #complete { position:absolute; z-index:30; inset:0; display:grid; place-items:center; padding:22px; background:rgba(38,27,16,.6); opacity:0; pointer-events:none; transition:opacity .45s ease; }
+    #complete.show { opacity:1; pointer-events:auto; }
+    .reveal { width:min(525px,95%); padding:32px 28px 27px; text-align:center; background:#fffdf6; border:1px solid #b39b73; box-shadow:0 12px 45px rgba(0,0,0,.35),inset 0 0 0 5px rgba(201,166,101,.17); transform:rotate(-.8deg); }
+    .reveal h2 { margin:0 0 10px; font-size:29px; font-weight:500; } .reveal .eyebrow { color:#936931; }
+    .answer { margin:16px 0 19px; color:#16120f; font-family:"Noto Serif JP","Yu Mincho",serif; font-size:clamp(40px,8vw,62px); letter-spacing:.12em; }
+    .reveal p:last-of-type { margin:0; color:#6a5d4e; line-height:1.5; } .reveal button { margin-top:22px; }
+    @media (max-width:760px) { .page{padding:22px 10px 28px} #playfield{height:590px;border-radius:4px} #counter{display:none} .intro{font-size:15px} #target::before{font-size:8px;top:-18px} }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <p class="eyebrow">Treasure hunter's archive · clue no. 07</p>
+      <h1>The Shredded Clue</h1><div class="rule"></div>
+      <p class="intro">The message was torn apart before it reached you. Drag each paper shred back to its true place; fragments settle when their ripped edges meet.</p>
+    </header>
+    <div class="tools"><button id="shuffle" type="button">Shuffle fragments</button><span id="counter">0 / 12 restored</span></div>
+    <section id="playfield" aria-label="Interactive torn paper puzzle">
+      <div id="target" aria-hidden="true"></div><div class="note">Handle with care — the answer is in the scraps.</div><div class="seal">archive<br>clue 07</div>
+      <div id="complete"><div class="reveal"><p class="eyebrow">Clue restored</p><h2>The torn message reads</h2><div class="answer">大浜漁村</div><p>You have reassembled the fragment of the map. Carry this answer to the next keeper.</p><button id="again" type="button">Tear it again</button></div></div>
+    </section>
+  </main>
+  <script>
+  (() => {
+    // An inline source keeps this page portable; the characters match the supplied clue exactly.
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="597" height="240" viewBox="0 0 597 240"><rect width="597" height="240" fill="#fff"/><text x="298.5" y="158" text-anchor="middle" fill="#090909" font-size="104" font-family="'Noto Serif JP','Yu Mincho','Hiragino Mincho ProN',serif" font-weight="400">大浜漁村</text></svg>`;
+    const image = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+    const field = document.querySelector('#playfield'), target = document.querySelector('#target'), counter = document.querySelector('#counter'), complete = document.querySelector('#complete');
+    const cols = 4, rows = 3, baseW = 597, baseH = 240; let pieces = [], scale = 1, W = baseW, H = baseH, boardX = 0, boardY = 0, locked = 0;
+    const clamp = (n,a,b) => Math.max(a,Math.min(b,n));
+    const straight = (a,b) => [a,b];
+    function torn(a,b,vertical) { const points=[]; const steps=6; for(let i=0;i<=steps;i++){ const t=i/steps; const j=(i===0||i===steps)?0:((Math.sin((i+2)*41.73)*.5+.5)*7-3.5); points.push(vertical?[a[0]+j,a[1]+(b[1]-a[1])*t]:[a[0]+(b[0]-a[0])*t,a[1]+j]); } return points; }
+    function pointsFor(r,c,xs,ys) {
+      const top=r?edges.h[r][c]:straight([xs[c],ys[r]],[xs[c+1],ys[r]]);
+      const right=c<cols-1?edges.v[c+1][r]:straight([xs[c+1],ys[r]],[xs[c+1],ys[r+1]]);
+      const bottom=r<rows-1?[...edges.h[r+1][c]].reverse():straight([xs[c+1],ys[r+1]],[xs[c],ys[r+1]]);
+      const left=c?[...edges.v[c][r]].reverse():straight([xs[c],ys[r+1]],[xs[c],ys[r]]);
+      return [...top,...right.slice(1),...bottom.slice(1),...left.slice(1)];
+    }
+    let edges;
+    function build() {
+      pieces.forEach(p=>p.el.remove()); pieces=[]; locked=0; complete.classList.remove('show');
+      scale=Math.min(1,(field.clientWidth-20)/637); W=baseW*scale; H=baseH*scale;
+      const xs=[0,.25,.505,.75,1].map(n=>n*W), ys=[0,.32,.66,1].map(n=>n*H);
+      boardX=(field.clientWidth-W)/2; boardY=field.clientWidth<700?185:230;
+      target.style.cssText+=`left:${boardX}px;top:${boardY}px;width:${W}px;height:${H}px;`;
+      edges={h:Array.from({length:rows+1},()=>[]),v:Array.from({length:cols+1},()=>[])};
+      for(let r=1;r<rows;r++) for(let c=0;c<cols;c++) edges.h[r][c]=torn([xs[c],ys[r]],[xs[c+1],ys[r]],false);
+      for(let c=1;c<cols;c++) for(let r=0;r<rows;r++) edges.v[c][r]=torn([xs[c],ys[r]],[xs[c],ys[r+1]],true);
+      for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) makePiece(r,c,xs,ys);
+      shuffle(); update();
+    }
+    function makePiece(r,c,xs,ys) {
+      const poly=pointsFor(r,c,xs,ys), minX=Math.min(...poly.map(p=>p[0])), maxX=Math.max(...poly.map(p=>p[0])), minY=Math.min(...poly.map(p=>p[1])), maxY=Math.max(...poly.map(p=>p[1]));
+      const el=document.createElement('div'); el.className='fragment'; el.setAttribute('aria-label',`paper fragment ${pieces.length+1}`);
+      el.style.width=`${maxX-minX}px`; el.style.height=`${maxY-minY}px`; el.style.backgroundImage=image; el.style.backgroundSize=`${W}px ${H}px`; el.style.backgroundPosition=`${-minX}px ${-minY}px`; el.style.clipPath=`polygon(${poly.map(([x,y])=>`${x-minX}px ${y-minY}px`).join(',')})`;
+      field.append(el); const p={el,minX,minY,w:maxX-minX,h:maxY-minY,x:0,y:0,correctX:boardX+minX,correctY:boardY+minY,locked:false}; pieces.push(p); drag(p); }
+    function shuffle() { complete.classList.remove('show'); locked=0; const safe=field.clientWidth<700?8:24; pieces.forEach((p,i)=>{ p.locked=false;p.el.classList.remove('locked'); const side=i%2===0; let x=side?safe:field.clientWidth-p.w-safe; let y=32+((i*103)%Math.max(200,field.clientHeight-p.h-70)); if(field.clientWidth<700){ x=clamp((i*71+23)%(field.clientWidth-p.w+1),3,field.clientWidth-p.w-3); y=35+((i*79)%Math.max(130,field.clientHeight-p.h-60)); } p.x=clamp(x,3,field.clientWidth-p.w-3);p.y=clamp(y,3,field.clientHeight-p.h-3);place(p); }); update(); }
+    function place(p){p.el.style.left=`${p.x}px`;p.el.style.top=`${p.y}px`;}
+    function update(){counter.textContent=`${locked} / ${pieces.length} restored`;}
+    function drag(p) { let dx=0,dy=0;
+      p.el.addEventListener('pointerdown',e=>{ if(p.locked)return; const box=p.el.getBoundingClientRect();dx=e.clientX-box.left;dy=e.clientY-box.top;p.el.classList.add('dragging');p.el.setPointerCapture(e.pointerId); });
+      p.el.addEventListener('pointermove',e=>{ if(!p.el.classList.contains('dragging'))return; const box=field.getBoundingClientRect();p.x=clamp(e.clientX-box.left-dx,0,field.clientWidth-p.w);p.y=clamp(e.clientY-box.top-dy,0,field.clientHeight-p.h);place(p); });
+      p.el.addEventListener('pointerup',e=>{ if(!p.el.classList.contains('dragging'))return; p.el.classList.remove('dragging');p.el.releasePointerCapture(e.pointerId); const d=Math.hypot(p.x-p.correctX,p.y-p.correctY);if(d<Math.max(25,42*scale)){p.x=p.correctX;p.y=p.correctY;p.locked=true;p.el.classList.add('locked');locked++;place(p);update();if(locked===pieces.length)setTimeout(()=>complete.classList.add('show'),350);} });
+    }
+    document.querySelector('#shuffle').addEventListener('click',shuffle); document.querySelector('#again').addEventListener('click',shuffle);
+    let timer; window.addEventListener('resize',()=>{clearTimeout(timer);timer=setTimeout(build,150);}); build();
+  })();
+  </script>
+</body>
+</html>
