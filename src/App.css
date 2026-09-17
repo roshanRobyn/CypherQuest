@@ -30,8 +30,16 @@ body {
 
   inset: 0;
 
-  width: 100vw;
-  height: 100vh;
+  /*
+    Sized from --gp-vw/--gp-vh (frozen to the viewport size when the page
+    first loaded) rather than live 100vw/100vh, then counter-scaled via
+    transform against the browser's current zoom level (see useZoomLock).
+    Net effect: the whole app renders at one fixed physical composition no
+    matter what zoom the browser is at.
+  */
+  width: calc(var(--gp-vw, 1vw) * 100);
+  height: calc(var(--gp-vh, 1vh) * 100);
+  transform-origin: top left;
 
   overflow: hidden;
 
@@ -237,7 +245,7 @@ body {
 
   width: 850px;
 
-  max-width: 90vw;
+  max-width: calc(var(--gp-vw, 1vw) * 90);
 
   text-align: center;
 }
@@ -292,7 +300,7 @@ body {
     "Times New Roman",
     serif;
 
-  font-size: clamp(55px, 6.5vw, 100px);
+  font-size: clamp(55px, calc(var(--gp-vw, 1vw) * 6.5), 100px);
 
   font-weight: 400;
 
@@ -656,8 +664,8 @@ body {
 
   inset: 0;
 
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
 
   display: flex;
 
@@ -694,8 +702,8 @@ body {
 
   inset: 0;
 
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
 
   display: flex;
 
@@ -722,7 +730,7 @@ body {
 .game-panel {
   width: 650px;
 
-  max-width: 85vw;
+  max-width: calc(var(--gp-vw, 1vw) * 85);
 
   padding: 60px 45px;
 
@@ -839,28 +847,30 @@ body {
    TABLET
 ========================================================= */
 
-@media (max-width: 1000px) {
+/*
+  Gated by .app-tablet (set in JS from the frozen baseline viewport width,
+  see useZoomLock) instead of a live @media max-width query. A live query
+  would also fire when the player just zooms the browser in on a normal
+  desktop window, incorrectly switching to this layout.
+*/
+.app-tablet .navigation {
+  right: 30px;
+}
 
-  .navigation {
-    right: 30px;
-  }
+.app-tablet .navigation nav {
+  gap: 25px;
+}
 
-  .navigation nav {
-    gap: 25px;
-  }
+.app-tablet .side-text {
+  display: none;
+}
 
-  .side-text {
-    display: none;
-  }
+.app-tablet .center-content {
+  width: calc(var(--gp-vw, 1vw) * 90);
+}
 
-  .center-content {
-    width: 90vw;
-  }
-
-  .event-title {
-    font-size: 65px;
-  }
-
+.app-tablet .event-title {
+  font-size: 65px;
 }
 
 
@@ -868,80 +878,81 @@ body {
    MOBILE
 ========================================================= */
 
-@media (max-width: 650px) {
+/*
+  Gated by .app-mobile (frozen baseline width, see useZoomLock) instead of
+  a live @media max-width query, for the same zoom-immunity reason as
+  .app-tablet above.
+*/
+.app-mobile .navigation {
+  top: 20px;
 
-  .navigation {
-    top: 20px;
+  right: 20px;
+}
 
-    right: 20px;
-  }
+.app-mobile .navigation nav {
+  gap: 15px;
+}
 
-  .navigation nav {
-    gap: 15px;
-  }
+.app-mobile .navigation a {
+  font-size: 8px;
 
-  .navigation a {
-    font-size: 8px;
+  letter-spacing: 2px;
+}
 
-    letter-spacing: 2px;
-  }
+.app-mobile .center-content {
+  width: calc(var(--gp-vw, 1vw) * 90);
 
-  .center-content {
-    width: 90vw;
+  top: 50%;
+}
 
-    top: 50%;
-  }
+.app-mobile .mystery-symbol {
+  font-size: 32px;
+}
 
-  .mystery-symbol {
-    font-size: 32px;
-  }
+.app-mobile .mystery-intro {
+  font-size: 8px;
 
-  .mystery-intro {
-    font-size: 8px;
+  letter-spacing: 3px;
+}
 
-    letter-spacing: 3px;
-  }
+.app-mobile .event-title {
+  font-size: 43px;
 
-  .event-title {
-    font-size: 43px;
+  letter-spacing: 1px;
+}
 
-    letter-spacing: 1px;
-  }
+.app-mobile .event-subtitle {
+  font-size: 20px;
 
-  .event-subtitle {
-    font-size: 20px;
+  letter-spacing: 5px;
+}
 
-    letter-spacing: 5px;
-  }
+.app-mobile .event-description {
+  font-size: 13px;
+}
 
-  .event-description {
-    font-size: 13px;
-  }
+.app-mobile .team-section h2 {
+  font-size: 17px;
 
-  .team-section h2 {
-    font-size: 17px;
+  letter-spacing: 4px;
+}
 
-    letter-spacing: 4px;
-  }
+.app-mobile .team-description {
+  font-size: 8px;
 
-  .team-description {
-    font-size: 8px;
+  letter-spacing: 2px;
+}
 
-    letter-spacing: 2px;
-  }
+.app-mobile .team-input {
+  width: 100%;
+}
 
-  .team-input {
-    width: 100%;
-  }
+.app-mobile .enter-button {
+  width: 100%;
+}
 
-  .enter-button {
-    width: 100%;
-  }
-
-  .quote {
-    display: none;
-  }
-
+.app-mobile .quote {
+  display: none;
 }
 /* =========================================================
    REALISTIC ATMOSPHERIC FOG
@@ -1359,7 +1370,7 @@ body {
 }
 
 .app,
-.app*,
+.app *,
 .app button,
 .app input,
 .app a{

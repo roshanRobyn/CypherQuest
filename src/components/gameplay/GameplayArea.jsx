@@ -1,15 +1,23 @@
-function GameplayArea({ teamName }) {
+import ShreddedCluePuzzle from "./puzzles/ShreddedCluePuzzle";
+import KarakuriStage from "./puzzles/KarakuriStage";
+
+function GameplayArea({ stage, onFirstPuzzleComplete, onKarakuriComplete }) {
   return (
     <div className="gp-central">
       <div className="gp-central-frame">
-        <div className="gp-central-inner">
+        <div className="gp-central-inner gp-central-inner-puzzle">
           <span className="gp-central-corner gp-corner-tl" />
           <span className="gp-central-corner gp-corner-tr" />
           <span className="gp-central-corner gp-corner-bl" />
           <span className="gp-central-corner gp-corner-br" />
 
-          <p className="gp-central-label">TEAM · {teamName || "UNKNOWN"}</p>
-          <div className="gp-central-glyph">暗</div>
+          {stage === "shredded-clue" && (
+            <ShreddedCluePuzzle onComplete={onFirstPuzzleComplete} />
+          )}
+
+          {stage === "karakuri" && (
+            <KarakuriStage onComplete={onKarakuriComplete} />
+          )}
         </div>
       </div>
     </div>

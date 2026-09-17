@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function ToolsPanel() {
+function ToolsPanel({ translationUnlocked, translationJustUnlocked, onOpenTranslation }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -20,7 +20,19 @@ function ToolsPanel() {
           <span className="gp-slot" />
           <span className="gp-slot" />
           <span className="gp-slot" />
-          <span className="gp-slot" />
+          {translationUnlocked ? (
+            <button
+              type="button"
+              className={`gp-slot gp-slot-button ${translationJustUnlocked ? "gp-slot-unlocked" : ""}`}
+              aria-label="Translation tool"
+              title="Translation tool"
+              onClick={onOpenTranslation}
+            >
+              訳
+            </button>
+          ) : (
+            <span className="gp-slot" />
+          )}
         </div>
       </div>
     </div>

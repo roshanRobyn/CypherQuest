@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Karakuri Sequence Lock</title>
+
+<style>
+html, body { height: 100%; margin: 0; overflow: hidden; }
+
+/* Hide the text caret on non-input elements only; inputs/textareas keep it. */
+* { caret-color: transparent; }
+input, textarea, [contenteditable="true"], [contenteditable=""] { caret-color: auto; }
+
+/* =========================================================
+   KARAKURI LOCK — ALL STYLES ARE SCOPED TO #karakuriGame
+   ========================================================= */
+
+#karakuriGame {
+    --wood-dark: #160b06;
+    --wood: #3b2112;
+    --wood-light: #684127;
+    --gold: #c5a06a;
+    --gold-dark: #76552f;
+    --paper: #d7c29b;
+    --muted: #82715c;
+    --red: #6e241c;
+
+    position: relative;
+
+    width: 100%;
+    height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            #302017 0%,
+            #120c08 48%,
+            #050403 100%
+        );
+
+    color: var(--paper);
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    isolation: isolate;
+}
+
+
+/* ---------- ATMOSPHERE ---------- */
+
+#karakuriGame::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 80px,
+            rgba(255,255,255,0.015) 81px,
+            transparent 82px
+        );
+
+    pointer-events: none;
+}
+
+
+#karakuriGame::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            transparent 35%,
+            rgba(0,0,0,0.65) 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* ---------- MAIN ---------- */
+
+#karakuriGame .kq-wrapper {
+    position: relative;
+    z-index: 2;
+
+    width: min(1000px, 94%);
+
+    padding: 10px 20px;
+
+    text-align: center;
+}
+
+
+/* ---------- HEADER ---------- */
+
+#karakuriGame .kq-eyebrow {
+    margin: 0 0 8px;
+
+    font-size: 11px;
+
+    letter-spacing: 6px;
+
+    color: #806341;
+
+    text-transform: uppercase;
+}
+
+
+#karakuriGame .kq-title {
+    margin: 0;
+
+    font-size: clamp(28px, 4.4vw, 42px);
+
+    font-weight: normal;
+
+    letter-spacing: 12px;
+
+    color: var(--paper);
+
+    text-shadow:
+        0 3px 4px #000;
+}
+
+
+#karakuriGame .kq-subtitle {
+    margin: 4px 0 10px;
+
+    font-size: 12px;
+
+    letter-spacing: 8px;
+
+    color: #826441;
+}
+
+
+/* ---------- STORY ---------- */
+
+#karakuriGame .kq-story {
+    max-width: 580px;
+
+    margin: 0 auto 6px;
+
+    color: #91816d;
+
+    font-size: 13px;
+
+    line-height: 1.45;
+}
+
+
+#karakuriGame .kq-story strong {
+    color: #b99b6b;
+
+    font-weight: normal;
+}
+
+
+/* =========================================================
+   LOCK
+   ========================================================= */
+
+#karakuriGame .kq-lock {
+
+    position: relative;
+
+    width: min(820px, 100%);
+
+    margin: auto;
+
+    padding: 5px;
+
+    background: #0d0704;
+
+    border: 1px solid #54331d;
+
+    box-shadow:
+        0 0 0 3px #080504,
+        0 0 0 5px #29170d,
+        0 25px 70px rgba(0,0,0,0.85);
+}
+
+
+/* ---------- TOP WOOD BAR ---------- */
+
+#karakuriGame .kq-topbar {
+
+    height: 34px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 35px;
+
+    background:
+        linear-gradient(
+            #4a2a17,
+            #28150c
+        );
+
+    border-bottom: 2px solid #654127;
+
+    color: #9e7b4e;
+
+    font-size: 12px;
+
+    letter-spacing: 5px;
+}
+
+
+#karakuriGame .kq-diamond {
+    font-size: 8px;
+
+    color: #74502c;
+}
+
+
+/* ---------- MAIN WOOD PANEL ---------- */
+
+#karakuriGame .kq-panel {
+
+    position: relative;
+
+    padding: 18px 50px 12px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #24130a,
+            #422515 18%,
+            #351d11 50%,
+            #422515 82%,
+            #24130a
+        );
+
+    border-left: 14px solid #1b0e08;
+    border-right: 14px solid #1b0e08;
+
+    box-shadow:
+        inset 0 0 70px rgba(0,0,0,0.7);
+}
+
+
+/* Wood grain */
+
+#karakuriGame .kq-panel::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    opacity: 0.12;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 13px,
+            #080402 14px,
+            transparent 16px
+        );
+
+    pointer-events: none;
+}
+
+
+/* ---------- LABEL ---------- */
+
+#karakuriGame .kq-label {
+
+    position: relative;
+
+    margin-bottom: 12px;
+
+    font-size: 10px;
+
+    letter-spacing: 5px;
+
+    color: #97744b;
+}
+
+
+/* =========================================================
+   MECHANISMS
+   ========================================================= */
+
+#karakuriGame .kq-mechanisms {
+
+    position: relative;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 20px;
+}
+
+
+/* Wooden buttons */
+
+#karakuriGame .kq-mechanism {
+
+    position: relative;
+
+    width: 90px;
+
+    height: 100px;
+
+    padding: 0;
+
+    border: none;
+
+    cursor: pointer;
+
+    background:
+        linear-gradient(
+            90deg,
+            #251309,
+            #61391e 22%,
+            #432616 50%,
+            #61391e 78%,
+            #251309
+        );
+
+    box-shadow:
+        inset 0 0 0 2px #70492a,
+        inset 0 0 20px rgba(0,0,0,0.75),
+        0 9px 15px rgba(0,0,0,0.7);
+
+    transition:
+        transform 0.15s ease,
+        filter 0.15s ease;
+}
+
+
+/* Outer frame */
+
+#karakuriGame .kq-mechanism::before {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 8px;
+
+    border: 1px solid #8a5d34;
+
+    box-shadow:
+        inset 0 0 10px rgba(0,0,0,0.6);
+
+    pointer-events: none;
+}
+
+
+/* Inner carved area */
+
+#karakuriGame .kq-mechanism::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: 20px;
+
+    border: 1px solid #342013;
+
+    background:
+        radial-gradient(
+            circle,
+            rgba(255,255,255,0.035),
+            transparent 65%
+        );
+
+    pointer-events: none;
+}
+
+
+/* Numerals */
+
+#karakuriGame .kq-number {
+
+    position: relative;
+
+    z-index: 3;
+
+    font-size: 26px;
+
+    color: #d0b17b;
+
+    text-shadow:
+        0 2px 3px #080402;
+}
+
+
+/* Hover */
+
+#karakuriGame .kq-mechanism:hover {
+
+    transform: translateY(-7px);
+
+    filter: brightness(1.15);
+}
+
+
+/* Press */
+
+#karakuriGame .kq-mechanism:active {
+
+    transform: translateY(5px);
+}
+
+
+/* Selected */
+
+#karakuriGame .kq-mechanism.selected {
+
+    transform: translateY(5px);
+
+    background:
+        linear-gradient(
+            90deg,
+            #32180d,
+            #774722,
+            #512c17,
+            #774722,
+            #32180d
+        );
+
+    box-shadow:
+        inset 0 0 0 2px #b48a4e,
+        inset 0 0 25px rgba(0,0,0,0.75),
+        0 3px 5px rgba(0,0,0,0.7);
+}
+
+
+/* Disabled after unlock */
+
+#karakuriGame .kq-mechanism:disabled {
+
+    cursor: default;
+}
+
+
+/* ---------- SIDE ORNAMENTS ---------- */
+
+#karakuriGame .kq-side {
+
+    position: absolute;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 25px;
+
+    color: #65442a;
+
+    font-size: 13px;
+}
+
+
+#karakuriGame .kq-side-left {
+    left: 25px;
+}
+
+
+#karakuriGame .kq-side-right {
+    right: 25px;
+}
+
+
+/* =========================================================
+   SEQUENCE
+   ========================================================= */
+
+#karakuriGame .kq-sequence-area {
+
+    position: relative;
+
+    margin-top: 10px;
+}
+
+
+#karakuriGame .kq-sequence-label {
+
+    margin-bottom: 8px;
+
+    font-size: 9px;
+
+    letter-spacing: 4px;
+
+    color: #775735;
+}
+
+
+#karakuriGame .kq-sequence {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+}
+
+
+#karakuriGame .kq-slot {
+
+    width: 34px;
+
+    height: 34px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #5a3921;
+
+    background: rgba(0,0,0,0.3);
+
+    color: #c5a06a;
+
+    font-size: 12px;
+}
+
+
+/* ---------- STATUS ---------- */
+
+#karakuriGame .kq-status {
+
+    position: relative;
+
+    min-height: 14px;
+
+    margin-top: 8px;
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    color: #806e58;
+}
+
+#karakuriGame .kq-status.kq-status-wrong {
+
+    color: #b6493a;
+}
+
+
+/* ---------- RESET ---------- */
+
+#karakuriGame .kq-reset {
+
+    position: relative;
+
+    margin-top: 6px;
+
+    padding: 6px 24px;
+
+    border: 1px solid #614027;
+
+    background: transparent;
+
+    color: #9a7a50;
+
+    font-family: Georgia, serif;
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+
+#karakuriGame .kq-reset:hover {
+
+    background: #24140c;
+
+    border-color: #9a6d3c;
+
+    color: #c9a875;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+#karakuriGame .kq-footer {
+
+    margin-top: 8px;
+
+    color: #51463a;
+
+    font-size: 11px;
+
+    font-style: italic;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   WRONG ANIMATION
+   ========================================================= */
+
+#karakuriGame .kq-lock.wrong {
+
+    animation:
+        kqShake 0.45s ease;
+}
+
+
+@keyframes kqShake {
+
+    0%   { transform: translateX(0); }
+
+    20%  { transform: translateX(-9px); }
+
+    40%  { transform: translateX(9px); }
+
+    60%  { transform: translateX(-7px); }
+
+    80%  { transform: translateX(7px); }
+
+    100% { transform: translateX(0); }
+}
+
+
+/* =========================================================
+   UNLOCKED STATE
+   ========================================================= */
+
+#karakuriGame .kq-lock.unlocked {
+
+    box-shadow:
+        0 0 0 3px #080504,
+        0 0 0 5px #76532e,
+        0 0 35px rgba(190,145,75,0.3),
+        0 25px 70px rgba(0,0,0,0.85);
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    #karakuriGame .kq-panel {
+
+        padding:
+            45px 20px 35px;
+    }
+
+
+    #karakuriGame .kq-mechanisms {
+
+        gap: 8px;
+    }
+
+
+    #karakuriGame .kq-mechanism {
+
+        width: 68px;
+
+        height: 105px;
+    }
+
+
+    #karakuriGame .kq-number {
+
+        font-size: 19px;
+    }
+
+
+    #karakuriGame .kq-side {
+
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 450px) {
+
+    #karakuriGame .kq-wrapper {
+
+        padding: 25px 10px;
+    }
+
+
+    #karakuriGame .kq-title {
+
+        letter-spacing: 7px;
+    }
+
+
+    #karakuriGame .kq-mechanisms {
+
+        gap: 5px;
+    }
+
+
+    #karakuriGame .kq-mechanism {
+
+        width: 56px;
+
+        height: 90px;
+    }
+
+
+    #karakuriGame .kq-number {
+
+        font-size: 16px;
+    }
+
+
+    #karakuriGame .kq-slot {
+
+        width: 28px;
+
+        height: 28px;
+    }
+
+}
+</style>
+</head>
+
+
+<body>
+
+<div id="karakuriGame">
+
+    <div class="kq-wrapper">
+
+
+        <!-- HEADER -->
+
+        <header class="kq-header">
+
+            <p class="kq-eyebrow">
+                ANCIENT MECHANISM
+            </p>
+
+            <h1 class="kq-title">
+                KARAKURI
+            </h1>
+
+            <p class="kq-subtitle">
+                SEQUENCE LOCK
+            </p>
+
+        </header>
+
+
+        <!-- STORY -->
+
+        <section class="kq-story">
+
+            <p>
+                An ancient mechanism stands before you.
+                Five forgotten seals control the lock.
+            </p>
+
+            <p>
+                Activate them in the
+                <strong>correct order</strong>.
+            </p>
+
+            <p>
+                The mechanism remembers.
+            </p>
+
+        </section>
+
+
+        <!-- LOCK -->
+
+        <section class="kq-lock" id="kqLock">
+
+
+            <!-- TOP -->
+
+            <div class="kq-topbar">
+
+                <span class="kq-diamond">◆</span>
+
+                <span>秘 密 の 鍵</span>
+
+                <span class="kq-diamond">◆</span>
+
+            </div>
+
+
+            <!-- MAIN PANEL -->
+
+            <div class="kq-panel">
+
+
+                <!-- SIDE DECORATION -->
+
+                <div class="kq-side kq-side-left">
+
+                    <span>◈</span>
+                    <span>◈</span>
+                    <span>◈</span>
+
+                </div>
+
+
+                <div class="kq-side kq-side-right">
+
+                    <span>◈</span>
+                    <span>◈</span>
+                    <span>◈</span>
+
+                </div>
+
+
+                <!-- CONTROLS -->
+
+                <div class="kq-label">
+                    SELECT SEQUENCE
+                </div>
+
+
+                <div class="kq-mechanisms">
+
+
+                    <button
+                        class="kq-mechanism"
+                        data-number="1">
+
+                        <span class="kq-number">
+                            I
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="kq-mechanism"
+                        data-number="2">
+
+                        <span class="kq-number">
+                            II
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="kq-mechanism"
+                        data-number="3">
+
+                        <span class="kq-number">
+                            III
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="kq-mechanism"
+                        data-number="4">
+
+                        <span class="kq-number">
+                            IV
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="kq-mechanism"
+                        data-number="5">
+
+                        <span class="kq-number">
+                            V
+                        </span>
+
+                    </button>
+
+
+                </div>
+
+
+                <!-- SEQUENCE -->
+
+                <div class="kq-sequence-area">
+
+                    <div class="kq-sequence-label">
+                        SEQUENCE
+                    </div>
+
+
+                    <div
+                        class="kq-sequence"
+                        id="kqSequence">
+
+                        <div class="kq-slot"></div>
+                        <div class="kq-slot"></div>
+                        <div class="kq-slot"></div>
+                        <div class="kq-slot"></div>
+                        <div class="kq-slot"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div
+                    class="kq-status"
+                    id="kqStatus">
+
+                    THE MECHANISM WAITS...
+
+                </div>
+
+
+                <!-- RESET -->
+
+                <button
+                    class="kq-reset"
+                    id="kqReset">
+
+                    RESET
+
+                </button>
+
+
+            </div>
+
+
+            <!-- BOTTOM -->
+
+            <div class="kq-topbar">
+
+                <span class="kq-diamond">◆</span>
+                <span>— ◇ —</span>
+                <span class="kq-diamond">◆</span>
+
+            </div>
+
+
+        </section>
+
+
+        <!-- FOOTER -->
+
+        <footer class="kq-footer">
+
+            <p>
+                Some locks are opened with a key.
+            </p>
+
+            <p>
+                Others are opened by remembering.
+            </p>
+
+        </footer>
+
+
+    </div>
+
+</div>
+
+
+<script>
+/* =========================================================
+   KARAKURI LOCK — JAVASCRIPT
+   Everything is contained inside this HTML file.
+   ========================================================= */
+
+
+(function () {
+
+    "use strict";
+
+
+    /* ---------- SECRET SEQUENCE ---------- */
+
+    const SECRET_SEQUENCE = [3, 1, 5, 2, 4];
+
+
+    /* ---------- ELEMENTS ---------- */
+
+    const game =
+        document.getElementById("karakuriGame");
+
+    const lock =
+        document.getElementById("kqLock");
+
+    const mechanisms =
+        game.querySelectorAll(".kq-mechanism");
+
+    const slots =
+        game.querySelectorAll(".kq-slot");
+
+    const status =
+        document.getElementById("kqStatus");
+
+    const reset =
+        document.getElementById("kqReset");
+
+    const stage =
+        game.querySelector(".kq-wrapper");
+
+
+    /* ---------- FIT TO VIEWPORT ---------- */
+    /* Scales the whole lock down so it always fits inside the
+       iframe without producing a scrollbar, never cropping it. */
+
+    function fitStage() {
+
+        stage.style.transform = "none";
+
+        const rect = stage.getBoundingClientRect();
+        const availW = window.innerWidth - 16;
+        const availH = window.innerHeight - 16;
+
+        const scaleW = availW / rect.width;
+        const scaleH = availH / rect.height;
+        const fit = Math.min(1, scaleW, scaleH);
+
+        stage.style.transform = `scale(${fit})`;
+        stage.style.transformOrigin = "center center";
+    }
+
+    window.addEventListener("resize", fitStage);
+    fitStage();
+
+
+    /* ---------- PLAYER SEQUENCE ---------- */
+
+    let playerSequence = [];
+
+    let unlocked = false;
+
+
+    /* =====================================================
+       BUTTON CLICK
+       ===================================================== */
+
+    mechanisms.forEach(function (mechanism) {
+
+        mechanism.addEventListener("click", function () {
+
+            if (unlocked) {
+                return;
+            }
+
+
+            /* Don't allow more than 5 selections */
+
+            if (playerSequence.length >= 5) {
+                return;
+            }
+
+
+            const number =
+                Number(mechanism.dataset.number);
+
+
+            /* Add selection */
+
+            playerSequence.push(number);
+
+
+            /* Mechanical press */
+
+            mechanism.classList.add("selected");
+
+
+            setTimeout(function () {
+
+                mechanism.classList.remove("selected");
+
+            }, 250);
+
+
+            /* Update display */
+
+            updateDisplay();
+
+
+            /* Only check once all five positions are filled */
+
+            if (playerSequence.length === 5) {
+
+                checkSequence();
+
+            }
+
+        });
+
+    });
+
+
+    /* =====================================================
+       DISPLAY SEQUENCE
+       ===================================================== */
+
+    function updateDisplay() {
+
+        slots.forEach(function (slot, index) {
+
+            if (playerSequence[index]) {
+
+                slot.textContent =
+                    playerSequence[index];
+
+            } else {
+
+                slot.textContent = "";
+
+            }
+
+        });
+
+    }
+
+
+    /* =====================================================
+       CHECK SEQUENCE
+       ===================================================== */
+
+    function checkSequence() {
+
+        /* Only called once all five positions are filled.
+           Compare the full sequence at once — never reveal
+           which individual position was wrong. */
+
+        const correct =
+            playerSequence.length === SECRET_SEQUENCE.length &&
+            playerSequence.every(function (value, index) {
+                return value === SECRET_SEQUENCE[index];
+            });
+
+        if (correct) {
+
+            unlock();
+
+        } else {
+
+            wrongSequence();
+
+        }
+
+    }
+
+
+    /* =====================================================
+       WRONG SEQUENCE
+       ===================================================== */
+
+    function wrongSequence() {
+
+        status.textContent =
+            "WRONG CODE — TRY AGAIN";
+
+        status.classList.add("kq-status-wrong");
+
+
+        lock.classList.add("wrong");
+
+        setTimeout(function () {
+
+            lock.classList.remove("wrong");
+
+        }, 500);
+
+
+        /* Lock input briefly, then auto-clear so the
+           player can try again immediately. */
+
+        mechanisms.forEach(function (mechanism) {
+
+            mechanism.disabled = true;
+
+        });
+
+        setTimeout(function () {
+
+            resetLock();
+
+        }, 900);
+
+    }
+
+
+    /* =====================================================
+       UNLOCK
+       ===================================================== */
+
+    function unlock() {
+
+        unlocked = true;
+
+
+        status.textContent =
+            "THE SEAL HAS BEEN BROKEN";
+
+
+        lock.classList.add("unlocked");
+
+
+        mechanisms.forEach(function (mechanism) {
+
+            mechanism.disabled = true;
+
+        });
+
+
+        /* Notify the parent React app that the puzzle is solved */
+
+        window.parent.postMessage({ type: "cq:karakuri-complete" }, "*");
+
+    }
+
+
+    /* =====================================================
+       RESET
+       ===================================================== */
+
+    function resetLock() {
+
+        playerSequence = [];
+
+        unlocked = false;
+
+
+        updateDisplay();
+
+
+        status.textContent =
+            "THE MECHANISM WAITS...";
+
+        status.classList.remove("kq-status-wrong");
+
+
+        lock.classList.remove("wrong");
+        lock.classList.remove("unlocked");
+
+
+        mechanisms.forEach(function (mechanism) {
+
+            mechanism.disabled = false;
+            mechanism.classList.remove("selected");
+
+        });
+
+    }
+
+
+    /* ---------- RESET BUTTON ---------- */
+
+    reset.addEventListener(
+        "click",
+        resetLock
+    );
+
+
+})();
+</script>
+
+</body>
+</html>

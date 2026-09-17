@@ -3,11 +3,8 @@
 ========================================================= */
 
 .gp-tabletop {
-  position: fixed;
+  position: absolute;
   inset: 0;
-
-  width: 100vw;
-  height: 100vh;
 
   background-size: cover;
   background-position: center;
@@ -29,7 +26,10 @@
 
 .gp-tabletop .gp-map-button,
 .gp-tabletop .gp-tools-tab,
-.gp-tabletop .gp-inventory-tab {
+.gp-tabletop .gp-inventory-tab,
+.gp-tabletop .gp-slot-button,
+.gp-tabletop .gp-slot-item,
+.gp-tabletop .gp-map-close {
   cursor: pointer !important;
 }
 
@@ -48,12 +48,11 @@
 
 .gp-central {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 16px;
+  left: 76px;
 
-  width: min(80vw, 1272px);
-  height: min(74vh, 742px);
+  width: min(calc((var(--gp-vw) * 100) - 76px - 142px), 1500px);
+  height: min(calc((var(--gp-vh) * 100) - 16px - 118px), 900px);
 
   z-index: 2;
 }
@@ -140,6 +139,41 @@
   font-size: 3.2rem;
   color: rgba(212, 175, 120, 0.35);
   line-height: 1;
+}
+
+/* =========================================================
+   PUZZLE STAGE — hosted inside the central gameplay display
+========================================================= */
+
+.gp-central-inner-puzzle {
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 18px;
+}
+
+.gp-puzzle-label {
+  margin: 0;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+  color: rgba(230, 210, 170, 0.65);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.gp-puzzle-frame {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 120, 0.25);
+  border-radius: 3px;
+}
+
+.gp-puzzle-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 /* =========================================================
@@ -355,6 +389,64 @@
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6);
 }
 
+.gp-slot-button {
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.1rem;
+  color: rgba(230, 210, 170, 0.85);
+
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.gp-slot-button:hover {
+  transform: scale(1.06);
+  border-color: rgba(212, 175, 120, 0.6);
+  box-shadow: 0 0 14px rgba(212, 175, 120, 0.3), inset 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.gp-slot-item {
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.gp-slot-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gp-slot-item:hover {
+  transform: scale(1.06);
+  border-color: rgba(212, 175, 120, 0.6);
+  box-shadow: 0 0 14px rgba(212, 175, 120, 0.3);
+}
+
+@keyframes gp-unlock-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(230, 195, 130, 0.55), inset 0 0 8px rgba(0, 0, 0, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(230, 195, 130, 0), inset 0 0 8px rgba(0, 0, 0, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(230, 195, 130, 0), inset 0 0 8px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.gp-slot-unlocked {
+  border-color: rgba(230, 195, 130, 0.9);
+  animation: gp-unlock-pulse 1.3s ease-out 2;
+}
+
 /* =========================================================
    MAP OVERLAY
 ========================================================= */
@@ -458,4 +550,204 @@
 
 .gp-map-close:hover {
   background: rgba(212, 175, 120, 0.12);
+}
+
+/* =========================================================
+   RIDDLE VIEWER
+========================================================= */
+
+.gp-riddle-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.gp-riddle-overlay-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-riddle-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 3, 2, 0.6);
+  backdrop-filter: blur(3px);
+}
+
+.gp-riddle-stage {
+  position: relative;
+  z-index: 1;
+
+  max-width: 90vw;
+  max-height: 90vh;
+
+  display: flex;
+
+  transform: scale(0.92) translateY(12px);
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.gp-riddle-overlay-open .gp-riddle-stage {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.gp-riddle-img {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+
+  display: block;
+  border-radius: 3px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.gp-riddle-close {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+
+  width: 30px;
+  height: 30px;
+
+  background: rgba(23, 16, 10, 0.85);
+  border: 1px solid rgba(212, 175, 120, 0.45);
+  border-radius: 50%;
+  color: rgba(230, 210, 170, 0.8);
+
+  cursor: pointer;
+  font-size: 0.85rem;
+  z-index: 2;
+}
+
+.gp-riddle-close:hover {
+  background: rgba(212, 175, 120, 0.18);
+}
+
+/* =========================================================
+   TRANSLATION PANEL
+========================================================= */
+
+.gp-translation-card {
+  position: relative;
+  z-index: 1;
+
+  width: min(360px, 88vw);
+  padding: 26px 30px 24px;
+  text-align: center;
+
+  background:
+    radial-gradient(ellipse at top left, rgba(224, 199, 150, 0.12), transparent 60%),
+    linear-gradient(160deg, #2c1d10, #17100a 70%);
+
+  border: 1px solid rgba(212, 175, 120, 0.4);
+  border-radius: 6px;
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.65),
+    inset 0 0 50px rgba(0, 0, 0, 0.55);
+
+  transform: scale(0.9) translateY(14px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.gp-map-overlay-open .gp-translation-card {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.gp-translation-label {
+  margin: 0 0 14px;
+  letter-spacing: 0.3em;
+  font-size: 0.68rem;
+  color: rgba(230, 210, 170, 0.55);
+  text-transform: uppercase;
+}
+
+.gp-translation-jp {
+  margin: 0 0 8px;
+  font-size: 2.1rem;
+  letter-spacing: 0.14em;
+  color: #f1e6ce;
+}
+
+.gp-translation-romaji {
+  margin: 0 0 12px;
+  font-style: italic;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  color: rgba(212, 175, 120, 0.75);
+}
+
+.gp-translation-en {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: rgba(230, 210, 170, 0.8);
+}
+
+.gp-translation-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  margin: 0 0 12px;
+
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(212, 175, 120, 0.4);
+  border-radius: 4px;
+
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: #f1e6ce;
+  text-align: center;
+}
+
+.gp-translation-input:focus {
+  outline: none;
+  border-color: rgba(212, 175, 120, 0.75);
+}
+
+.gp-translation-btn {
+  padding: 8px 22px;
+  margin: 0 0 6px;
+
+  background: linear-gradient(160deg, #3a2716, #241608);
+  border: 1px solid rgba(212, 175, 120, 0.5);
+  border-radius: 4px;
+
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(230, 210, 170, 0.9);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.gp-translation-btn:hover {
+  background: linear-gradient(160deg, #4a331d, #2c1a0c);
+  border-color: rgba(212, 175, 120, 0.8);
+}
+
+.gp-translation-result {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(212, 175, 120, 0.25);
+}
+
+.gp-translation-notfound {
+  margin: 14px 0 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: rgba(200, 120, 100, 0.85);
 }

@@ -7,6 +7,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
+    * { caret-color: transparent; }
+    input, textarea, [contenteditable="true"], [contenteditable=""] { caret-color: auto; }
+
     html, body, #map {
         width: 100%;
         height: 100%;
@@ -98,19 +101,12 @@
     }
 
     .camp {
-        width: 13px !important;
-        height: 13px !important;
+        width: 9px !important;
+        height: 9px !important;
         border-radius: 50%;
-        border: 2px solid #f3eee0;
-        box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 5px rgba(0,0,0,.8);
+        border: 1.5px solid #f3eee0;
+        box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 4px rgba(0,0,0,.8);
         box-sizing: border-box;
-    }
-
-    .camp.red {
-        background: #7e2924;
-    }
-
-    .camp.black {
         background: #191817;
     }
 
@@ -212,23 +208,22 @@
     const icon = svg => L.divIcon({
         className: "got-icon",
         html: svg,
-        iconSize: [25, 25],
-        iconAnchor: [12, 12]
+        iconSize: [19, 19],
+        iconAnchor: [9.5, 9.5]
     });
 
-    const camp = type => L.divIcon({
-        className: `camp ${type}`,
+    const camp = () => L.divIcon({
+        className: "camp",
         html: "",
-        iconSize: [13, 13],
-        iconAnchor: [6.5, 6.5]
+        iconSize: [9, 9],
+        iconAnchor: [4.5, 4.5]
     });
 
     const icons = {
         village: icon(villageSVG),
         torii: icon(toriiSVG),
         spring: icon(springSVG),
-        redCamp: camp("red"),
-        blackCamp: camp("black")
+        blackCamp: camp()
     };
 
     /*
@@ -272,23 +267,37 @@
         { name:"Shinto Shrine", y:770, x:550, icon:icons.torii },
         { name:"Tsutsu Hot Spring", y:800, x:350, icon:icons.spring },
 
-        { name:"Mongol Camp", y:390, x:350, icon:icons.blackCamp },
-        { name:"Mongol Camp", y:730, x:410, icon:icons.redCamp },
-        { name:"Mongol Camp", y:850, x:350, icon:icons.redCamp },
-        { name:"Mongol Camp", y:920, x:430, icon:icons.redCamp },
-        { name:"Mongol Camp", y:840, x:490, icon:icons.blackCamp },
-        { name:"Mongol Camp", y:790, x:680, icon:icons.redCamp },
-        { name:"Mongol Camp", y:720, x:700, icon:icons.blackCamp },
-        { name:"Mongol Camp", y:760, x:500, icon:icons.redCamp },
-        { name:"Mongol Camp", y:630, x:530, icon:icons.redCamp },
-        { name:"Mongol Camp", y:550, x:710, icon:icons.redCamp },
-        { name:"Mongol Camp", y:380, x:480, icon:icons.redCamp },
-        { name:"Mongol Camp", y:340, x:430, icon:icons.redCamp },
-        { name:"Mongol Camp", y:150, x:400, icon:icons.redCamp },
-        { name:"Mongol Camp", y:130, x:490, icon:icons.blackCamp },
-        { name:"Mongol Camp", y:330, x:660, icon:icons.redCamp },
-        { name:"Mongol Camp", y:250, x:550, icon:icons.blackCamp },
-        { name:"Mongol Camp", y:310, x:540, icon:icons.redCamp }
+        /*
+          The 13 quest-location dots. Positions are fixed and chosen to sit
+          within the region each name belongs to (grouped near the
+          matching existing region label / terrain feature, e.g. the two
+          Kashine locations sit near the "Kashine" region, the two river
+          locations follow the river running down the island's centre,
+          the coast/bluff locations sit near the island's edges). These
+          coordinates are hardcoded, not computed at runtime, so the
+          mapping never changes.
+        */
+        { id:"sakimori-overlook", name:"Sakimori Overlook", y:740, x:600, icon:icons.blackCamp },
+        { id:"archers-rise",      name:"Archer's Rise",     y:180, x:700, icon:icons.blackCamp },
+        { id:"wolf-cub-falls",    name:"Wolf Cub Falls",    y:195, x:365, icon:icons.blackCamp },
+        { id:"kashine-hills",     name:"Kashine Hills",     y:300, x:340, icon:icons.blackCamp },
+        { id:"exiles-bluff",      name:"Exile's Bluff",     y:480, x:270, icon:icons.blackCamp },
+        { id:"kashine-forest",    name:"Kashine Forest",    y:380, x:300, icon:icons.blackCamp },
+        { id:"golden-leaf-hot-spring", name:"Golden Leaf Hot Spring", y:460, x:530, icon:icons.blackCamp },
+        { id:"kuta-grasslands",   name:"Kuta Grasslands",   y:700, x:420, icon:icons.blackCamp },
+        { id:"brown-river-gorge", name:"Brown River Gorge", y:520, x:320, icon:icons.blackCamp },
+        { id:"azamo-foothills",   name:"Azamo Foothills",   y:860, x:560, icon:icons.blackCamp },
+        { id:"tsutsu-plains",     name:"Tsutsu Plains",     y:870, x:360, icon:icons.blackCamp },
+        { id:"isonade-coast",     name:"Isonade Coast",     y:180, x:820, icon:icons.blackCamp },
+
+        /*
+          A normal-looking location dot like every other above. It is a
+          puzzle-progression target: clicking it only does anything once
+          the parent app has unlocked it via CQ_setLocationsUnlocked (see
+          below). Locked or unlocked, it renders identically to every
+          other dot — no glow, color change, or special icon.
+        */
+        { id:"ohama-fishing-village", name:"Ohama Fishing Village", y:780, x:330, icon:icons.blackCamp, clickable:true }
     ];
 
     function project(loc) {
@@ -296,6 +305,14 @@
         const y = oy + loc.y * sy;
         return [IMAGE_H - y, x];
     }
+
+    /*
+      Locations the player must unlock before clicking them does anything.
+      Populated by the parent app via CQ_setLocationsUnlocked. Every dot is
+      visible and styled identically from the start regardless of this set
+      — only click behavior is gated, never appearance.
+    */
+    let unlockedIds = new Set();
 
     locations.forEach(loc => {
         const marker = L.marker(project(loc), {
@@ -322,7 +339,34 @@
                 offset: [0, -10]
             });
         }
+
+        if (loc.clickable) {
+            marker.on("click", () => {
+                if (!unlockedIds.has(loc.id)) return;
+                window.parent.postMessage({ type: "cq:location-click", id: loc.id }, "*");
+            });
+        }
     });
+
+    /*
+      Fixed quest-location registry for future puzzles. Each entry's `id`
+      is permanent and matches the `id` set on the corresponding dot in
+      `locations` above, so a later puzzle can say "Sakimori Overlook" and
+      reliably resolve it to a marker on this map.
+    */
+    window.CQ_LOCATIONS = locations
+        .filter(loc => loc.id)
+        .map(loc => ({ id: loc.id, name: loc.name, x: loc.x, y: loc.y }));
+
+    /*
+      Exposed to the parent Cypher Quest app: pass the full array of
+      currently-unlocked location ids. Reusable for any future puzzle that
+      follows the same "clue solved -> location becomes clickable" pattern
+      — no per-location special-casing needed here.
+    */
+    window.CQ_setLocationsUnlocked = function (ids) {
+        unlockedIds = new Set(ids || []);
+    };
 
     // Keep the reference map centred when the browser window changes size.
     window.addEventListener("resize", () => {

@@ -3,8 +3,10 @@ import "./App.css";
 
 import outsideImage from "./assets/outside.png";
 import GameplayScreen from "./components/gameplay/GameplayScreen";
+import { useZoomLock } from "./hooks/useZoomLock";
 
 function App() {
+  const zoomLock = useZoomLock();
   const [scene, setScene] = useState("home");
   const [teamName, setTeamName] = useState("");
   const [error, setError] = useState("");
@@ -49,7 +51,8 @@ function App() {
 
   return (
     <main
-      className="app"
+      className={`app${zoomLock.isTablet ? " app-tablet" : ""}${zoomLock.isMobile ? " app-mobile" : ""}`}
+      style={zoomLock.style}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
     >
