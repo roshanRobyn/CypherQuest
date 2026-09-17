@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Three Hidden Differences</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap');
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; color:#eee;
+    background:
+      radial-gradient(circle at 50% 0%,#24201c 0,#100f0e 38%,#080807 100%);
+    font-family:Georgia,serif;
+  }
+  .wrap{max-width:1500px;margin:auto;padding:34px 22px 50px}
+  header{text-align:center;margin-bottom:28px}
+  .eyebrow{letter-spacing:5px;text-transform:uppercase;color:#a89470;font-size:12px}
+  h1{font-family:Cinzel,serif;letter-spacing:4px;margin:10px 0 8px;font-size:38px}
+  .instruction{font-style:italic;color:#c9c0af;font-size:18px}
+  .pairs{display:flex;justify-content:center;gap:24px}
+  .pair{
+    background:linear-gradient(145deg,#171614,#0e0e0d);
+    border:1px solid #4a4134;border-radius:10px;padding:18px;
+    box-shadow:0 12px 35px #0008, inset 0 0 30px #0005;
+  }
+  .pair h2{text-align:center;font-family:Cinzel,serif;letter-spacing:2px;margin:3px 0 16px;color:#cbb98f}
+  .grids{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .label{text-align:center;color:#827866;font-size:11px;letter-spacing:2px;margin-bottom:6px;padding-left:14px}
+  
+  /* New Marker Wrappers */
+  .grid-container{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    grid-template-rows:auto 1fr;
+  }
+  .col-markers{
+    grid-column:2; display:grid; grid-template-columns:repeat(8,1fr);
+    text-align:center; color:#6a6152; font-size:11px; padding-bottom:6px;
+    font-family:Cinzel,serif;
+  }
+  .row-markers{
+    grid-column:1; grid-row:2; display:grid; grid-template-rows:repeat(8,1fr);
+    align-items:center; justify-items:end; padding-right:8px; color:#6a6152;
+    font-size:11px; font-family:Cinzel,serif;
+  }
+
+  .grid{
+    grid-column:2; grid-row:2;
+    display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;
+    border:1px solid #5b5040;background:#121110;
+  }
+  .cell{
+    position:relative;display:flex;align-items:center;justify-content:center;
+    border-right:1px solid #292722;border-bottom:1px solid #292722;
+    font-family:"Noto Sans JP",sans-serif;font-size:clamp(17px,2.1vw,28px);
+    color:#d8d0c0;user-select:none;
+  }
+  .cell:nth-child(8n){border-right:0}.cell:nth-last-child(-n+8){border-bottom:0}
+  .cell:hover{background:#25221c}
+  .answer{
+    margin-top:13px;text-align:center;color:#817765;font-size:12px;
+    letter-spacing:1px;height:18px
+  }
+  .controls{
+    margin:30px auto 0;max-width:600px;text-align:center;padding:22px;
+    border-top:1px solid #39332b
+  }
+  .slots{display:flex;justify-content:center;gap:8px;margin:15px 0}
+  input{
+    width:42px;height:48px;background:#111;border:1px solid #665a48;
+    color:#f1e7d2;text-align:center;font:24px Georgia;border-radius:5px;
+  }
+  button{
+    margin-top:8px;padding:12px 28px;border:1px solid #9b875f;
+    background:#b39a6b;color:#17130d;border-radius:4px;
+    font-family:Cinzel,serif;font-weight:bold;letter-spacing:2px;cursor:pointer
+  }
+  button:hover{background:#c6ae7d}
+  #result{min-height:24px;margin-top:14px;font-size:15px;letter-spacing:1px}
+  .hint{color:#746b5c;font-size:12px;margin-top:10px}
+  .coords{display:flex;justify-content:space-around;margin-top:14px;font-size:12px;color:#887d6a}
+  @media(max-width:950px){.pair{max-width:720px;width:100%;margin:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">Field Puzzle · Observation</div>
+  <h1>THREE HIDDEN DIFFERENCES</h1>
+  <div class="instruction">“Three marks were left behind. Find where they stand.”</div>
+</header>
+
+<main class="pairs" id="pairs"></main>
+
+<section class="controls">
+  <div class="slots" id="slots"></div>
+  <button onclick="checkCode()">UNLOCK</button>
+  <div id="result"></div>
+</section>
+</div>
+
+<script>
+const puzzle = {
+  // Three differences: (3,7), (6,2), (8,4) → 376284
+  differences: [[2,6],[5,1],[7,3]],
+  rows: [
+    "さねきすせむらぬめ",
+    "きすせそたちつてと",
+    "さねきすせむらぬめ",
+    "かきくけこさしすせ",
+    "たちつてとまみむめ",
+    "はひふへほかきくけ",
+    "なにぬねのさしすせ",
+    "ら"
+  ]
+};
+
+const variants = [
+  ["ほ","ま"], // difference at row 3, col 7
+  ["ぬ","め"], // difference at row 6, col 2
+  ["れ","ね"]  // difference at row 8, col 4
+];
+
+function buildPuzzle(){
+  const container=document.getElementById("pairs");
+  const markers = [1,2,3,4,5,6,7,8].map(n=>`<div>${n}</div>`).join('');
+  
+  container.innerHTML = `
+    <section class="pair">
+      <h2>THE THREE MARKS</h2>
+      <div class="grids">
+        <div>
+          <div class="label">GRID A</div>
+          <div class="grid-container">
+            <div class="col-markers">${markers}</div>
+            <div class="row-markers">${markers}</div>
+            <div class="grid" id="gridA"></div>
+          </div>
+        </div>
+        <div>
+          <div class="label">GRID B</div>
+          <div class="grid-container">
+            <div class="col-markers">${markers}</div>
+            <div class="row-markers">${markers}</div>
+            <div class="grid" id="gridB"></div>
+          </div>
+        </div>
+      </div>
+      <div class="answer">Exactly three characters have changed. Find all three.</div>
+    </section>`;
+
+  let base=[];
+  puzzle.rows.forEach(row => base.push(...Array.from(row)));
+
+  let b=base.slice();
+  puzzle.differences.forEach((pos,idx)=>{
+    const flat=pos[0]*8+pos[1];
+    base[flat]=variants[idx][0];
+    b[flat]=variants[idx][1];
+  });
+
+  [["gridA",base],["gridB",b]].forEach(([id,data])=>{
+    const grid=document.getElementById(id);
+    data.forEach((ch,i)=>{
+      const cell=document.createElement("div");
+      cell.className="cell";
+      cell.textContent=ch;
+      cell.title=`Row ${Math.floor(i/8)+1}, Column ${i%8+1}`;
+      grid.appendChild(cell);
+    });
+  });
+}
+
+buildPuzzle();
+
+// Six boxes: two digits per pair.
+for(let i=0;i<6;i++){
+  const inp=document.createElement("input");
+  inp.maxLength=1; inp.inputMode="numeric";
+  inp.addEventListener("input",e=>{
+    e.target.value=e.target.value.replace(/\D/g,"");
+    if(e.target.value && i<5) document.getElementById("slots").children[i+1].focus();
+  });
+  document.getElementById("slots").appendChild(inp);
+}
+
+function checkCode(){
+  const code=[...document.querySelectorAll("#slots input")].map(x=>x.value).join("");
+  const result=document.getElementById("result");
+  if(code.length!==6){result.textContent="Complete all six digits.";result.style.color="#b9a47b";return}
+  if(code==="376284"){
+    result.textContent="✓ LOCK ACCEPTED — THE NEXT CLUE AWAITS.";
+    result.style.color="#d0bd91";
+  }else{
+    result.textContent="✕ The lock remains sealed. Re-check the three coordinates.";
+    result.style.color="#9f7770";
+  }
+}
+</script>
+</body>
+</html>
