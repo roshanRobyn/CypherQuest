@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cypher Quest — Lantern Trial</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(38, 65, 63, 0.35),
+            transparent 45%
+        ),
+        linear-gradient(
+            180deg,
+            #080b0b 0%,
+            #111616 50%,
+            #050707 100%
+        );
+
+    color: #e5ded0;
+    font-family: Georgia, "Times New Roman", serif;
+}
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+#lanternGame {
+    position: relative;
+
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden;
+}
+
+/* =========================================================
+   FOG
+   ========================================================= */
+
+.fog {
+    position: absolute;
+
+    inset: -20%;
+
+    pointer-events: none;
+
+    opacity: 0.18;
+
+    filter: blur(35px);
+
+    background:
+        radial-gradient(
+            ellipse at 20% 50%,
+            rgba(190, 205, 190, 0.18),
+            transparent 45%
+        ),
+        radial-gradient(
+            ellipse at 80% 40%,
+            rgba(170, 190, 185, 0.14),
+            transparent 45%
+        );
+
+    animation:
+        fogMove 18s ease-in-out infinite alternate;
+}
+
+.fog.two {
+    opacity: 0.12;
+
+    animation-duration: 27s;
+
+    animation-direction: alternate-reverse;
+}
+
+@keyframes fogMove {
+
+    0% {
+        transform:
+            translateX(-4%)
+            translateY(1%);
+    }
+
+    100% {
+        transform:
+            translateX(4%)
+            translateY(-2%);
+    }
+
+}
+
+/* =========================================================
+   MAIN PANEL
+   ========================================================= */
+
+.game-panel {
+
+    position: relative;
+
+    z-index: 5;
+
+    width: min(1000px, 94vw);
+
+    min-height: 620px;
+
+    padding: 45px 45px 40px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    background:
+        linear-gradient(
+            rgba(12, 17, 17, 0.92),
+            rgba(8, 11, 11, 0.96)
+        );
+
+    border:
+        1px solid
+        rgba(185, 166, 125, 0.25);
+
+    box-shadow:
+        0 0 80px rgba(0, 0, 0, 0.8),
+        inset 0 0 50px rgba(0, 0, 0, 0.55);
+
+    backdrop-filter: blur(5px);
+}
+
+/* =========================================================
+   DECORATIVE CORNERS
+   ========================================================= */
+
+.game-panel::before,
+.game-panel::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 45px;
+    height: 45px;
+
+    border-color:
+        rgba(180, 157, 110, 0.55);
+
+    pointer-events: none;
+}
+
+.game-panel::before {
+
+    top: 15px;
+    left: 15px;
+
+    border-top: 1px solid;
+    border-left: 1px solid;
+}
+
+.game-panel::after {
+
+    bottom: 15px;
+    right: 15px;
+
+    border-bottom: 1px solid;
+    border-right: 1px solid;
+}
+
+/* =========================================================
+   TITLE
+   ========================================================= */
+
+.eyebrow {
+
+    font-size: 12px;
+
+    letter-spacing: 5px;
+
+    text-transform: uppercase;
+
+    color: #8e9b91;
+
+    margin-bottom: 15px;
+}
+
+.title {
+
+    font-size:
+        clamp(34px, 5vw, 58px);
+
+    font-weight: normal;
+
+    letter-spacing: 8px;
+
+    text-transform: uppercase;
+
+    color: #d9d0be;
+
+    text-shadow:
+        0 0 15px
+        rgba(180, 190, 170, 0.18);
+
+    margin-bottom: 10px;
+}
+
+.subtitle {
+
+    max-width: 600px;
+
+    text-align: center;
+
+    color: #9b9f97;
+
+    font-size: 15px;
+
+    line-height: 1.7;
+
+    margin-bottom: 35px;
+}
+
+/* =========================================================
+   RIDDLE
+   ========================================================= */
+
+.riddle {
+
+    width: min(650px, 100%);
+
+    padding: 18px 25px;
+
+    text-align: center;
+
+    border-top:
+        1px solid
+        rgba(184, 160, 110, 0.25);
+
+    border-bottom:
+        1px solid
+        rgba(184, 160, 110, 0.25);
+
+    color: #bdb6a7;
+
+    font-size: 15px;
+
+    line-height: 1.7;
+
+    margin-bottom: 35px;
+}
+
+.riddle span {
+
+    display: block;
+
+    margin-top: 7px;
+
+    font-size: 12px;
+
+    letter-spacing: 3px;
+
+    color: #777d76;
+
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   LANTERN ROW
+   ========================================================= */
+
+.lantern-row {
+
+    width: 100%;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: flex-end;
+
+    gap:
+        clamp(8px, 2vw, 22px);
+
+    margin-top: 10px;
+
+    margin-bottom: 30px;
+}
+
+/* =========================================================
+   LANTERN
+   ========================================================= */
+
+.lantern {
+
+    position: relative;
+
+    width: 75px;
+    height: 115px;
+
+    cursor: pointer;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    transition:
+        transform 0.25s ease,
+        filter 0.25s ease;
+}
+
+.lantern:hover {
+
+    transform:
+        translateY(-5px);
+
+}
+
+/* =========================================================
+   ROOF
+   ========================================================= */
+
+.lantern-roof {
+
+    position: absolute;
+
+    top: 0;
+
+    width: 64px;
+    height: 16px;
+
+    background: #292d2b;
+
+    clip-path: polygon(
+        50% 0,
+        100% 75%,
+        85% 100%,
+        15% 100%,
+        0 75%
+    );
+
+    border:
+        1px solid
+        #494b43;
+}
+
+/* =========================================================
+   LANTERN BODY
+   ========================================================= */
+
+.lantern-body {
+
+    position: absolute;
+
+    top: 14px;
+
+    width: 51px;
+    height: 62px;
+
+    border:
+        1px solid
+        #4c4e45;
+
+    background:
+        linear-gradient(
+            90deg,
+            #242725,
+            #343732,
+            #242725
+        );
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    overflow: visible;
+
+    transition:
+        all 0.3s ease;
+}
+
+/* =========================================================
+   VERTICAL FRAME
+   ========================================================= */
+
+.lantern-body::before,
+.lantern-body::after {
+
+    content: "";
+
+    position: absolute;
+
+    top: -3px;
+    bottom: -3px;
+
+    width: 5px;
+
+    background: #171a18;
+}
+
+.lantern-body::before {
+    left: 4px;
+}
+
+.lantern-body::after {
+    right: 4px;
+}
+
+/* =========================================================
+   LIGHT
+   ========================================================= */
+
+.light {
+
+    width: 31px;
+
+    height: 40px;
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            #e8e0bd 0%,
+            #c8c39f 35%,
+            #777a63 70%,
+            transparent 100%
+        );
+
+    opacity: 0.22;
+
+    transition:
+        opacity 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+.lantern-base {
+
+    position: absolute;
+
+    top: 76px;
+
+    width: 5px;
+
+    height: 30px;
+
+    background: #252925;
+}
+
+.lantern-foot {
+
+    position: absolute;
+
+    bottom: 0;
+
+    width: 36px;
+
+    height: 7px;
+
+    background: #202420;
+}
+
+/* =========================================================
+   LANTERN ON
+   ========================================================= */
+
+.lantern.on .light {
+
+    opacity: 1;
+
+    box-shadow:
+        0 0 12px
+        rgba(220, 215, 170, 0.8),
+
+        0 0 30px
+        rgba(190, 190, 150, 0.5),
+
+        0 0 55px
+        rgba(170, 175, 145, 0.25);
+
+    transform:
+        scale(1.05);
+
+    animation:
+        lanternFlicker
+        2.4s
+        infinite
+        ease-in-out;
+}
+
+.lantern.on .lantern-body {
+
+    border-color:
+        rgba(180, 170, 125, 0.6);
+
+}
+
+@keyframes lanternFlicker {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.88;
+    }
+
+    70% {
+        opacity: 0.96;
+    }
+
+}
+
+/* =========================================================
+   LANTERN NUMBERS
+   ========================================================= */
+
+.lantern-number {
+
+    position: absolute;
+
+    bottom: -28px;
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+
+    color: #777b74;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.status {
+
+    min-height: 25px;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+
+    color: #777e77;
+
+    margin-top: 5px;
+
+    transition:
+        color 0.3s ease,
+        text-shadow 0.3s ease;
+}
+
+.status.success {
+
+    color: #d6cfb7;
+
+    text-shadow:
+        0 0 10px
+        rgba(210, 205, 170, 0.4),
+
+        0 0 25px
+        rgba(210, 205, 170, 0.2);
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    body {
+        overflow-y: auto;
+    }
+
+    #lanternGame {
+
+        min-height: 100vh;
+
+        height: auto;
+
+        padding: 20px 0;
+    }
+
+    .game-panel {
+
+        width: 95vw;
+
+        min-height: 650px;
+
+        padding:
+            35px 12px;
+    }
+
+    .title {
+
+        letter-spacing: 4px;
+
+        font-size: 32px;
+    }
+
+    .subtitle {
+
+        font-size: 13px;
+    }
+
+    .riddle {
+
+        font-size: 13px;
+
+        padding:
+            15px 10px;
+    }
+
+    .lantern-row {
+
+        width: 100%;
+
+        gap: 0;
+
+        justify-content:
+            space-between;
+    }
+
+    .lantern {
+
+        transform:
+            scale(0.72);
+
+        margin:
+            0 -7px;
+    }
+
+    .lantern:hover {
+
+        transform:
+            scale(0.72)
+            translateY(-5px);
+    }
+
+}
+</style>
+</head>
+
+
+<body>
+
+<div id="lanternGame">
+
+    <!-- FOG -->
+
+    <div class="fog"></div>
+
+    <div class="fog two"></div>
+
+
+    <!-- MAIN PANEL -->
+
+    <main class="game-panel">
+
+
+        <!-- TITLE -->
+
+        <div class="eyebrow">
+            Cypher Quest · Trial II
+        </div>
+
+
+        <h1 class="title">
+            Lanterns
+        </h1>
+
+
+        <p class="subtitle">
+
+            The shrine sleeps beneath the mist.
+            Seven lanterns guard the forgotten path.
+            Wake them, and the way forward shall reveal itself.
+
+        </p>
+
+
+        <!-- RIDDLE -->
+
+        <div class="riddle">
+
+            <em>
+
+                "When one flame is disturbed,
+                those beside it answer.
+                Find the hands that awaken every light."
+
+            </em>
+
+
+            <span>
+
+                Click a lantern to change its flame
+
+            </span>
+
+        </div>
+
+
+        <!-- =================================================
+             SEVEN LANTERNS
+             ================================================= -->
+
+        <div
+            class="lantern-row"
+            id="lanternRow"
+        >
+
+
+            <!-- LANTERN I -->
+
+            <div
+                class="lantern"
+                data-index="0"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    I
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN II -->
+
+            <div
+                class="lantern"
+                data-index="1"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    II
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN III -->
+
+            <div
+                class="lantern"
+                data-index="2"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    III
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN IV -->
+
+            <div
+                class="lantern"
+                data-index="3"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    IV
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN V -->
+
+            <div
+                class="lantern"
+                data-index="4"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    V
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN VI -->
+
+            <div
+                class="lantern"
+                data-index="5"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    VI
+                </div>
+
+            </div>
+
+
+            <!-- LANTERN VII -->
+
+            <div
+                class="lantern"
+                data-index="6"
+            >
+
+                <div class="lantern-roof"></div>
+
+                <div class="lantern-body">
+
+                    <div class="light"></div>
+
+                </div>
+
+                <div class="lantern-base"></div>
+
+                <div class="lantern-foot"></div>
+
+                <div class="lantern-number">
+                    VII
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- STATUS -->
+
+        <div
+            class="status"
+            id="status"
+        >
+            Seven flames remain silent.
+        </div>
+
+
+    </main>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CYPHER QUEST — 7 LANTERN PUZZLE
+   ========================================================= */
+
+
+/* =========================================================
+   GET ELEMENTS
+   ========================================================= */
+
+const lanterns =
+    document.querySelectorAll(".lantern");
+
+const statusText =
+    document.getElementById("status");
+
+
+/* =========================================================
+   STARTING STATE
+   =========================================================
+
+   false = OFF
+   true  = ON
+
+   I       II      III     IV      V       VI      VII
+
+   OFF     ON      OFF     ON      OFF     OFF     OFF
+
+   ========================================================= */
+
+let state = [
+
+    false,
+    true,
+    false,
+    true,
+    false,
+    false,
+    false
+
+];
+
+
+let solved = false;
+
+
+/* =========================================================
+   UPDATE LANTERNS
+   ========================================================= */
+
+function updateLanterns() {
+
+    lanterns.forEach(
+        (lantern, index) => {
+
+            if (state[index]) {
+
+                lantern.classList.add("on");
+
+            }
+
+            else {
+
+                lantern.classList.remove("on");
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   TOGGLE LANTERN
+   =========================================================
+
+   Clicking a lantern toggles:
+
+   LEFT
+   CURRENT
+   RIGHT
+
+   Example:
+
+   OFF   ON   OFF
+
+   Click middle:
+
+   ON    OFF  ON
+
+   ========================================================= */
+
+function toggle(index) {
+
+    /* Do nothing after puzzle is solved */
+
+    if (solved) {
+        return;
+    }
+
+
+    /* Toggle clicked lantern */
+
+    state[index] =
+        !state[index];
+
+
+    /* Toggle left neighbour */
+
+    if (index > 0) {
+
+        state[index - 1] =
+            !state[index - 1];
+
+    }
+
+
+    /* Toggle right neighbour */
+
+    if (index < state.length - 1) {
+
+        state[index + 1] =
+            !state[index + 1];
+
+    }
+
+
+    /* Update lantern appearance */
+
+    updateLanterns();
+
+
+    /* Check whether all seven are ON */
+
+    checkPuzzle();
+
+}
+
+
+/* =========================================================
+   CHECK PUZZLE
+   ========================================================= */
+
+function checkPuzzle() {
+
+    const allOn =
+        state.every(
+            light => light === true
+        );
+
+
+    /* =====================================================
+       PUZZLE SOLVED
+       ===================================================== */
+
+    if (allOn) {
+
+        solved = true;
+
+
+        statusText.textContent =
+            "Every flame burns. The path remembers you.";
+
+
+        statusText.classList.add("success");
+
+
+        /* Make sure every lantern remains glowing */
+
+        lanterns.forEach(
+            lantern => {
+
+                lantern.classList.add("on");
+
+            }
+        );
+
+
+        return;
+    }
+
+
+    /* =====================================================
+       NORMAL STATUS
+       ===================================================== */
+
+    const numberOn =
+        state.filter(
+            light => light === true
+        ).length;
+
+
+    if (numberOn === 0) {
+
+        statusText.textContent =
+            "The shrine is completely dark.";
+
+    }
+
+    else if (numberOn === 1) {
+
+        statusText.textContent =
+            "One flame answers the mist.";
+
+    }
+
+    else if (numberOn === 2) {
+
+        statusText.textContent =
+            "Two spirits stir beneath the lanterns.";
+
+    }
+
+    else if (numberOn === 3) {
+
+        statusText.textContent =
+            "The shrine begins to awaken.";
+
+    }
+
+    else if (numberOn === 4) {
+
+        statusText.textContent =
+            "Four flames burn through the mist.";
+
+    }
+
+    else if (numberOn === 5) {
+
+        statusText.textContent =
+            "The shrine is almost awake.";
+
+    }
+
+    else if (numberOn === 6) {
+
+        statusText.textContent =
+            "One final flame remains.";
+
+    }
+
+}
+
+
+/* =========================================================
+   LANTERN CLICK EVENTS
+   ========================================================= */
+
+lanterns.forEach(
+    lantern => {
+
+        lantern.addEventListener(
+            "click",
+            () => {
+
+                const index =
+                    Number(
+                        lantern.dataset.index
+                    );
+
+
+                toggle(index);
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   INITIAL DISPLAY
+   ========================================================= */
+
+updateLanterns();
+
+</script>
+
+</body>
+</html>
+```
