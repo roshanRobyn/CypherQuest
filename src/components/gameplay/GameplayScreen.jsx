@@ -44,15 +44,17 @@ function GameplayScreen() {
       <div className="gp-vignette" />
 
       <ToolsPanel
-        translationUnlocked={quest.unlockedTools.includes("translation")}
-        translationJustUnlocked={quest.justUnlockedTool === "translation"}
+        translationUnlocked={quest.availableTools.includes("translator")}
+        translationJustUnlocked={quest.justUnlockedTool === "translator"}
         onOpenTranslation={() => setTranslationOpen(true)}
       />
 
       <GameplayArea
-        stage={quest.stage}
-        onFirstPuzzleComplete={() => quest.completeStep("shredded-clue")}
-        onKarakuriComplete={() => quest.completeStep("karakuri")}
+        stage={quest.currentStage}
+        onFirstPuzzleComplete={() => quest.completePuzzle("jigsaw")}
+        onKarakuriComplete={() => quest.completePuzzle("karakuri")}
+        onForgottenSpiritComplete={() => quest.completePuzzle("forgotten-spirit")}
+        onLanternSwitchComplete={() => quest.completePuzzle("lantern-switch")}
       />
 
       <InventoryPanel
@@ -72,7 +74,7 @@ function GameplayScreen() {
         <MapOverlay
           isOpen={mapOpen}
           onClose={() => setMapOpen(false)}
-          unlockedLocationIds={quest.unlockedLocationIds}
+          unlockedLocationIds={quest.unlockedLocations}
           onLocationClick={handleLocationClick}
         />,
         document.body
