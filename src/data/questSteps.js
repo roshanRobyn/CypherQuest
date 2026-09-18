@@ -7,20 +7,27 @@
 //                       completedPuzzles / currentPuzzle)
 //   stage              which puzzle component GameplayArea mounts
 //   onComplete         effects applied the moment this puzzle is solved
-//   completionReveal   { japanese, english, mapLocationId } — shown via the
-//                       reusable "Clue Restored" overlay the instant this
-//                       puzzle is solved, and unlocks that map location (the
-//                       player must still open the map and click the dot
-//                       themselves). Omit for a puzzle that doesn't reveal
-//                       a next destination (yet).
-//   unlockTranslation  exact Japanese answer that unlocks this puzzle's map
-//                       location (omit if this puzzle isn't reached via a
-//                       map location — e.g. the very first puzzle). This is
-//                       the original Jigsaw -> Translator -> Ohama path,
-//                       distinct from completionReveal: it requires the
-//                       player to manually enter the clue into the
-//                       Translator tool rather than being shown the English
-//                       meaning immediately.
+//   completionReveal   { japanese, mapLocationId } — the Japanese clue
+//                       shown via the reusable "Clue Restored" overlay the
+//                       instant this puzzle is solved. Reveals ONLY the
+//                       Japanese text — never the English meaning, and
+//                       never unlocks the map location by itself. The
+//                       player must carry that clue to the Translator tool
+//                       (src/data/translations.js needs a matching entry so
+//                       the Translator can display its English meaning);
+//                       only a correct translation there unlocks
+//                       `mapLocationId` (see handleTranslation in
+//                       useQuestProgression.js). Omit for a puzzle that
+//                       doesn't reveal a next destination (yet).
+//   unlockTranslation  exact Japanese answer that unlocks this puzzle's own
+//                       map location (omit if this puzzle isn't reached via
+//                       a map location — e.g. the very first puzzle). This
+//                       is the original Jigsaw -> Translator -> Ohama path;
+//                       mechanically identical to completionReveal (both
+//                       are only ever resolved through the Translator), just
+//                       named for its historical self-referential case
+//                       (the clue unlocks the dot leading to the very
+//                       puzzle that declares it).
 //   mapLocationId      the map dot that, once unlocked, lets the player
 //                       enter this puzzle
 //   onEnter            effects applied the moment the player enters this puzzle
@@ -52,7 +59,6 @@ export const QUEST_STEPS = [
     onComplete: [],
     completionReveal: {
       japanese: "樫根の丘",
-      english: "KASHINE HILLS",
       mapLocationId: "kashine-hills",
     },
   },
@@ -68,7 +74,6 @@ export const QUEST_STEPS = [
     onComplete: [],
     completionReveal: {
       japanese: "磯撫で",
-      english: "ISONADE COAST",
       mapLocationId: "isonade-coast",
     },
   },
@@ -79,7 +84,6 @@ export const QUEST_STEPS = [
     onComplete: [],
     completionReveal: {
       japanese: "茶川の峡谷",
-      english: "BROWN RIVER GORGE",
       mapLocationId: "brown-river-gorge",
     },
   },
@@ -90,7 +94,6 @@ export const QUEST_STEPS = [
     onComplete: [],
     completionReveal: {
       japanese: "豆酘平原",
-      english: "TSUTSU PLAINS",
       mapLocationId: "tsutsu-plains",
     },
   },
@@ -101,7 +104,6 @@ export const QUEST_STEPS = [
     onComplete: [],
     completionReveal: {
       japanese: "金泉",
-      english: "GOLDEN LEAF HOT SPRING",
       mapLocationId: "golden-leaf-hot-spring",
     },
     // No autoNext / next stage yet — end of the currently defined chain.

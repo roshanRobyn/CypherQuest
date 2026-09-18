@@ -98,7 +98,6 @@ function GameplayScreen() {
       <ClueRevealOverlay
         isOpen={!!quest.reveal}
         japanese={quest.reveal?.japanese}
-        english={quest.reveal?.english}
         onClose={quest.dismissReveal}
       />
 

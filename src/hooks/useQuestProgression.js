@@ -94,14 +94,14 @@ export function useQuestProgression() {
   // for sequences whose real unlock requirements haven't been decided yet.
   //
   // `completionReveal` is the permanent replacement for that once a
-  // puzzle's real destination is known: { japanese, english, mapLocationId }.
-  // Completing the puzzle shows that clue (the same reusable "Clue
-  // Restored" presentation every puzzle uses) and unlocks the map location
-  // it names — the player must still open the map and click that dot
-  // themselves, exactly like the original Jigsaw -> Translator -> Ohama
-  // flow, just without a manual translation step since the meaning is
-  // already revealed. A puzzle can have `completionReveal` and no
-  // `autoNext` (or vice versa) — the two mechanisms don't interact.
+  // puzzle's real destination is known: { japanese, mapLocationId }.
+  // Completing the puzzle shows ONLY the Japanese clue via the reusable
+  // "Clue Restored" presentation every puzzle uses. It does NOT unlock the
+  // map location and does NOT reveal the English meaning — translating the
+  // clue (below, via the Translator tool) is the only thing that does
+  // either of those, exactly like the original Jigsaw -> Translator ->
+  // Ohama flow. A puzzle can have `completionReveal` and no `autoNext` (or
+  // vice versa) — the two mechanisms don't interact.
   const completePuzzle = (puzzleId) => {
     const puzzle = puzzleById.current.get(puzzleId);
     if (!puzzle) return;
@@ -111,11 +111,7 @@ export function useQuestProgression() {
       applyEffects(puzzle.onComplete);
       if (puzzle.autoNext) enterPuzzle(puzzle.autoNext);
       if (puzzle.completionReveal) {
-        const { japanese, english, mapLocationId } = puzzle.completionReveal;
-        setUnlockedLocations((locations) =>
-          locations.includes(mapLocationId) ? locations : [...locations, mapLocationId]
-        );
-        setReveal({ japanese, english });
+        setReveal({ japanese: puzzle.completionReveal.japanese });
       }
       return [...current, puzzleId];
     });
@@ -128,12 +124,31 @@ export function useQuestProgression() {
 
   // Validate a clue/answer against every puzzle's unlock requirement. Only
   // an exact match unlocks its map location — wrong input unlocks nothing.
+  // This is the ONLY place a map location gets unlocked: neither puzzle
+  // completion nor the reveal overlay unlock anything by themselves — the
+  // player must bring the revealed Japanese clue here, to the Translator.
+  //
+  // Two independent sources feed this lookup:
+  //   unlockTranslation      the original per-destination field (e.g.
+  //                          karakuri's "大浜漁村" -> its own mapLocationId)
+  //   completionReveal.japanese   a completed puzzle's own revealed clue,
+  //                          unlocking whatever mapLocationId it names —
+  //                          which may or may not have a puzzle behind it
+  //                          yet (see three-hidden-differences' entry).
   const handleTranslation = (japaneseInput) => {
-    const target = QUEST_STEPS.find((puzzle) => puzzle.unlockTranslation === japaneseInput);
-    if (!target || !target.mapLocationId) return;
+    const viaUnlockTranslation = QUEST_STEPS.find(
+      (puzzle) => puzzle.unlockTranslation === japaneseInput
+    );
+    const viaCompletionReveal = QUEST_STEPS.find(
+      (puzzle) => puzzle.completionReveal?.japanese === japaneseInput
+    );
+
+    const mapLocationId =
+      viaUnlockTranslation?.mapLocationId ?? viaCompletionReveal?.completionReveal.mapLocationId;
+    if (!mapLocationId) return;
 
     setUnlockedLocations((current) =>
-      current.includes(target.mapLocationId) ? current : [...current, target.mapLocationId]
+      current.includes(mapLocationId) ? current : [...current, mapLocationId]
     );
   };
 

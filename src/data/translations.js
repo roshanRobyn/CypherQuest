@@ -5,6 +5,11 @@
 export const TRANSLATIONS = {
   "風": { romaji: "Kaze", en: "Wind" },
   "大浜漁村": { romaji: null, en: "OHAMA FISHING VILLAGE" },
+  "樫根の丘": { romaji: null, en: "KASHINE HILLS" },
+  "磯撫で": { romaji: null, en: "ISONADE COAST" },
+  "茶川の峡谷": { romaji: null, en: "BROWN RIVER GORGE" },
+  "豆酘平原": { romaji: null, en: "TSUTSU PLAINS" },
+  "金泉": { romaji: null, en: "GOLDEN LEAF HOT SPRING" },
 
   // Location names (Japanese clues may reference these)
   "先守見晴らし": { romaji: "Sakimori Overlook", en: "Sakimori Overlook" },
