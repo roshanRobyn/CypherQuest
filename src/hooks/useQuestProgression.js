@@ -94,14 +94,21 @@ export function useQuestProgression() {
   // for sequences whose real unlock requirements haven't been decided yet.
   //
   // `completionReveal` is the permanent replacement for that once a
-  // puzzle's real destination is known: { japanese, mapLocationId }.
+  // puzzle's real destination is known: { japanese, mapLocationId, skipOverlay? }.
   // Completing the puzzle shows ONLY the Japanese clue via the reusable
-  // "Clue Restored" presentation every puzzle uses. It does NOT unlock the
-  // map location and does NOT reveal the English meaning — translating the
-  // clue (below, via the Translator tool) is the only thing that does
-  // either of those, exactly like the original Jigsaw -> Translator ->
-  // Ohama flow. A puzzle can have `completionReveal` and no `autoNext` (or
-  // vice versa) — the two mechanisms don't interact.
+  // "Clue Restored" presentation every puzzle uses (unless `skipOverlay` is
+  // set, e.g. the Jigsaw, whose own iframe already shows its own reveal).
+  // It does NOT unlock the map location and does NOT reveal the English
+  // meaning — translating the clue (below, via the Translator tool) is the
+  // only thing that does either of those, exactly like the original
+  // Jigsaw -> Translator -> Ohama flow. A puzzle can have `completionReveal`
+  // and no `autoNext` (or vice versa) — the two mechanisms don't interact.
+  //
+  // Regardless of `skipOverlay`, completing a puzzle with `completionReveal`
+  // permanently adds its clue to the discovered-clue log (see
+  // `discoveredClues` below) — dismissing the popup never removes it from
+  // there, since the log is derived from `completedPuzzles`, which this
+  // function only ever appends to.
   const completePuzzle = (puzzleId) => {
     const puzzle = puzzleById.current.get(puzzleId);
     if (!puzzle) return;
@@ -110,12 +117,21 @@ export function useQuestProgression() {
       if (current.includes(puzzleId)) return current;
       applyEffects(puzzle.onComplete);
       if (puzzle.autoNext) enterPuzzle(puzzle.autoNext);
-      if (puzzle.completionReveal) {
+      if (puzzle.completionReveal && !puzzle.completionReveal.skipOverlay) {
         setReveal({ japanese: puzzle.completionReveal.japanese });
       }
       return [...current, puzzleId];
     });
   };
+
+  // Every clue discovered so far, in quest order, for the persistent
+  // "discovered clues" inventory log. Deliberately a derived value rather
+  // than its own state: it reuses `completedPuzzles` (already permanent for
+  // the session) instead of tracking a second, parallel copy of the same
+  // fact, so dismissing the "Clue Restored" popup can never desync it.
+  const discoveredClues = QUEST_STEPS.filter(
+    (puzzle) => puzzle.completionReveal && completedPuzzles.includes(puzzle.id)
+  ).map((puzzle) => ({ id: puzzle.id, japanese: puzzle.completionReveal.japanese }));
 
   // Stable across renders (useCallback + [] deps) so it can safely be
   // listed as an effect dependency at call sites (e.g. GameplayScreen's
@@ -154,6 +170,21 @@ export function useQuestProgression() {
 
   // Call when a map location marker is clicked. Returns true if it was
   // unlocked and successfully entered (so the caller can e.g. close the map).
+  //
+  // The physical map has a fixed set of dots but the quest may eventually
+  // have 20+ puzzles, so a dot is not a permanent gateway to one puzzle —
+  // it's a reusable gate. Entering successfully CONSUMES the location by
+  // removing it from `unlockedLocations`: the dot stays visible on the map
+  // (map visuals are untouched) but is no longer in the unlocked set the
+  // next time the iframe reloads, so clicking it again does nothing — it
+  // reads as "locked" again rather than as some separate "visited" state,
+  // which is all that's needed since both render identically (not
+  // clickable). No separate consumed/visited set is tracked: consumption
+  // IS removal from `unlockedLocations`, so a later quest step whose own
+  // `completionReveal`/`unlockTranslation` names this same `mapLocationId`
+  // can unlock (re-add) it again through the exact same handleTranslation
+  // path above — reuse of a physical dot for a future puzzle just works,
+  // with no extra state or special-casing.
   const enterLocation = (locationId) => {
     if (!unlockedLocations.includes(locationId)) return false;
 
@@ -161,6 +192,7 @@ export function useQuestProgression() {
     if (!puzzle) return false;
 
     enterPuzzle(puzzle.id);
+    setUnlockedLocations((current) => current.filter((id) => id !== locationId));
     return true;
   };
 
@@ -178,6 +210,7 @@ export function useQuestProgression() {
     justUnlockedItem,
     reveal,
     dismissReveal,
+    discoveredClues,
     completePuzzle,
     handleTranslation,
     enterLocation,

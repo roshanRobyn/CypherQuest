@@ -9,6 +9,7 @@ import GameplayArea from "./GameplayArea";
 import RiddleViewer from "./RiddleViewer";
 import WhispersViewer from "./WhispersViewer";
 import ClueRevealOverlay from "./ClueRevealOverlay";
+import ClueLogViewer from "./ClueLogViewer";
 import TranslationPanel from "./TranslationPanel";
 import { useQuestProgression } from "../../hooks/useQuestProgression";
 import "./GameplayScreen.css";
@@ -20,6 +21,7 @@ function GameplayScreen() {
   const [riddleOpen, setRiddleOpen] = useState(false);
   const [whispersOpen, setWhispersOpen] = useState(false);
   const [translationOpen, setTranslationOpen] = useState(false);
+  const [clueLogOpen, setClueLogOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -28,6 +30,7 @@ function GameplayScreen() {
         setRiddleOpen(false);
         setWhispersOpen(false);
         setTranslationOpen(false);
+        setClueLogOpen(false);
         dismissReveal();
       }
     };
@@ -72,6 +75,8 @@ function GameplayScreen() {
         whispersUnlocked={quest.unlockedItems.includes("whispers")}
         whispersJustUnlocked={quest.justUnlockedItem === "whispers"}
         onOpenWhispers={() => setWhispersOpen(true)}
+        cluesUnlocked={quest.discoveredClues.length > 0}
+        onOpenClues={() => setClueLogOpen(true)}
       />
 
       <MapButton isOpen={mapOpen} onToggle={() => setMapOpen((open) => !open)} />
@@ -94,6 +99,12 @@ function GameplayScreen() {
       <RiddleViewer isOpen={riddleOpen} onClose={() => setRiddleOpen(false)} />
 
       <WhispersViewer isOpen={whispersOpen} onClose={() => setWhispersOpen(false)} />
+
+      <ClueLogViewer
+        isOpen={clueLogOpen}
+        onClose={() => setClueLogOpen(false)}
+        clues={quest.discoveredClues}
+      />
 
       <ClueRevealOverlay
         isOpen={!!quest.reveal}

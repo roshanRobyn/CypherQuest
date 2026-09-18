@@ -7,18 +7,27 @@
 //                       completedPuzzles / currentPuzzle)
 //   stage              which puzzle component GameplayArea mounts
 //   onComplete         effects applied the moment this puzzle is solved
-//   completionReveal   { japanese, mapLocationId } — the Japanese clue
-//                       shown via the reusable "Clue Restored" overlay the
-//                       instant this puzzle is solved. Reveals ONLY the
-//                       Japanese text — never the English meaning, and
+//   completionReveal   { japanese, mapLocationId, skipOverlay? } — the
+//                       Japanese clue this puzzle produces. It is ALWAYS
+//                       added to the player's persistent discovered-clue
+//                       log the instant this puzzle is solved (see
+//                       `discoveredClues` in useQuestProgression.js), and by
+//                       default is also shown once via the reusable "Clue
+//                       Restored" popup at that same moment. Reveals ONLY
+//                       the Japanese text — never the English meaning, and
 //                       never unlocks the map location by itself. The
-//                       player must carry that clue to the Translator tool
-//                       (src/data/translations.js needs a matching entry so
-//                       the Translator can display its English meaning);
-//                       only a correct translation there unlocks
-//                       `mapLocationId` (see handleTranslation in
-//                       useQuestProgression.js). Omit for a puzzle that
+//                       player must carry that clue (from the log, or from
+//                       memory) to the Translator tool (src/data/translations.js
+//                       needs a matching entry so the Translator can display
+//                       its English meaning); only a correct translation
+//                       there unlocks `mapLocationId` (see handleTranslation
+//                       in useQuestProgression.js). Omit for a puzzle that
 //                       doesn't reveal a next destination (yet).
+//   skipOverlay        (inside completionReveal) set true when this
+//                       puzzle's own iframe already shows its own "Clue
+//                       Restored" reveal (e.g. the Jigsaw) — the clue still
+//                       joins the persistent log, it just doesn't also pop
+//                       the outer app's overlay a second time.
 //   unlockTranslation  exact Japanese answer that unlocks this puzzle's own
 //                       map location (omit if this puzzle isn't reached via
 //                       a map location — e.g. the very first puzzle). This
@@ -49,6 +58,14 @@ export const QUEST_STEPS = [
     id: "jigsaw",
     stage: "shredded-clue",
     onComplete: [{ type: "tool", id: "translator" }],
+    // The Jigsaw's own iframe already shows "Clue Restored / 大浜漁村"
+    // internally — skipOverlay stops the outer app from popping a second,
+    // redundant reveal, while still adding this clue to the persistent log.
+    completionReveal: {
+      japanese: "大浜漁村",
+      mapLocationId: "ohama-fishing-village",
+      skipOverlay: true,
+    },
   },
   {
     id: "karakuri",

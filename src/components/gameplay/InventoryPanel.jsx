@@ -1,5 +1,3 @@
-import riddleImage from "../../assets/riddle.png";
-
 function InventoryPanel({
   riddleUnlocked,
   riddleJustUnlocked,
@@ -7,6 +5,8 @@ function InventoryPanel({
   whispersUnlocked,
   whispersJustUnlocked,
   onOpenWhispers,
+  cluesUnlocked,
+  onOpenClues,
 }) {
   return (
     <div className="gp-inventory gp-inventory-open">
@@ -15,12 +15,12 @@ function InventoryPanel({
           {riddleUnlocked ? (
             <button
               type="button"
-              className={`gp-slot gp-slot-item ${riddleJustUnlocked ? "gp-slot-unlocked" : ""}`}
+              className={`gp-slot gp-slot-button ${riddleJustUnlocked ? "gp-slot-unlocked" : ""}`}
               onClick={onOpenRiddle}
               aria-label="View recovered riddle"
               title="Recovered riddle"
             >
-              <img src={riddleImage} alt="" />
+              謎
             </button>
           ) : (
             <span className="gp-slot" />
@@ -40,7 +40,20 @@ function InventoryPanel({
             <span className="gp-slot" />
           )}
 
-          <span className="gp-slot" />
+          {cluesUnlocked ? (
+            <button
+              type="button"
+              className="gp-slot gp-slot-button"
+              onClick={onOpenClues}
+              aria-label="View discovered clues"
+              title="Discovered clues"
+            >
+              文
+            </button>
+          ) : (
+            <span className="gp-slot" />
+          )}
+
           <span className="gp-slot" />
           <span className="gp-slot" />
           <span className="gp-slot" />

@@ -6,6 +6,15 @@ function TranslationPanel({ isOpen, onClose, onTranslated }) {
   const [result, setResult] = useState(null);
   const [notFound, setNotFound] = useState(false);
 
+  const handleInputChange = (event) => {
+    setInput(event.target.value);
+    // The displayed result must always correspond to the current input —
+    // any edit invalidates the previous translation immediately, rather
+    // than leaving a stale result on screen until the next Translate press.
+    setResult(null);
+    setNotFound(false);
+  };
+
   const handleTranslate = () => {
     const key = input.trim();
     const found = translate(key);
@@ -47,7 +56,7 @@ function TranslationPanel({ isOpen, onClose, onTranslated }) {
           className="gp-translation-input"
           placeholder="Enter Japanese word or phrase"
           value={input}
-          onChange={(event) => setInput(event.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown}
         />
 
