@@ -69,13 +69,10 @@ function GameplayScreen() {
       />
 
       <InventoryPanel
-        riddleUnlocked={quest.unlockedItems.includes("riddle")}
-        riddleJustUnlocked={quest.justUnlockedItem === "riddle"}
+        unlockedItems={quest.unlockedItems}
+        justUnlockedItem={quest.justUnlockedItem}
         onOpenRiddle={() => setRiddleOpen(true)}
-        whispersUnlocked={quest.unlockedItems.includes("whispers")}
-        whispersJustUnlocked={quest.justUnlockedItem === "whispers"}
         onOpenWhispers={() => setWhispersOpen(true)}
-        cluesUnlocked={quest.discoveredClues.length > 0}
         onOpenClues={() => setClueLogOpen(true)}
       />
 

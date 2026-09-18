@@ -57,7 +57,15 @@ export const QUEST_STEPS = [
   {
     id: "jigsaw",
     stage: "shredded-clue",
-    onComplete: [{ type: "tool", id: "translator" }],
+    // The "clues" inventoryItem effect exists purely to give the discovered-
+    // clue log a place in the LEFT-TO-RIGHT, first-empty-slot inventory
+    // ordering (see unlockedItems / InventoryPanel.jsx) — it marks the
+    // moment the log becomes non-empty, in true chronological order
+    // alongside "riddle"/"whispers", rather than reserving it a fixed slot.
+    onComplete: [
+      { type: "tool", id: "translator" },
+      { type: "inventoryItem", id: "clues" },
+    ],
     // The Jigsaw's own iframe already shows "Clue Restored / 大浜漁村"
     // internally — skipOverlay stops the outer app from popping a second,
     // redundant reveal, while still adding this clue to the persistent log.
