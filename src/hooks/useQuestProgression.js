@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { QUEST_STEPS } from "../data/questSteps";
 
 const PULSE_MS = 3200;
@@ -40,6 +40,7 @@ export function useQuestProgression() {
   const [unlockedLocations, setUnlockedLocations] = useState([]);
   const [justUnlockedTool, setJustUnlockedTool] = useState(null);
   const [justUnlockedItem, setJustUnlockedItem] = useState(null);
+  const [reveal, setReveal] = useState(null);
 
   const puzzleById = useRef(new Map(QUEST_STEPS.map((puzzle) => [puzzle.id, puzzle])));
   const puzzleByLocationId = useRef(
@@ -91,6 +92,16 @@ export function useQuestProgression() {
   // — if it declares an `autoNext` — immediately enter that next puzzle.
   // `autoNext` is a temporary linear-chain mechanism: it bypasses the map,
   // for sequences whose real unlock requirements haven't been decided yet.
+  //
+  // `completionReveal` is the permanent replacement for that once a
+  // puzzle's real destination is known: { japanese, english, mapLocationId }.
+  // Completing the puzzle shows that clue (the same reusable "Clue
+  // Restored" presentation every puzzle uses) and unlocks the map location
+  // it names — the player must still open the map and click that dot
+  // themselves, exactly like the original Jigsaw -> Translator -> Ohama
+  // flow, just without a manual translation step since the meaning is
+  // already revealed. A puzzle can have `completionReveal` and no
+  // `autoNext` (or vice versa) — the two mechanisms don't interact.
   const completePuzzle = (puzzleId) => {
     const puzzle = puzzleById.current.get(puzzleId);
     if (!puzzle) return;
@@ -99,9 +110,21 @@ export function useQuestProgression() {
       if (current.includes(puzzleId)) return current;
       applyEffects(puzzle.onComplete);
       if (puzzle.autoNext) enterPuzzle(puzzle.autoNext);
+      if (puzzle.completionReveal) {
+        const { japanese, english, mapLocationId } = puzzle.completionReveal;
+        setUnlockedLocations((locations) =>
+          locations.includes(mapLocationId) ? locations : [...locations, mapLocationId]
+        );
+        setReveal({ japanese, english });
+      }
       return [...current, puzzleId];
     });
   };
+
+  // Stable across renders (useCallback + [] deps) so it can safely be
+  // listed as an effect dependency at call sites (e.g. GameplayScreen's
+  // Escape-key handler) without that effect re-running on every render.
+  const dismissReveal = useCallback(() => setReveal(null), []);
 
   // Validate a clue/answer against every puzzle's unlock requirement. Only
   // an exact match unlocks its map location — wrong input unlocks nothing.
@@ -138,6 +161,8 @@ export function useQuestProgression() {
     unlockedLocations,
     justUnlockedTool,
     justUnlockedItem,
+    reveal,
+    dismissReveal,
     completePuzzle,
     handleTranslation,
     enterLocation,

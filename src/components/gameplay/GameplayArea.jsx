@@ -2,6 +2,8 @@ import ShreddedCluePuzzle from "./puzzles/ShreddedCluePuzzle";
 import KarakuriStage from "./puzzles/KarakuriStage";
 import ForgottenSpiritStage from "./puzzles/ForgottenSpiritStage";
 import LanternSwitchStage from "./puzzles/LanternSwitchStage";
+import SamuraiPuzzleStage from "./puzzles/SamuraiPuzzleStage";
+import ThreeHiddenDifferencesStage from "./puzzles/ThreeHiddenDifferencesStage";
 
 function GameplayArea({
   stage,
@@ -9,6 +11,8 @@ function GameplayArea({
   onKarakuriComplete,
   onForgottenSpiritComplete,
   onLanternSwitchComplete,
+  onSamuraiPuzzleComplete,
+  onThreeHiddenDifferencesComplete,
 }) {
   return (
     <div className="gp-central">
@@ -33,6 +37,14 @@ function GameplayArea({
 
           {stage === "lantern-switch" && (
             <LanternSwitchStage onComplete={onLanternSwitchComplete} />
+          )}
+
+          {stage === "samurai-puzzle" && (
+            <SamuraiPuzzleStage onComplete={onSamuraiPuzzleComplete} />
+          )}
+
+          {stage === "three-hidden-differences" && (
+            <ThreeHiddenDifferencesStage onComplete={onThreeHiddenDifferencesComplete} />
           )}
         </div>
       </div>

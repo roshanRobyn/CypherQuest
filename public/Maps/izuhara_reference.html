@@ -280,21 +280,23 @@
         { id:"sakimori-overlook", name:"Sakimori Overlook", y:740, x:600, icon:icons.blackCamp },
         { id:"archers-rise",      name:"Archer's Rise",     y:180, x:700, icon:icons.blackCamp },
         { id:"wolf-cub-falls",    name:"Wolf Cub Falls",    y:195, x:365, icon:icons.blackCamp },
-        { id:"kashine-hills",     name:"Kashine Hills",     y:300, x:340, icon:icons.blackCamp },
+        { id:"kashine-hills",     name:"Kashine Hills",     y:300, x:340, icon:icons.blackCamp, clickable:true },
         { id:"exiles-bluff",      name:"Exile's Bluff",     y:480, x:270, icon:icons.blackCamp },
         { id:"kashine-forest",    name:"Kashine Forest",    y:380, x:300, icon:icons.blackCamp },
-        { id:"golden-leaf-hot-spring", name:"Golden Leaf Hot Spring", y:460, x:530, icon:icons.blackCamp },
+        { id:"golden-leaf-hot-spring", name:"Golden Leaf Hot Spring", y:460, x:530, icon:icons.blackCamp, clickable:true },
         { id:"kuta-grasslands",   name:"Kuta Grasslands",   y:700, x:420, icon:icons.blackCamp },
-        { id:"brown-river-gorge", name:"Brown River Gorge", y:520, x:320, icon:icons.blackCamp },
+        { id:"brown-river-gorge", name:"Brown River Gorge", y:520, x:320, icon:icons.blackCamp, clickable:true },
         { id:"azamo-foothills",   name:"Azamo Foothills",   y:860, x:560, icon:icons.blackCamp },
-        { id:"tsutsu-plains",     name:"Tsutsu Plains",     y:870, x:360, icon:icons.blackCamp },
-        { id:"isonade-coast",     name:"Isonade Coast",     y:180, x:820, icon:icons.blackCamp },
+        { id:"tsutsu-plains",     name:"Tsutsu Plains",     y:870, x:360, icon:icons.blackCamp, clickable:true },
+        { id:"isonade-coast",     name:"Isonade Coast",     y:180, x:820, icon:icons.blackCamp, clickable:true },
 
         /*
           A normal-looking location dot like every other above. It is a
           puzzle-progression target: clicking it only does anything once
           the parent app has unlocked it via CQ_setLocationsUnlocked (see
-          below). Locked or unlocked, it renders identically to every
+          below) — same as kashine-hills / isonade-coast / brown-river-gorge
+          / tsutsu-plains / golden-leaf-hot-spring above. Locked or
+          unlocked, every `clickable` dot renders identically to every
           other dot — no glow, color change, or special icon.
         */
         { id:"ohama-fishing-village", name:"Ohama Fishing Village", y:780, x:330, icon:icons.blackCamp, clickable:true }

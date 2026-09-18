@@ -70,28 +70,22 @@ body {
 .panel {
 
     /*
-      Fluid two-column composition: both columns are fr-based with a
-      min-width:0 floor (see .left/.clues below), so the grid always fits
-      exactly inside the panel's own box — it can never force the panel to
-      overflow the gameplay frame, regardless of iframe size.
+      Board-only stage: a single centered column (the clues that used to
+      live in the right column are now a separate inventory document, see
+      GameplayScreen's ForgottenSpiritStage / whispers viewer). Sized
+      relative to its own box, not the raw viewport, so it can never
+      overflow the gameplay frame regardless of iframe size.
     */
     width: 100%;
-    max-width: 1600px;
+    max-width: 860px;
 
     height: 100%;
     max-height: 100%;
 
-    display: grid;
+    display: flex;
 
-    grid-template-columns:
-        1.05fr
-        0.95fr;
-
-    grid-template-rows: minmax(0, 1fr);
-
-    align-items: stretch;
-
-    gap: 44px;
+    align-items: center;
+    justify-content: center;
 
     padding: 32px;
 
@@ -128,6 +122,8 @@ body {
     align-items: center;
 
     justify-content: center;
+
+    gap: 14px;
 }
 
 
@@ -559,87 +555,6 @@ body {
 
 
 /* =========================================================
-   CLUES
-========================================================= */
-
-.clues {
-
-    width: 100%;
-    min-width: 0;
-    max-width: 100%;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
-
-    display: flex;
-
-    flex-direction: column;
-
-    justify-content: flex-start;
-
-    gap: 2px;
-
-    overflow: hidden;
-}
-
-
-.clue-heading {
-
-    color: #a49b82;
-
-    font-size: clamp(14px, 2.1vh, 17px);
-
-    letter-spacing: 4px;
-
-    text-transform: uppercase;
-
-    padding-bottom: clamp(6px, 1.6vh, 8px);
-
-    border-bottom:
-        1px solid
-        rgba(190,169,120,.25);
-
-    margin-bottom: clamp(2px, 0.6vh, 3px);
-}
-
-
-.clue {
-
-    display: flex;
-
-    gap: 14px;
-
-    padding: clamp(4px, 1.15vh, 5px) 0;
-
-    border-bottom:
-        1px solid
-        rgba(190,169,120,.08);
-
-    color: #a7ada4;
-
-    font-size: clamp(12px, 1.65vh, 14px);
-
-    line-height: 1.25;
-}
-
-
-.clue-number {
-
-    min-width: 30px;
-
-    color: #85857a;
-
-    font-size: clamp(10px, 1.3vh, 11px);
-}
-
-
-.clue strong {
-
-    color: #b9b19d;
-}
-
-
-/* =========================================================
    PLAY NOTE
 ========================================================= */
 
@@ -677,8 +592,6 @@ body {
 
     min-height: 22px;
 
-    margin-top: 18px;
-
     color: #737a73;
 
     font-size: 11px;
@@ -703,10 +616,9 @@ body {
 
 .reset {
 
-    margin-top: clamp(6px, 1.4vh, 8px);
     flex-shrink: 0;
 
-    padding: clamp(6px, 1vh, 6px) 19px;
+    padding: 9px 22px;
 
     background: transparent;
 
@@ -721,7 +633,7 @@ body {
         "Times New Roman",
         serif;
 
-    font-size: 10px;
+    font-size: 11px;
 
     letter-spacing: 2px;
 
@@ -1014,300 +926,6 @@ body {
 </div>
 
 
-</section>
-
-
-<!-- =====================================================
-     CLUES
-===================================================== -->
-
-<section class="clues">
-
-
-<div class="clue-heading">
-    Whispers of the Spirit
-</div>
-
-
-<!-- 1 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        I
-    </div>
-
-    <div>
-
-        Where the shrine's four directions
-        find their balance,
-        the <strong>Fox</strong> keeps watch.
-
-    </div>
-
-</div>
-
-
-<!-- 2 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        II
-    </div>
-
-    <div>
-
-        The <strong>Moon</strong> follows the Fox's
-        northern path.
-        Only one silent space separates them.
-
-    </div>
-
-</div>
-
-
-<!-- 3 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        III
-    </div>
-
-    <div>
-
-        The Moon's western companion bears
-        the colour of the deep winter sky.
-
-    </div>
-
-</div>
-
-
-<!-- 4 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        IV
-    </div>
-
-    <div>
-
-        On the Moon's road stands the
-        <strong>Black</strong> stone.
-        Three silent spaces lie between them.
-
-    </div>
-
-</div>
-
-
-<!-- 5 DIRECT -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        V
-    </div>
-
-    <div>
-
-        The <strong>Red</strong> stone rests on the
-        <strong>4th row, first square</strong>.
-
-    </div>
-
-</div>
-
-
-<!-- 6 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        VI
-    </div>
-
-    <div>
-
-        Red is not alone.
-        Its <strong>Purple</strong> companion rests beside it,
-        toward the rising sun.
-
-    </div>
-
-</div>
-
-
-<!-- 7 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        VII
-    </div>
-
-    <div>
-
-        The Fox looks eastward.
-        After two silent spaces,
-        <strong>Green</strong> answers its gaze.
-
-    </div>
-
-</div>
-
-
-<!-- 8 DIRECT -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        VIII
-    </div>
-
-    <div>
-
-        The <strong>White</strong> stone claims the place
-        where the eastern and southern edges meet.
-
-    </div>
-
-</div>
-
-
-<!-- 9 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        IX
-    </div>
-
-    <div>
-
-        The <strong>Bell</strong> rings on White's
-        vertical road.
-        One levels separate its voice from White.
-
-    </div>
-
-</div>
-
-
-<!-- 10 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        X
-    </div>
-
-    <div>
-
-        Before the Bell can be heard,
-        the <strong>Crow</strong> watches from above.
-
-    </div>
-
-</div>
-
-
-<!-- 11 DIRECT -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        XI
-    </div>
-
-    <div>
-
-        The <strong>Sun</strong> rests on the
-        <strong>4th row, fifth square</strong>.
-
-    </div>
-
-</div>
-
-
-<!-- 12 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        XII
-    </div>
-
-    <div>
-
-        What rises above the Fox casts its opposite below.
-        There the <strong>Leaf</strong> takes root.
-
-    </div>
-
-</div>
-
-
-<!-- 13 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        XIII
-    </div>
-
-    <div>
-
-        From the Leaf, follow the shrine floor
-        toward the rising sun.
-        After one silent stone, <strong>Rain</strong> waits.
-
-    </div>
-
-</div>
-
-
-<!-- 14 -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        XIV
-    </div>
-
-    <div>
-
-        Rain and the <strong>Skull</strong> belong
-        to the same vertical trail.
-        Between them lies one untouched place.
-
-    </div>
-
-</div>
-
-
-<!-- 15 DIRECT -->
-
-<div class="clue">
-
-    <div class="clue-number">
-        XV
-    </div>
-
-    <div>
-
-        The <strong>Lotus</strong> rests on the
-        <strong>9th row, seventh square</strong>.
-
-    </div>
-
-</div>
-
-
-
 <button
     type="button"
     class="reset"
@@ -1320,6 +938,12 @@ body {
 
 
 </section>
+
+
+<!-- =====================================================
+     (removed) CLUES — moved to the inventory "Whispers of
+     the Spirit" document; see WhispersViewer.jsx
+===================================================== -->
 
 </div>
 

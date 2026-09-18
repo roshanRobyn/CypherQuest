@@ -7,14 +7,18 @@ import ToolsPanel from "./ToolsPanel";
 import InventoryPanel from "./InventoryPanel";
 import GameplayArea from "./GameplayArea";
 import RiddleViewer from "./RiddleViewer";
+import WhispersViewer from "./WhispersViewer";
+import ClueRevealOverlay from "./ClueRevealOverlay";
 import TranslationPanel from "./TranslationPanel";
 import { useQuestProgression } from "../../hooks/useQuestProgression";
 import "./GameplayScreen.css";
 
 function GameplayScreen() {
   const quest = useQuestProgression();
+  const { dismissReveal } = quest;
   const [mapOpen, setMapOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
+  const [whispersOpen, setWhispersOpen] = useState(false);
   const [translationOpen, setTranslationOpen] = useState(false);
 
   useEffect(() => {
@@ -22,13 +26,15 @@ function GameplayScreen() {
       if (event.key === "Escape") {
         setMapOpen(false);
         setRiddleOpen(false);
+        setWhispersOpen(false);
         setTranslationOpen(false);
+        dismissReveal();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [dismissReveal]);
 
   const handleLocationClick = (locationId) => {
     if (quest.enterLocation(locationId)) {
@@ -55,12 +61,17 @@ function GameplayScreen() {
         onKarakuriComplete={() => quest.completePuzzle("karakuri")}
         onForgottenSpiritComplete={() => quest.completePuzzle("forgotten-spirit")}
         onLanternSwitchComplete={() => quest.completePuzzle("lantern-switch")}
+        onSamuraiPuzzleComplete={() => quest.completePuzzle("samurai-puzzle")}
+        onThreeHiddenDifferencesComplete={() => quest.completePuzzle("three-hidden-differences")}
       />
 
       <InventoryPanel
         riddleUnlocked={quest.unlockedItems.includes("riddle")}
         riddleJustUnlocked={quest.justUnlockedItem === "riddle"}
         onOpenRiddle={() => setRiddleOpen(true)}
+        whispersUnlocked={quest.unlockedItems.includes("whispers")}
+        whispersJustUnlocked={quest.justUnlockedItem === "whispers"}
+        onOpenWhispers={() => setWhispersOpen(true)}
       />
 
       <MapButton isOpen={mapOpen} onToggle={() => setMapOpen((open) => !open)} />
@@ -81,6 +92,15 @@ function GameplayScreen() {
       )}
 
       <RiddleViewer isOpen={riddleOpen} onClose={() => setRiddleOpen(false)} />
+
+      <WhispersViewer isOpen={whispersOpen} onClose={() => setWhispersOpen(false)} />
+
+      <ClueRevealOverlay
+        isOpen={!!quest.reveal}
+        japanese={quest.reveal?.japanese}
+        english={quest.reveal?.english}
+        onClose={quest.dismissReveal}
+      />
 
       <TranslationPanel
         isOpen={translationOpen}
