@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import tableImage from "../../assets/gameplay/table.jpeg";
 import MapButton from "./MapButton";
+import Compass from "./Compass";
 import MapOverlay from "./MapOverlay";
 import ToolsPanel from "./ToolsPanel";
 import InventoryPanel from "./InventoryPanel";
@@ -15,8 +16,8 @@ import TranslationPanel from "./TranslationPanel";
 import { useQuestProgression } from "../../hooks/useQuestProgression";
 import "./GameplayScreen.css";
 
-function GameplayScreen() {
-  const quest = useQuestProgression();
+function GameplayScreen({ teamName }) {
+  const quest = useQuestProgression(teamName);
   const { dismissReveal } = quest;
   const [mapOpen, setMapOpen] = useState(false);
   const [riddleOpen, setRiddleOpen] = useState(false);
@@ -24,6 +25,7 @@ function GameplayScreen() {
   const [translationOpen, setTranslationOpen] = useState(false);
   const [clueLogOpen, setClueLogOpen] = useState(false);
   const [kintsugiClueOpen, setKintsugiClueOpen] = useState(false);
+  const [magnifierActive, setMagnifierActive] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -34,6 +36,7 @@ function GameplayScreen() {
         setTranslationOpen(false);
         setClueLogOpen(false);
         setKintsugiClueOpen(false);
+        setMagnifierActive(false);
         dismissReveal();
       }
     };
@@ -48,7 +51,16 @@ function GameplayScreen() {
     }
   };
 
+  // Magnifying glass and Translator share the same "one active tool"
+  // convention: selecting either one turns the other off, rather than
+  // building a separate tool-selection system.
+  const handleToggleMagnifier = () => {
+    setMagnifierActive((active) => !active);
+    setTranslationOpen(false);
+  };
+
   const handleOpenTranslation = () => {
+    setMagnifierActive(false);
     setTranslationOpen(true);
   };
 
@@ -63,10 +75,13 @@ function GameplayScreen() {
         translationUnlocked={quest.availableTools.includes("translator")}
         translationJustUnlocked={quest.justUnlockedTool === "translator"}
         onOpenTranslation={handleOpenTranslation}
+        magnifierActive={magnifierActive}
+        onToggleMagnifier={handleToggleMagnifier}
       />
 
       <GameplayArea
         stage={quest.currentStage}
+        magnifierActive={magnifierActive}
         onFirstPuzzleComplete={() => quest.completePuzzle("jigsaw")}
         onKarakuriComplete={() => quest.completePuzzle("karakuri")}
         onForgottenSpiritComplete={() => quest.completePuzzle("forgotten-spirit")}
@@ -86,6 +101,7 @@ function GameplayScreen() {
       />
 
       <MapButton isOpen={mapOpen} onToggle={() => setMapOpen((open) => !open)} />
+      <Compass />
 
       {/*
         The map has its own independent internal zoom (Leaflet). It is

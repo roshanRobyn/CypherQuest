@@ -177,6 +177,87 @@
 }
 
 /* =========================================================
+   MAGNIFYING GLASS TOOL
+
+   Reusable across every puzzle stage: MagnifierLens.jsx only ever looks
+   for a generic ".gp-puzzle-iframe" inside GameplayArea's puzzle-hosting
+   container, never a puzzle-specific element. The real iframe above is
+   NEVER transformed/resized/touched — it renders completely normally at
+   all times, active or not. The lens is a separate floating circle whose
+   INSIDE shows an independently zoomed, panned copy (an inert DOM
+   snapshot, not a second live puzzle) of the same content, clipped by
+   .gp-magnifier-viewport's own `overflow: hidden` — so only that small
+   circle is ever magnified, and everything outside it stays 100% normal.
+========================================================= */
+
+.gp-magnifier-lens {
+  position: fixed;
+  z-index: 30;
+  width: 170px;
+  height: 170px;
+  margin-left: -85px;
+  margin-top: -85px;
+
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  left: -9999px;
+  top: -9999px;
+
+  border: 3px solid rgba(212, 175, 120, 0.75);
+  box-shadow:
+    0 0 0 2px rgba(20, 14, 8, 0.7),
+    0 12px 28px rgba(0, 0, 0, 0.55),
+    inset 0 0 26px rgba(255, 255, 255, 0.05),
+    inset 0 0 3px rgba(255, 255, 255, 0.35);
+
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.08), transparent 55%);
+
+  transition: opacity 0.15s ease;
+}
+
+/* While active, the lens becomes visible AND starts intercepting pointer
+   events — this is what stops clicks/drags from reaching the real puzzle
+   underneath whenever the cursor is over the lens's own circular area,
+   without touching the real iframe's own pointer-events anywhere else. */
+.gp-magnifier-lens-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gp-magnifier-viewport {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #0a0806;
+}
+
+.gp-magnifier-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 10px;
+  height: 52px;
+  border-radius: 5px;
+
+  background: linear-gradient(180deg, rgba(212, 175, 120, 0.85), rgba(90, 68, 38, 0.85));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+
+  transform: rotate(45deg);
+  transform-origin: top center;
+}
+
+/* Magnifying-glass tool slot's persistent "on" indicator — distinct from
+   .gp-slot-unlocked, which is a one-shot pulse for newly-granted items,
+   not a toggled state. */
+.gp-slot-active {
+  border-color: rgba(230, 195, 130, 0.9);
+  box-shadow: 0 0 14px rgba(230, 195, 130, 0.4), inset 0 0 8px rgba(0, 0, 0, 0.6);
+  color: rgba(240, 220, 180, 0.95);
+}
+
+/* =========================================================
    MAP BUTTON — top right
 ========================================================= */
 
@@ -211,6 +292,124 @@
 
 .gp-map-button-active {
   transform: scale(1.05) rotate(-3deg);
+}
+
+/* =========================================================
+   COMPASS — directly beneath the Map button, top right
+
+   Positioned in the same absolute/top-right coordinate system as
+   .gp-map-button (26px/30px, 100x100), just offset down by its own
+   height + a fixed gap, and centered under the map button's own width —
+   not the map button's DOM/behavior, just geometry derived from its
+   known fixed size, so both stay locked together under any resize/
+   fullscreen (both live under the same zoom-locked .app root and scale
+   together). Purely decorative CSS (no image asset) — antique brass ring
+   + ivory face + painted rose, no interactivity, no puzzle awareness.
+========================================================= */
+
+.gp-compass {
+  position: absolute;
+  top: 140px;
+  right: 52px;
+  z-index: 5;
+
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+
+  background: radial-gradient(circle at 34% 28%, #d9ba7c 0%, #96762f 55%, #402c14 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 6px 14px rgba(0, 0, 0, 0.55),
+    inset 0 1px 2px rgba(255, 245, 220, 0.4),
+    inset 0 -3px 5px rgba(0, 0, 0, 0.55);
+
+  pointer-events: none;
+}
+
+.gp-compass-face {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+
+  background: radial-gradient(circle at 38% 34%, #f1e6c4 0%, #ddc78f 55%, #b79a5e 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(70, 48, 16, 0.55),
+    inset 0 0 9px rgba(90, 63, 22, 0.35),
+    0 0 0 1px rgba(60, 42, 16, 0.5);
+}
+
+.gp-compass-letter {
+  position: absolute;
+  color: #3a2a14;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 245, 220, 0.4);
+}
+
+.gp-compass-n { top: 3px; left: 50%; transform: translateX(-50%); }
+.gp-compass-s { bottom: 3px; left: 50%; transform: translateX(-50%); }
+.gp-compass-e { right: 3px; top: 50%; transform: translateY(-50%); }
+.gp-compass-w { left: 3px; top: 50%; transform: translateY(-50%); }
+
+.gp-compass-tick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 10px;
+  background: rgba(70, 48, 16, 0.4);
+  transform-origin: center top;
+}
+
+.gp-compass-tick-ne { transform: rotate(45deg); }
+.gp-compass-tick-se { transform: rotate(135deg); }
+.gp-compass-tick-sw { transform: rotate(225deg); }
+.gp-compass-tick-nw { transform: rotate(315deg); }
+
+.gp-compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 34px;
+  margin-left: -1.5px;
+  margin-top: -17px;
+}
+
+.gp-compass-needle-north,
+.gp-compass-needle-south {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  height: 17px;
+}
+
+.gp-compass-needle-north {
+  top: 0;
+  background: linear-gradient(180deg, #7a2a20, #4a1712);
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+}
+
+.gp-compass-needle-south {
+  bottom: 0;
+  background: linear-gradient(0deg, #2a2015, #55442a);
+  clip-path: polygon(50% 100%, 100% 0%, 0% 0%);
+}
+
+.gp-compass-pivot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  margin-top: -2.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f1e0ac, #8a6a34);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 /* =========================================================
