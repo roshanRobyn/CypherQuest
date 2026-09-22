@@ -19,6 +19,6 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGIN
-        value: https://REPLACE-ME.vercel.app
+        value: https://cypher-quest-theta.vercel.app
       - key: ADMIN_RESET_TOKEN
         generateValue: true
