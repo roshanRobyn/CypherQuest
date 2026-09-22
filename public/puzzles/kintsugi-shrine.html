@@ -1,0 +1,2907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cypher Quest — Kintsugi Shrine</title>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 50% 5%,
+            rgba(160, 125, 55, 0.08),
+            transparent 42%
+        ),
+        linear-gradient(
+            180deg,
+            #060707 0%,
+            #010202 100%
+        );
+
+    color: #e6dfcf;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+:root {
+    --gold: #c6ae68;
+    --gold-bright: #ead79b;
+
+    --text: #ded8c9;
+    --muted: #7d7f77;
+
+    --border:
+        rgba(198, 174, 104, 0.28);
+
+    --red: #864343;
+
+    --green: #708871;
+}
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page {
+    min-height: 100vh;
+
+    padding:
+        42px 18px 80px;
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+.container {
+    width:
+        min(1100px, 100%);
+
+    margin: auto;
+
+    position: relative;
+
+    z-index: 5;
+}
+
+
+/* =========================================================
+   ATMOSPHERE
+========================================================= */
+
+.moon {
+    position: absolute;
+
+    width: 210px;
+    height: 210px;
+
+    top: 30px;
+    right: 9%;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 35%,
+            #eee4c2,
+            #aaa078 65%,
+            #615b48
+        );
+
+    opacity: 0.055;
+
+    pointer-events: none;
+}
+
+.mist {
+    position: absolute;
+
+    width: 850px;
+    height: 160px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(220,220,210,0.025);
+
+    filter: blur(40px);
+
+    pointer-events: none;
+}
+
+.mist-a {
+    top: 350px;
+    left: -500px;
+
+    animation:
+        mistMove 30s linear infinite;
+}
+
+.mist-b {
+    top: 900px;
+    right: -500px;
+
+    animation:
+        mistMoveBack 35s linear infinite;
+}
+
+@keyframes mistMove {
+
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(650px);
+    }
+
+}
+
+@keyframes mistMoveBack {
+
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-650px);
+    }
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header {
+    text-align: center;
+
+    margin-bottom: 38px;
+}
+
+.trial {
+    color: var(--gold);
+
+    font-family: Arial, sans-serif;
+
+    font-size: 9px;
+
+    letter-spacing: 5px;
+
+    margin-bottom: 16px;
+}
+
+.header h1 {
+    color: var(--text);
+
+    font-size:
+        clamp(35px, 6vw, 65px);
+
+    font-weight: 400;
+
+    letter-spacing: 5px;
+}
+
+.japanese {
+    color: var(--gold);
+
+    font-size: 31px;
+
+    letter-spacing: 8px;
+
+    margin-top: 11px;
+}
+
+.subtitle {
+    max-width: 650px;
+
+    margin:
+        16px auto 0;
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.8;
+}
+
+.divider {
+    width: 90px;
+
+    height: 1px;
+
+    margin:
+        25px auto 0;
+
+    background: var(--gold);
+
+    opacity: 0.45;
+}
+
+
+/* =========================================================
+   STORY
+========================================================= */
+
+.story {
+    display: flex;
+
+    gap: 20px;
+
+    padding: 22px;
+
+    margin-bottom: 34px;
+
+    border:
+        1px solid var(--border);
+
+    background:
+        rgba(10,12,12,0.88);
+}
+
+.story-symbol {
+    width: 58px;
+    height: 58px;
+
+    min-width: 58px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    border:
+        1px solid var(--border);
+
+    color: var(--gold);
+
+    font-size: 27px;
+}
+
+.story h2 {
+    color: var(--gold-bright);
+
+    font-size: 12px;
+
+    font-weight: 400;
+
+    letter-spacing: 4px;
+
+    margin-bottom: 9px;
+}
+
+.story p {
+    color: #81837b;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+}
+
+
+/* =========================================================
+   SECTION TITLE
+========================================================= */
+
+.section-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    margin:
+        27px 0 14px;
+}
+
+.section-number {
+    color: var(--gold);
+
+    font-family: Arial, sans-serif;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+}
+
+.section-name {
+    color: #c8c2b2;
+
+    font-size: 12px;
+
+    letter-spacing: 4px;
+}
+
+
+/* =========================================================
+   CLUES
+========================================================= */
+
+.clues {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 8px;
+}
+
+.clue {
+    min-height: 66px;
+
+    display: flex;
+
+    gap: 12px;
+
+    padding: 13px;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.18);
+
+    background:
+        rgba(8,10,10,0.78);
+}
+
+.clue-number {
+    min-width: 24px;
+
+    color: var(--gold);
+
+    font-size: 15px;
+}
+
+.clue-text {
+    color: #85877f;
+
+    font-size: 11px;
+
+    line-height: 1.65;
+}
+
+.clue-text strong {
+    color: #d5cfbf;
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   INSTRUCTION
+========================================================= */
+
+.instruction {
+    margin:
+        24px 0 18px;
+
+    padding:
+        15px 18px;
+
+    border-left:
+        2px solid var(--gold);
+
+    background:
+        rgba(18,18,16,0.65);
+
+    color: #797b73;
+
+    font-size: 11px;
+
+    line-height: 1.8;
+}
+
+.instruction strong {
+    color: var(--gold-bright);
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   PUZZLE
+========================================================= */
+
+.puzzle-layout {
+
+    display: flex;
+
+    justify-content: center;
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+.tablet {
+
+    width:
+        min(700px, 100%);
+
+    aspect-ratio: 1 / 1;
+
+    padding: 12px;
+
+    position: relative;
+
+    background:
+        linear-gradient(
+            145deg,
+            #181a18,
+            #090b0a
+        );
+
+    border:
+        1px solid
+        rgba(198,174,104,0.52);
+
+    box-shadow:
+
+        0 0 0 5px
+        rgba(198,174,104,0.035),
+
+        0 25px 70px
+        rgba(0,0,0,0.75),
+
+        inset 0 0 45px
+        rgba(0,0,0,0.75);
+}
+
+.tablet::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 5px;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.09);
+
+    pointer-events: none;
+}
+
+.tablet::after {
+    content: "金継ぎ";
+
+    position: absolute;
+
+    left: 50%;
+    bottom: -31px;
+
+    transform:
+        translateX(-50%);
+
+    color:
+        rgba(198,174,104,0.38);
+
+    font-size: 9px;
+
+    letter-spacing: 6px;
+}
+
+
+/* =========================================================
+   BOARD
+========================================================= */
+
+.board {
+
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    grid-template-rows:
+        repeat(3, 1fr);
+
+    gap: 5px;
+
+    background:
+        #060707;
+}
+
+
+/* =========================================================
+   CELL
+========================================================= */
+
+.cell {
+    position: relative;
+
+    overflow: hidden;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.23);
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(198,174,104,0.045),
+            transparent 70%
+        );
+
+    transition:
+        border-color 0.25s,
+        background 0.25s;
+}
+
+.cell:hover {
+    border-color:
+        rgba(198,174,104,0.5);
+}
+
+
+/* =========================================================
+   TILE
+========================================================= */
+
+.tile {
+    position: relative;
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-direction: column;
+
+    cursor: pointer;
+
+    user-select: none;
+
+    transition:
+        background 0.25s,
+        box-shadow 0.25s;
+}
+
+
+/* =========================================================
+   SELECTED TILE
+========================================================= */
+
+.tile.selected {
+
+    background:
+        rgba(198,174,104,0.09);
+
+    box-shadow:
+        inset 0 0 0 2px
+        rgba(198,174,104,0.8),
+
+        inset 0 0 30px
+        rgba(198,174,104,0.06);
+}
+
+
+/* =========================================================
+   SYMBOL
+========================================================= */
+
+.symbol {
+
+    font-size:
+        clamp(35px, 6vw, 58px);
+
+    line-height: 1;
+
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(220,200,140,0.13)
+        );
+}
+
+.name {
+
+    margin-top: 8px;
+
+    color: #aaa99e;
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+}
+
+.number {
+
+    position: absolute;
+
+    right: 7px;
+    bottom: 6px;
+
+    color: #66685f;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   ROTATE BUTTON
+========================================================= */
+
+.rotate {
+
+    position: absolute;
+
+    top: 7px;
+    left: 7px;
+
+    width: 31px;
+    height: 31px;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.36);
+
+    background:
+        rgba(4,5,5,0.78);
+
+    color: #a8a08a;
+
+    cursor: pointer;
+
+    font-size: 17px;
+
+    z-index: 20;
+
+    transition:
+        0.2s;
+}
+
+.rotate:hover {
+
+    color: var(--gold-bright);
+
+    border-color:
+        var(--gold);
+
+    background:
+        rgba(198,174,104,0.1);
+}
+
+
+/* =========================================================
+   GOLD CRACKS
+========================================================= */
+
+.crack {
+
+    position: absolute;
+
+    z-index: 5;
+
+    pointer-events: none;
+
+    opacity: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #b69b53,
+            #f1df9e,
+            #b69b53,
+            transparent
+        );
+
+    box-shadow:
+        0 0 5px
+        rgba(235,215,150,0.7);
+
+    transition:
+        opacity 0.35s;
+}
+
+
+/*
+   Top crack
+*/
+
+.crack.top {
+
+    width: 3px;
+    height: 48%;
+
+    left: 50%;
+    top: 0;
+
+    transform:
+        translateX(-50%);
+}
+
+
+/*
+   Right crack
+*/
+
+.crack.right {
+
+    width: 48%;
+    height: 3px;
+
+    right: 0;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+}
+
+
+/*
+   Bottom crack
+*/
+
+.crack.bottom {
+
+    width: 3px;
+    height: 48%;
+
+    left: 50%;
+    bottom: 0;
+
+    transform:
+        translateX(-50%);
+}
+
+
+/*
+   Left crack
+*/
+
+.crack.left {
+
+    width: 48%;
+    height: 3px;
+
+    left: 0;
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+}
+
+
+/* =========================================================
+   REVEALED CRACKS
+========================================================= */
+
+.crack.active {
+
+    opacity: 0.72;
+}
+
+.tile.revealed .crack.active {
+
+    opacity: 1;
+
+    animation:
+        glowCrack 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes glowCrack {
+
+    from {
+        filter: brightness(0.8);
+    }
+
+    to {
+        filter: brightness(1.45);
+    }
+
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.controls {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-top: 26px;
+}
+
+.button {
+
+    padding:
+        14px 27px;
+
+    border:
+        1px solid var(--gold);
+
+    background:
+        transparent;
+
+    color:
+        var(--gold-bright);
+
+    font-family:
+        Georgia,
+        serif;
+
+    font-size: 9px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition:
+        0.25s;
+}
+
+.button:hover {
+
+    background:
+        rgba(198,174,104,0.09);
+
+    box-shadow:
+        0 0 18px
+        rgba(198,174,104,0.06);
+}
+
+.button.reset {
+
+    border-color:
+        #363933;
+
+    color:
+        #777970;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+
+    margin-top: 17px;
+
+    padding:
+        14px 16px;
+
+    border-left:
+        2px solid
+        rgba(198,174,104,0.35);
+
+    background:
+        rgba(8,10,10,0.78);
+
+    color:
+        #777a72;
+
+    text-align: center;
+
+    font-size: 11px;
+
+    line-height: 1.7;
+}
+
+.status.bad {
+
+    border-color:
+        var(--red);
+
+    color:
+        #b17b7b;
+}
+
+.status.good {
+
+    border-color:
+        var(--green);
+
+    color:
+        #a9baa9;
+}
+
+
+/* =========================================================
+   EXTRACTION
+========================================================= */
+
+.extraction {
+
+    display: none;
+
+    margin-top: 40px;
+
+    padding:
+        38px 20px;
+
+    text-align: center;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.52);
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(104,75,27,0.15),
+            rgba(6,8,8,0.98) 65%
+        );
+
+    animation:
+        appear 0.8s ease;
+}
+
+.extraction.show {
+    display: block;
+}
+
+.extraction-symbol {
+
+    color:
+        var(--gold);
+
+    font-size: 43px;
+
+    margin-bottom: 12px;
+}
+
+.extraction h2 {
+
+    color:
+        var(--gold-bright);
+
+    font-size: 20px;
+
+    font-weight: 400;
+
+    letter-spacing: 4px;
+}
+
+.extraction-description {
+
+    max-width: 650px;
+
+    margin:
+        15px auto;
+
+    color:
+        #898b83;
+
+    font-size: 12px;
+
+    line-height: 1.8;
+}
+
+.extraction-description strong {
+
+    color:
+        #d0c8b2;
+
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   PATH
+========================================================= */
+
+.path-box {
+
+    max-width: 650px;
+
+    margin:
+        23px auto;
+
+    padding:
+        19px;
+
+    border-top:
+        1px solid var(--border);
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.path {
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 9px;
+
+    flex-wrap: wrap;
+}
+
+.path-item {
+
+    color:
+        var(--gold-bright);
+
+    font-size: 29px;
+
+    opacity: 0;
+
+    animation:
+        pathAppear 0.5s forwards;
+}
+
+.path-arrow {
+
+    color:
+        #71694f;
+
+    font-size: 14px;
+
+    opacity: 0;
+
+    animation:
+        pathAppear 0.5s forwards;
+}
+
+@keyframes pathAppear {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(7px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   CODE
+========================================================= */
+
+.code-input {
+
+    width: 230px;
+
+    padding:
+        14px;
+
+    background:
+        #040505;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.45);
+
+    outline: none;
+
+    color:
+        var(--gold-bright);
+
+    font-family:
+        Georgia,
+        serif;
+
+    font-size: 25px;
+
+    text-align: center;
+
+    letter-spacing: 8px;
+}
+
+.code-input:focus {
+
+    border-color:
+        var(--gold);
+
+    box-shadow:
+        0 0 20px
+        rgba(198,174,104,0.08);
+}
+
+.code-message {
+
+    display: none;
+
+    max-width: 480px;
+
+    margin:
+        14px auto 0;
+
+    padding: 11px;
+
+    font-size: 11px;
+}
+
+.code-message.show {
+
+    display: block;
+}
+
+.code-message.error {
+
+    color:
+        #b27c7c;
+
+    border-left:
+        2px solid
+        var(--red);
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.success {
+
+    display: none;
+
+    margin-top: 40px;
+
+    padding:
+        50px 20px;
+
+    text-align: center;
+
+    border:
+        1px solid
+        rgba(198,174,104,0.68);
+
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(101,73,28,0.17),
+            rgba(5,7,7,0.98) 65%
+        );
+
+    animation:
+        appear 1s ease;
+}
+
+.success.show {
+    display: block;
+}
+
+.success-symbol {
+
+    color:
+        var(--gold);
+
+    font-size: 55px;
+
+    margin-bottom: 12px;
+}
+
+.success-label {
+
+    color:
+        var(--gold);
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 5px;
+}
+
+.success h2 {
+
+    margin-top: 14px;
+
+    color:
+        #e5dfcf;
+
+    font-size: 28px;
+
+    font-weight: 400;
+
+    letter-spacing: 5px;
+}
+
+.success p {
+
+    max-width: 600px;
+
+    margin:
+        16px auto;
+
+    color:
+        #898b83;
+
+    font-size: 12px;
+
+    line-height: 1.8;
+}
+
+.next-clue {
+
+    max-width: 480px;
+
+    margin:
+        27px auto 0;
+
+    padding:
+        18px;
+
+    border-top:
+        1px solid var(--border);
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.next-label {
+
+    color:
+        #5c5e57;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 9px;
+}
+
+.next-text {
+
+    color:
+        var(--gold-bright);
+
+    font-size: 18px;
+
+    letter-spacing: 3px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes appear {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+
+    margin-top: 45px;
+
+    text-align: center;
+
+    color:
+        #373934;
+
+    font-family:
+        Arial,
+        sans-serif;
+
+    font-size: 7px;
+
+    letter-spacing: 3px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width: 700px) {
+
+    .page {
+        padding:
+            30px 11px 65px;
+    }
+
+    .clues {
+        grid-template-columns: 1fr;
+    }
+
+    .story {
+        flex-direction: column;
+    }
+
+    .tablet {
+        padding: 7px;
+    }
+
+    .board {
+        gap: 3px;
+    }
+
+    .rotate {
+        width: 27px;
+        height: 27px;
+
+        font-size: 15px;
+    }
+
+    .symbol {
+        font-size: 32px;
+    }
+
+    .name {
+        font-size: 6px;
+    }
+
+}
+
+
+/* =========================================================
+   CYPHER QUEST GAMEPLAY-FRAME CONTAINMENT (desktop only)
+
+   Reduces vertical/spacing footprint so the puzzle fits the
+   available iframe/gameplay-frame area with no page-level
+   scrolling, and centers it for the fitStage() scale-to-fit
+   safety net (see script below). Overrides spacing/font-size
+   only — no structural or mechanical rule is changed.
+========================================================= */
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page {
+    width: 100%;
+    min-height: auto;
+    padding: 16px 18px 18px;
+    transform-origin: center center;
+}
+
+.header {
+    margin-bottom: 14px;
+}
+
+.japanese {
+    font-size: 22px;
+    margin-top: 6px;
+}
+
+.subtitle {
+    margin: 8px auto 0;
+    line-height: 1.5;
+}
+
+.divider {
+    margin: 14px auto 0;
+}
+
+.tablet {
+    width: min(360px, 100%);
+    padding: 10px;
+}
+
+.controls {
+    margin-top: 14px;
+}
+
+.button {
+    padding: 10px 20px;
+}
+
+.status {
+    margin-top: 10px;
+    padding: 10px 12px;
+}
+
+.extraction {
+    margin-top: 16px;
+    padding: 18px 16px;
+}
+
+.extraction-symbol {
+    font-size: 30px;
+    margin-bottom: 6px;
+}
+
+.extraction-description {
+    margin: 8px auto;
+    line-height: 1.5;
+}
+
+.path-box {
+    margin: 12px auto;
+    padding: 10px;
+}
+
+.path-item {
+    font-size: 22px;
+}
+
+.code-input {
+    padding: 10px;
+    font-size: 20px;
+}
+
+.code-message {
+    margin: 8px auto 0;
+    padding: 8px;
+}
+
+.success {
+    margin-top: 16px;
+    padding: 20px 16px;
+}
+
+.success-symbol {
+    font-size: 34px;
+    margin-bottom: 6px;
+}
+
+.success h2 {
+    margin-top: 6px;
+    font-size: 20px;
+}
+
+.success p {
+    margin: 8px auto;
+    line-height: 1.5;
+}
+
+.next-clue {
+    margin: 12px auto 0;
+    padding: 10px;
+}
+
+.next-text {
+    font-size: 14px;
+    line-height: 1.3;
+}
+
+.footer {
+    margin-top: 14px;
+}
+
+</style>
+</head>
+
+
+<body>
+
+<div class="page">
+
+    <div class="moon"></div>
+
+    <div class="mist mist-a"></div>
+    <div class="mist mist-b"></div>
+
+
+    <main class="container">
+
+
+        <!-- =================================================
+             HEADER
+        ================================================== -->
+
+        <header class="header">
+
+
+            <h1>
+                THE KINTSUGI SHRINE
+            </h1>
+
+            <div class="japanese">
+                金継ぎ
+            </div>
+
+            <p class="subtitle">
+
+                Nine fragments.
+
+                One forgotten tablet.
+
+                The cracks remember what the eyes cannot.
+
+            </p>
+
+            <div class="divider"></div>
+
+        </header>
+
+
+
+        <!-- =================================================
+             STORY
+        ================================================== -->
+
+
+
+        <!-- =================================================
+             BOARD
+        ================================================== -->
+
+        <section class="puzzle-layout">
+
+            <div class="tablet">
+
+                <div
+                    class="board"
+                    id="board"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             CONTROLS
+        ================================================== -->
+
+        <div class="controls">
+
+            <button
+                class="button"
+                id="checkButton"
+            >
+                RESTORE THE TABLET
+            </button>
+
+            <button
+                class="button reset"
+                id="resetButton"
+            >
+                RESET
+            </button>
+
+        </div>
+
+
+        <!-- =================================================
+             STATUS
+        ================================================== -->
+
+        <div
+            class="status"
+            id="status"
+        >
+            The fragments remember their places. Only the golden wounds are lost.
+
+        </div>
+
+
+
+        <!-- =================================================
+             EXTRACTION
+        ================================================== -->
+
+        <section
+            class="extraction"
+            id="extraction"
+        >
+
+            <div class="extraction-symbol">
+                金
+            </div>
+
+            <h2>
+                THE GOLDEN WOUND AWAKENS
+            </h2>
+
+            <p class="extraction-description">
+
+                The tablet remembers.
+
+                <br><br>
+
+                An inscription appears beneath the cracks:
+
+                <br><br>
+
+                <strong>
+                    "Begin with the Moon.
+                    Follow the golden wound.
+                    Take five seals."
+                </strong>
+
+            </p>
+
+
+            <div class="path-box">
+
+                <div
+                    class="path"
+                    id="path"
+                ></div>
+
+            </div>
+
+
+            <p class="extraction-description">
+
+                Follow the golden path from the Moon through the connected wounds.
+
+                Read the number carried by each marked fragment.
+
+                Enter the five seals.
+
+            </p>
+
+
+            <input
+                id="codeInput"
+                class="code-input"
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                autocomplete="off"
+                placeholder="•••••"
+            >
+
+            <br>
+
+            <button
+                class="button"
+                id="unlockButton"
+                style="margin-top:18px;"
+            >
+                OPEN THE SHRINE
+            </button>
+
+
+            <div
+                id="codeMessage"
+                class="code-message"
+            ></div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             SUCCESS
+        ================================================== -->
+
+        <section
+            class="success"
+            id="success"
+        >
+
+            <div class="success-symbol">
+                ⛩
+            </div>
+
+            <div class="success-label">
+                THE SHRINE ACCEPTS YOUR ANSWER
+            </div>
+
+            <h2>
+                THE STONE REMEMBERS
+            </h2>
+
+            <p>
+
+                The golden wound closes.
+
+                The hidden seal has been released.
+
+                The path to the next trial is open.
+
+            </p>
+
+
+            <div class="next-clue">
+
+                <div class="next-label">
+                    NEXT CLUE
+                </div>
+
+                <div class="next-text">
+
+                    WHERE THE BELL RINGS,<br>
+
+                    THE SHADOW WAITS.
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <footer class="footer">
+
+            EVERY PATH HIDES A STORY · TSUSHIMA
+
+        </footer>
+
+    </main>
+
+</div>
+
+
+
+<script>const fragments = {
+
+    moon: {
+        name: "MOON",
+        symbol: "🌙",
+        number: 1,
+        // RIGHT — connects to FOX
+        cracks: [0, 1, 1, 0]
+    },
+
+    fox: {
+        name: "FOX",
+        symbol: "🦊",
+        number: 8,
+        // LEFT + RIGHT + BOTTOM — connects MOON, CRESCENT and SEAL
+        cracks: [0, 1, 1, 1]
+    },
+
+    crescent: {
+        name: "CRESCENT",
+        symbol: "☾",
+        number: 9,
+        // LEFT + BOTTOM — connects FOX and RED
+        cracks: [0, 0, 1, 1]
+    },
+
+    bell: {
+        name: "BELL",
+        symbol: "🔔",
+        number: 6,
+        // TOP + RIGHT + BOTTOM — connects MOON, SEAL and LOTUS
+        cracks: [1, 1, 1, 0]
+    },
+
+    seal: {
+        name: "BROKEN SEAL",
+        symbol: "印",
+        number: 7,
+        // LEFT + RIGHT + BOTTOM — connects BELL, RED and SKULL
+        cracks: [1, 1, 1, 1]
+    },
+
+    red: {
+        name: "RED",
+        symbol: "🔴",
+        number: 2,
+        // TOP + LEFT — connects CRESCENT and SEAL
+        cracks: [1, 0, 0, 1]
+    },
+
+    lotus: {
+        name: "LOTUS",
+        symbol: "🪷",
+        number: 3,
+        // TOP — connects to BELL
+        cracks: [1, 0, 0, 0]
+    },
+
+    skull: {
+        name: "SKULL",
+        symbol: "☠",
+        number: 4,
+        // TOP + RIGHT — connects SEAL and WHITE
+        cracks: [1, 1, 0, 0]
+    },
+
+    white: {
+        name: "WHITE",
+        symbol: "⚪",
+        number: 5,
+        // LEFT — receives the final wound from SKULL
+        cracks: [0, 0, 0, 1]
+    }
+
+};
+
+
+/* =========================================================
+   INITIAL SCRAMBLED BOARD
+========================================================= */
+
+const startingBoard = [
+    "moon",
+    "fox",
+    "crescent",
+
+    "bell",
+    "seal",
+    "red",
+
+    "lotus",
+    "skull",
+    "white"
+];
+
+/* =========================================================
+   EXTRACTION PATH
+========================================================= */
+
+const extractionPath = [
+
+    "moon",
+    "fox",
+    "crescent",
+    "red",
+    "seal"
+
+];
+
+
+/* =========================================================
+   ROTATION STATE
+========================================================= */
+
+let rotations = {
+    moon: 1,
+    fox: 2,
+    crescent: 1,
+
+    bell: 3,
+    seal: 1,
+    red: 2,
+
+    lotus: 2,
+    skull: 3,
+    white: 1
+};
+
+
+/* =========================================================
+   STATE
+========================================================= */
+
+let boardState =
+    [...startingBoard];
+
+let selected =
+    null;
+
+let solved =
+    false;
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const board =
+    document.getElementById(
+        "board"
+    );
+
+const status =
+    document.getElementById(
+        "status"
+    );
+
+const extraction =
+    document.getElementById(
+        "extraction"
+    );
+
+const path =
+    document.getElementById(
+        "path"
+    );
+
+const codeInput =
+    document.getElementById(
+        "codeInput"
+    );
+
+const codeMessage =
+    document.getElementById(
+        "codeMessage"
+    );
+
+const success =
+    document.getElementById(
+        "success"
+    );
+
+
+/* =========================================================
+   CREATE TILE
+========================================================= */
+
+function createTile(
+    id
+) {
+
+    const fragment =
+        fragments[id];
+
+
+    const tile =
+        document.createElement(
+            "div"
+        );
+
+
+    tile.className =
+        "tile";
+
+
+    if (
+        selected === id
+    ) {
+
+        tile.classList.add(
+            "selected"
+        );
+
+    }
+
+
+    tile.innerHTML = `
+
+        <button
+            class="rotate"
+            type="button"
+            title="Rotate fragment"
+        >
+            ↻
+        </button>
+
+
+        <div class="symbol">
+            ${fragment.symbol}
+        </div>
+
+
+        <div class="name">
+            ${fragment.name}
+        </div>
+
+
+        <div class="number">
+            ${fragment.number}
+        </div>
+
+
+        <div class="crack top"></div>
+        <div class="crack right"></div>
+        <div class="crack bottom"></div>
+        <div class="crack left"></div>
+
+    `;
+
+
+    /* =====================================================
+       ROTATE
+    ===================================================== */
+
+    const rotateButton =
+        tile.querySelector(
+            ".rotate"
+        );
+
+
+    rotateButton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+
+            rotations[id] =
+                (
+                    rotations[id] + 1
+                ) % 4;
+
+
+            solved = false;
+
+
+            extraction.classList.remove(
+                "show"
+            );
+
+            success.classList.remove(
+                "show"
+            );
+
+
+            status.textContent =
+                fragment.name +
+                " rotated.";
+
+
+            status.className =
+                "status";
+
+
+            render();
+
+            fitStage();
+
+        }
+    );
+
+    return tile;
+
+}
+
+
+/* =========================================================
+   ROTATED CRACKS
+========================================================= */
+
+function getCracks(id) {
+
+    const original =
+        fragments[id].cracks;
+
+
+    const output = [
+        0,
+        0,
+        0,
+        0
+    ];
+
+
+    for (
+        let i = 0;
+        i < 4;
+        i++
+    ) {
+
+        const newIndex =
+            (
+                i +
+                rotations[id]
+            ) % 4;
+
+
+        output[newIndex] =
+            original[i];
+
+    }
+
+
+    return output;
+
+}
+
+
+/* =========================================================
+   RENDER BOARD
+========================================================= */
+
+function render() {
+
+    board.innerHTML = "";
+
+
+    boardState.forEach(
+        (id, index) => {
+
+            const cell =
+                document.createElement(
+                    "div"
+                );
+
+
+            cell.className =
+                "cell";
+
+
+            const tile =
+                createTile(id);
+
+
+            /*
+                Display crack positions.
+            */
+
+            const cracks =
+                getCracks(id);
+
+
+            const directions = [
+                "top",
+                "right",
+                "bottom",
+                "left"
+            ];
+
+
+            directions.forEach(
+                (
+                    direction,
+                    crackIndex
+                ) => {
+
+                    const crack =
+                        tile.querySelector(
+                            ".crack." +
+                            direction
+                        );
+
+
+                    if (
+                        cracks[crackIndex]
+                    ) {
+
+                        crack.classList.add(
+                            "active"
+                        );
+
+                    }
+
+                }
+            );
+
+
+            /*
+                Only show cracks
+                after successful solve.
+            */
+
+            if (
+                solved
+            ) {
+
+                tile.classList.add(
+                    "revealed"
+                );
+
+            }
+
+
+            cell.appendChild(
+                tile
+            );
+
+
+            board.appendChild(
+                cell
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   POSITION + ROTATION CHECKS ARE NOT HARD-CODED
+========================================================= */
+
+/*
+   The player is NOT compared with a hidden solution array.
+   The arrangement is judged entirely from the shrine clues
+   and from the actual golden-crack connections.
+*/
+
+
+/* =========================================================
+   CHECK CRACK CONNECTIONS
+========================================================= */
+
+function checkCracks() {
+
+    for (
+        let row = 0;
+        row < 3;
+        row++
+    ) {
+
+        for (
+            let col = 0;
+            col < 3;
+            col++
+        ) {
+
+            const index =
+                row * 3 + col;
+
+
+            const current =
+                getCracks(
+                    boardState[index]
+                );
+
+
+            /*
+                RIGHT
+            */
+
+            if (
+                col < 2
+            ) {
+
+                const right =
+                    getCracks(
+                        boardState[
+                            index + 1
+                        ]
+                    );
+
+
+                if (
+                    current[1] !==
+                    right[3]
+                ) {
+
+                    return false;
+
+                }
+
+            }
+
+
+            /*
+                BOTTOM
+            */
+
+            if (
+                row < 2
+            ) {
+
+                const below =
+                    getCracks(
+                        boardState[
+                            index + 3
+                        ]
+                    );
+
+
+                if (
+                    current[2] !==
+                    below[0]
+                ) {
+
+                    return false;
+
+                }
+
+            }
+
+
+            /*
+                OUTER EDGES
+            */
+
+            if (
+                row === 0 &&
+                current[0]
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                row === 2 &&
+                current[2]
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                col === 0 &&
+                current[3]
+            ) {
+
+                return false;
+
+            }
+
+
+            if (
+                col === 2 &&
+                current[1]
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   CHECK LOGIC
+========================================================= */
+
+function checkLogic() {
+
+    /*
+       The fragments are already in their correct positions.
+       Only the golden lines are rotated.
+
+       Required directions are written as:
+       [TOP, RIGHT, BOTTOM, LEFT]
+    */
+
+    const required = {
+        moon:    [0, 1, 1, 0],
+        fox:     [0, 1, 1, 1],
+        crescent:[0, 0, 1, 1],
+
+        bell:    [1, 1, 1, 0],
+        seal:    [1, 1, 1, 1],
+        red:     [1, 0, 0, 1],
+
+        lotus:   [1, 0, 0, 0],
+        skull:   [1, 1, 0, 0],
+        white:   [0, 0, 0, 1]
+    };
+
+    for (const id of Object.keys(required)) {
+
+        const actual = getCracks(id);
+
+        if (actual.some((value, index) => value !== required[id][index])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+/* =========================================================
+   ADJACENCY
+========================================================= */
+
+function adjacent(
+    a,
+    b
+) {
+
+    const rowA =
+        Math.floor(
+            a / 3
+        );
+
+    const colA =
+        a % 3;
+
+
+    const rowB =
+        Math.floor(
+            b / 3
+        );
+
+    const colB =
+        b % 3;
+
+
+    return (
+        Math.abs(
+            rowA - rowB
+        ) +
+        Math.abs(
+            colA - colB
+        )
+    ) === 1;
+
+}
+
+
+/* =========================================================
+   CHECK PUZZLE
+========================================================= */
+
+function checkPuzzle() {
+
+    /*
+       The arrangement is judged from the clues, not from a
+       hard-coded solution array.
+    */
+
+    if (!checkLogic()) {
+
+        status.textContent =
+            "The shrine inscription is still unsatisfied.";
+
+        status.className =
+            "status bad";
+
+        return;
+
+    }
+
+
+    /*
+       The golden wound must also connect perfectly.
+    */
+
+    if (!checkCracks()) {
+
+        status.textContent =
+            "The golden wounds do not meet. Rotate the lines using the clues.";
+
+        status.className =
+            "status bad";
+
+        return;
+
+    }
+
+
+    solved = true;
+
+    status.textContent =
+        "The tablet remembers. The golden wounds have awakened.";
+
+    status.className =
+        "status good";
+
+    render();
+
+    buildExtractionPath();
+
+    fitStage();
+
+    setTimeout(
+        () => {
+
+            extraction.classList.add(
+                "show"
+            );
+
+            fitStage();
+
+        },
+        1000
+    );
+
+}
+
+
+/* =========================================================
+   BUILD PATH
+========================================================= */
+
+function buildExtractionPath() {
+
+    path.innerHTML = "";
+
+
+    extractionPath.forEach(
+        (
+            id,
+            index
+        ) => {
+
+            const item =
+                document.createElement(
+                    "span"
+                );
+
+
+            item.className =
+                "path-item";
+
+
+            item.textContent =
+                fragments[id].symbol;
+
+
+            item.style.animationDelay =
+                (
+                    index * 0.25
+                ) + "s";
+
+
+            path.appendChild(
+                item
+            );
+
+
+            if (
+                index <
+                extractionPath.length - 1
+            ) {
+
+                const arrow =
+                    document.createElement(
+                        "span"
+                    );
+
+
+                arrow.className =
+                    "path-arrow";
+
+
+                arrow.textContent =
+                    "→";
+
+
+                arrow.style.animationDelay =
+                    (
+                        index * 0.25 +
+                        0.12
+                    ) + "s";
+
+
+                path.appendChild(
+                    arrow
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CODE
+========================================================= */
+
+function checkCode() {
+
+    if (
+        !solved
+    ) {
+
+        return;
+
+    }
+
+
+    const correctCode =
+        extractionPath
+            .map(
+                id =>
+                    fragments[id].number
+            )
+            .join("");
+
+
+    const entered =
+        codeInput.value
+            .replace(
+                /\D/g,
+                ""
+            );
+
+
+    if (
+        entered !==
+        correctCode
+    ) {
+
+        codeMessage.textContent =
+            "The shrine remains sealed. Follow the golden path again.";
+
+        codeMessage.className =
+            "code-message show error";
+
+
+        codeInput.value =
+            "";
+
+
+        codeInput.focus();
+
+        fitStage();
+
+        return;
+
+    }
+
+
+    /*
+        FINAL SUCCESS
+    */
+
+    codeMessage.classList.remove(
+        "show"
+    );
+
+
+    extraction.classList.remove(
+        "show"
+    );
+
+
+    success.classList.add(
+        "show"
+    );
+
+
+    window.parent.postMessage(
+        { type: "cq:puzzle-complete", id: "kintsugi-shrine" },
+        "*"
+    );
+
+
+    fitStage();
+
+
+    status.textContent =
+        "The ancient seal opens.";
+
+    status.className =
+        "status good";
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetPuzzle() {
+
+    boardState =
+        [...startingBoard];
+
+
+    rotations = {
+        moon: 1,
+        fox: 2,
+        crescent: 1,
+
+        bell: 3,
+        seal: 1,
+        red: 2,
+
+        lotus: 2,
+        skull: 3,
+        white: 1
+    };
+
+
+    selected = null;
+
+    solved = false;
+
+
+    extraction.classList.remove(
+        "show"
+    );
+
+    success.classList.remove(
+        "show"
+    );
+
+
+    codeMessage.classList.remove(
+        "show"
+    );
+
+
+    codeInput.value =
+        "";
+
+
+    status.textContent =
+        "The fragments wait for their forgotten places.";
+
+    status.className =
+        "status";
+
+
+    render();
+
+    fitStage();
+
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+document
+    .getElementById(
+        "checkButton"
+    )
+    .addEventListener(
+        "click",
+        checkPuzzle
+    );
+
+
+document
+    .getElementById(
+        "resetButton"
+    )
+    .addEventListener(
+        "click",
+        resetPuzzle
+    );
+
+
+document
+    .getElementById(
+        "unlockButton"
+    )
+    .addEventListener(
+        "click",
+        checkCode
+    );
+
+
+/* =========================================================
+   CODE INPUT
+========================================================= */
+
+codeInput.addEventListener(
+    "input",
+    () => {
+
+        codeInput.value =
+            codeInput.value
+                .replace(
+                    /\D/g,
+                    ""
+                )
+                .slice(
+                    0,
+                    5
+                );
+
+    }
+);
+
+
+codeInput.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            checkCode();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CYPHER QUEST GAMEPLAY-FRAME CONTAINMENT
+
+   Uniformly scales the puzzle's natural content size down to
+   whatever the iframe's actual available area is (fullscreen
+   and normal-browser gameplay views give different amounts of
+   room). Recalculated on resize and whenever content that
+   changes the puzzle's height is shown/hidden (rotate, solve,
+   extraction reveal, code entry, success, reset) — see the
+   fitStage() calls placed at each of those points above.
+========================================================= */
+
+const pageElement =
+    document.querySelector(
+        ".page"
+    );
+
+function fitStage() {
+
+    pageElement.style.transform =
+        "none";
+
+    const rect =
+        pageElement.getBoundingClientRect();
+
+    const fit =
+        Math.min(
+            1,
+            window.innerWidth / rect.width,
+            window.innerHeight / rect.height
+        );
+
+    pageElement.style.transform =
+        `scale(${fit})`;
+
+}
+
+window.addEventListener(
+    "resize",
+    fitStage
+);
+
+
+/* =========================================================
+   START GAME
+========================================================= */
+
+render();
+
+fitStage();
+
+</script>
+
+</body>
+</html>

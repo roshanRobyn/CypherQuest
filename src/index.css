@@ -17,3 +17,20 @@ body {
   overflow: hidden;
   background: #000;
 }
+
+/*
+  Hide the blinking text caret everywhere by default (headings, buttons,
+  puzzle text, etc. are not meant to look editable when clicked), but keep
+  normal caret/typing behavior for actual input fields. Text selection and
+  copy/paste are untouched — this only affects the caret, not selection.
+*/
+* {
+  caret-color: transparent;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+[contenteditable=""] {
+  caret-color: auto;
+}

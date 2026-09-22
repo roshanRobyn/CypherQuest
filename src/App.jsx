@@ -3,8 +3,10 @@ import "./App.css";
 
 import outsideImage from "./assets/outside.png";
 import GameplayScreen from "./components/gameplay/GameplayScreen";
+import { useZoomLock } from "./hooks/useZoomLock";
 
 function App() {
+  const zoomLock = useZoomLock();
   const [scene, setScene] = useState("home");
   const [teamName, setTeamName] = useState("");
   const [error, setError] = useState("");
@@ -49,26 +51,30 @@ function App() {
 
   return (
     <main
-      className="app"
+      className={`app${zoomLock.isTablet ? " app-tablet" : ""}${zoomLock.isMobile ? " app-mobile" : ""}`}
+      style={zoomLock.style}
       onMouseMove={handleMouseMove}
       onMouseDown={handleMouseDown}
     >
-      <div ref={cursorRef} className="cursor-orb">
-        <span className="cursor-compass-ring"></span>
-        <span className="cursor-cross cursor-cross-top"></span>
-        <span className="cursor-cross cursor-cross-right"></span>
-        <span className="cursor-cross cursor-cross-bottom"></span>
-        <span className="cursor-cross cursor-cross-left"></span>
-        <span className="cursor-diamond"></span>
-      </div>
+      {scene !== "game" && (
+        <div ref={cursorRef} className="cursor-orb">
+          <span className="cursor-compass-ring"></span>
+          <span className="cursor-cross cursor-cross-top"></span>
+          <span className="cursor-cross cursor-cross-right"></span>
+          <span className="cursor-cross cursor-cross-bottom"></span>
+          <span className="cursor-cross cursor-cross-left"></span>
+          <span className="cursor-diamond"></span>
+        </div>
+      )}
 
-      {ripples.map((ripple) => (
-        <span
-          key={ripple.id}
-          className="cursor-ripple"
-          style={{ left: ripple.x, top: ripple.y }}
-        ></span>
-      ))}
+      {scene !== "game" &&
+        ripples.map((ripple) => (
+          <span
+            key={ripple.id}
+            className="cursor-ripple"
+            style={{ left: ripple.x, top: ripple.y }}
+          ></span>
+        ))}
 
       {/* =====================================================
           HOME SCREEN

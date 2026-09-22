@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Izuhara — Reference Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+    * { caret-color: transparent; }
+    input, textarea, [contenteditable="true"], [contenteditable=""] { caret-color: auto; }
+
+    html, body, #map {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+    }
+
+    body {
+        background: #eee7d7;
+        font-family: "Palatino Linotype", Palatino, Georgia, serif;
+    }
+
+    #map {
+        background: #eee7d7;
+    }
+
+    /* Keep the supplied map looking like an old printed/game map. */
+    .leaflet-image-layer {
+        image-rendering: auto;
+        filter: sepia(.08) contrast(1.02);
+    }
+
+    .leaflet-control-zoom {
+        display: none;
+    }
+
+    .map-title {
+        position: absolute;
+        z-index: 1000;
+        right: 5.5vw;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #292722;
+        text-align: center;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 8px;
+        text-shadow: 0 1px 0 rgba(255,255,255,.35);
+    }
+
+    .map-title .jp {
+        writing-mode: vertical-rl;
+        font-family: Georgia, serif;
+        font-size: clamp(26px, 3vw, 46px);
+        letter-spacing: 4px;
+        margin: 0 auto 14px;
+    }
+
+    .map-title .en {
+        font-size: clamp(15px, 1.4vw, 24px);
+        letter-spacing: 5px;
+    }
+
+    .region-label {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: rgba(245,240,226,.96);
+        font-family: "Palatino Linotype", Palatino, Georgia, serif;
+        font-size: 13px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        text-shadow:
+            0 1px 2px #111,
+            1px 0 2px #111,
+            -1px 0 2px #111;
+        pointer-events: none;
+    }
+
+    .region-label::before {
+        display: none;
+    }
+
+    .got-icon {
+        background: transparent;
+        border: 0;
+        filter:
+            drop-shadow(0 1px 1px #111)
+            drop-shadow(0 0 3px rgba(255,255,255,.45));
+        transition: transform .16s ease, filter .16s ease;
+    }
+
+    .got-icon:hover {
+        transform: scale(1.28);
+        filter:
+            drop-shadow(0 1px 2px #111)
+            drop-shadow(0 0 6px rgba(255,255,255,.9));
+    }
+
+    .camp {
+        width: 9px !important;
+        height: 9px !important;
+        border-radius: 50%;
+        border: 1.5px solid #f3eee0;
+        box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 4px rgba(0,0,0,.8);
+        box-sizing: border-box;
+        background: #191817;
+    }
+
+    .minor-label {
+        background: rgba(35,32,28,.94);
+        color: #f7f0dc;
+        border: 1px solid #c6a65a;
+        border-radius: 2px;
+        padding: 5px 9px;
+        font-size: 12px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 2px 8px rgba(0,0,0,.35);
+    }
+
+    .minor-label::before {
+        border-top-color: #c6a65a;
+    }
+
+    .map-frame {
+        position: absolute;
+        inset: 14px;
+        z-index: 900;
+        pointer-events: none;
+        border: 1px solid rgba(70,60,45,.18);
+        box-shadow: inset 0 0 80px rgba(76,56,30,.08);
+    }
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+<div class="map-frame"></div>
+
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    /*
+      The supplied reference image is the actual visual base.
+      This keeps the coastline, region divisions, rivers and ink texture
+      faithful to the reference instead of replacing them with a rough SVG.
+    */
+
+    const map = L.map("map", {
+        crs: L.CRS.Simple,
+        minZoom: -2,
+        maxZoom: 3,
+        zoomControl: false,
+        attributionControl: false,
+        dragging: true,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true
+    });
+
+    const IMAGE_W = 1455;
+    const IMAGE_H = 1536;
+    const bounds = [[0, 0], [IMAGE_H, IMAGE_W]];
+
+    L.imageOverlay("izuhara_reference.png", bounds, {
+        opacity: 1,
+        interactive: false
+    }).addTo(map);
+
+    map.fitBounds(bounds);
+    map.setView([IMAGE_H / 2, IMAGE_W / 2], -0.15);
+
+    const villageSVG = `
+        <svg viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 11.5 12 4l8 7.5v8H4z"
+                  fill="#f5f0df" stroke="#24211c" stroke-width="1"/>
+            <path d="M9 19.5v-5h6v5"
+                  stroke="#24211c" stroke-width="1.4"/>
+        </svg>`;
+
+    const toriiSVG = `
+        <svg viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 6h18M5 9h14M6.5 8v11M17.5 8v11"
+                  stroke="#f5f0df" stroke-width="1.8"
+                  stroke-linecap="square"/>
+            <path d="M8.5 13h7"
+                  stroke="#f5f0df" stroke-width="1.4"/>
+        </svg>`;
+
+    const springSVG = `
+        <svg viewBox="0 0 24 24" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 20c0-3.2 2.8-5 7-5s7 1.8 7 5"
+                  stroke="#f5f0df" stroke-width="1.7"/>
+            <path d="M9 11c-2-2.5 2-3.4 0-7M14 11c-2-2.5 2-3.4 0-7"
+                  stroke="#f5f0df" stroke-width="1.6"
+                  stroke-linecap="round"/>
+        </svg>`;
+
+    const icon = svg => L.divIcon({
+        className: "got-icon",
+        html: svg,
+        iconSize: [19, 19],
+        iconAnchor: [9.5, 9.5]
+    });
+
+    const camp = () => L.divIcon({
+        className: "camp",
+        html: "",
+        iconSize: [9, 9],
+        iconAnchor: [4.5, 4.5]
+    });
+
+    const icons = {
+        village: icon(villageSVG),
+        torii: icon(toriiSVG),
+        spring: icon(springSVG),
+        blackCamp: camp()
+    };
+
+    /*
+      Coordinates below retain the location set from the supplied HTML.
+      They are scaled into the supplied portrait reference image.
+      Change only sx/sy if you later replace the reference artwork.
+    */
+    const sx = 1.00;
+    const sy = 1.48;
+    const ox = 170;
+    const oy = 0;
+
+    const locations = [
+        { name:"Komoda", main:true, y:160, x:450 },
+        { name:"Hiyoshi", main:true, y:220, x:650 },
+        { name:"Kashine", main:true, y:340, x:380 },
+        { name:"Ariake", main:true, y:440, x:620 },
+        { name:"Komatsu", main:true, y:500, x:380 },
+        { name:"Tsutsu", main:true, y:780, x:400 },
+        { name:"Azamo", main:true, y:820, x:580 },
+
+        { name:"Komoda Town", y:190, x:400, icon:icons.village },
+        { name:"Shinto Shrine", y:270, x:310, icon:icons.torii },
+        { name:"Hot Spring", y:270, x:350, icon:icons.spring },
+
+        { name:"Castle Kaneda", y:80, x:650, icon:icons.village },
+        { name:"Hiyoshi Springs Village", y:270, x:680, icon:icons.village },
+        { name:"Hiyoshi Hot Spring", y:250, x:590, icon:icons.spring },
+        { name:"Shinto Shrine", y:200, x:720, icon:icons.torii },
+        { name:"Hot Spring", y:400, x:710, icon:icons.spring },
+
+        { name:"Golden Temple", y:440, x:550, icon:icons.village },
+        { name:"Shinto Shrine", y:530, x:600, icon:icons.torii },
+
+        { name:"Komatsu Forge", y:530, x:430, icon:icons.village },
+        { name:"Shinto Shrine", y:460, x:420, icon:icons.torii },
+        { name:"Shinto Shrine", y:640, x:480, icon:icons.torii },
+
+        { name:"Azamo Bay", y:920, x:590, icon:icons.village },
+        { name:"Hot Spring", y:850, x:660, icon:icons.spring },
+        { name:"Shinto Shrine", y:770, x:550, icon:icons.torii },
+        { name:"Tsutsu Hot Spring", y:800, x:350, icon:icons.spring },
+
+        /*
+          The 13 quest-location dots. Positions are fixed and chosen to sit
+          within the region each name belongs to (grouped near the
+          matching existing region label / terrain feature, e.g. the two
+          Kashine locations sit near the "Kashine" region, the two river
+          locations follow the river running down the island's centre,
+          the coast/bluff locations sit near the island's edges). These
+          coordinates are hardcoded, not computed at runtime, so the
+          mapping never changes.
+        */
+        { id:"sakimori-overlook", name:"Sakimori Overlook", y:740, x:600, icon:icons.blackCamp, clickable:true },
+        { id:"archers-rise",      name:"Archer's Rise",     y:180, x:700, icon:icons.blackCamp },
+        { id:"wolf-cub-falls",    name:"Wolf Cub Falls",    y:195, x:365, icon:icons.blackCamp },
+        { id:"kashine-hills",     name:"Kashine Hills",     y:300, x:340, icon:icons.blackCamp, clickable:true },
+        { id:"exiles-bluff",      name:"Exile's Bluff",     y:480, x:270, icon:icons.blackCamp },
+        { id:"kashine-forest",    name:"Kashine Forest",    y:380, x:300, icon:icons.blackCamp },
+        { id:"golden-leaf-hot-spring", name:"Golden Leaf Hot Spring", y:460, x:530, icon:icons.blackCamp, clickable:true },
+        { id:"kuta-grasslands",   name:"Kuta Grasslands",   y:700, x:420, icon:icons.blackCamp },
+        { id:"brown-river-gorge", name:"Brown River Gorge", y:520, x:320, icon:icons.blackCamp, clickable:true },
+        { id:"azamo-foothills",   name:"Azamo Foothills",   y:860, x:560, icon:icons.blackCamp },
+        { id:"tsutsu-plains",     name:"Tsutsu Plains",     y:870, x:360, icon:icons.blackCamp, clickable:true },
+        { id:"isonade-coast",     name:"Isonade Coast",     y:180, x:820, icon:icons.blackCamp, clickable:true },
+
+        /*
+          A normal-looking location dot like every other above. It is a
+          puzzle-progression target: clicking it only does anything once
+          the parent app has unlocked it via CQ_setLocationsUnlocked (see
+          below) — same as kashine-hills / isonade-coast / brown-river-gorge
+          / tsutsu-plains / golden-leaf-hot-spring above. Locked or
+          unlocked, every `clickable` dot renders identically to every
+          other dot — no glow, color change, or special icon.
+        */
+        { id:"ohama-fishing-village", name:"Ohama Fishing Village", y:780, x:330, icon:icons.blackCamp, clickable:true }
+    ];
+
+    function project(loc) {
+        const x = ox + loc.x * sx;
+        const y = oy + loc.y * sy;
+        return [IMAGE_H - y, x];
+    }
+
+    /*
+      Locations the player must unlock before clicking them does anything.
+      Populated by the parent app via CQ_setLocationsUnlocked. Every dot is
+      visible and styled identically from the start regardless of this set
+      — only click behavior is gated, never appearance.
+    */
+    let unlockedIds = new Set();
+
+    locations.forEach(loc => {
+        const marker = L.marker(project(loc), {
+            icon: loc.icon || L.divIcon({
+                className: "empty",
+                html: "",
+                iconSize: [0, 0]
+            }),
+            interactive: !loc.main
+        }).addTo(map);
+
+        if (loc.main) {
+            marker.bindTooltip(loc.name, {
+                permanent: true,
+                direction: "center",
+                className: "region-label",
+                opacity: 1
+            });
+        } else {
+            marker.bindTooltip(loc.name, {
+                permanent: false,
+                direction: "top",
+                className: "minor-label",
+                offset: [0, -10]
+            });
+        }
+
+        if (loc.clickable) {
+            marker.on("click", () => {
+                if (!unlockedIds.has(loc.id)) return;
+                window.parent.postMessage({ type: "cq:location-click", id: loc.id }, "*");
+            });
+        }
+    });
+
+    /*
+      Fixed quest-location registry for future puzzles. Each entry's `id`
+      is permanent and matches the `id` set on the corresponding dot in
+      `locations` above, so a later puzzle can say "Sakimori Overlook" and
+      reliably resolve it to a marker on this map.
+    */
+    window.CQ_LOCATIONS = locations
+        .filter(loc => loc.id)
+        .map(loc => ({ id: loc.id, name: loc.name, x: loc.x, y: loc.y }));
+
+    /*
+      Exposed to the parent Cypher Quest app: pass the full array of
+      currently-unlocked location ids. Reusable for any future puzzle that
+      follows the same "clue solved -> location becomes clickable" pattern
+      — no per-location special-casing needed here.
+    */
+    window.CQ_setLocationsUnlocked = function (ids) {
+        unlockedIds = new Set(ids || []);
+    };
+
+    // Keep the reference map centred when the browser window changes size.
+    window.addEventListener("resize", () => {
+        map.invalidateSize();
+        map.fitBounds(bounds, { padding: [0, 0] });
+    });
+</script>
+</body>
+</html>

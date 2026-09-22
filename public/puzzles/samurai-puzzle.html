@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Cypher Quest — The Five Blades</title>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Hide the text caret on non-input elements only; inputs/textareas keep it. */
+* { caret-color: transparent; }
+input, textarea, [contenteditable="true"], [contenteditable=""] { caret-color: auto; }
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+
+    background:
+        radial-gradient(
+            circle at 50% 15%,
+            rgba(130, 30, 30, 0.12),
+            transparent 38%
+        ),
+        linear-gradient(
+            180deg,
+            #080a0a,
+            #030404
+        );
+
+    color: #e8e1d0;
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   VARIABLES
+========================================================= */
+
+:root {
+
+    --gold: #c9b579;
+    --gold-light: #e4d29a;
+
+    --text: #e8e1d0;
+    --muted: #888982;
+
+    --border:
+        rgba(201, 181, 121, 0.28);
+
+    --panel:
+        rgba(13, 15, 15, 0.92);
+
+    --red:
+        #8d3c3c;
+
+    --green:
+        #718b76;
+}
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.page {
+
+    min-height: 100vh;
+
+    position: relative;
+
+    padding:
+        55px 30px 90px;
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   MOON
+========================================================= */
+
+.moon {
+
+    position: absolute;
+
+    width: 180px;
+    height: 180px;
+
+    border-radius: 50%;
+
+    top: 45px;
+    right: 8%;
+
+    background:
+        radial-gradient(
+            circle at 35% 35%,
+            #eee6cb,
+            #b6aa84 55%,
+            #726a52
+        );
+
+    opacity: 0.09;
+
+    box-shadow:
+        0 0 100px
+        rgba(220, 205, 165, 0.16);
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   MIST
+========================================================= */
+
+.mist {
+
+    position: absolute;
+
+    width: 900px;
+    height: 180px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(200, 200, 190, 0.025);
+
+    filter: blur(35px);
+
+    pointer-events: none;
+}
+
+.mist-one {
+
+    top: 300px;
+    left: -400px;
+
+    animation:
+        moveMist 24s linear infinite;
+}
+
+.mist-two {
+
+    top: 700px;
+    right: -400px;
+
+    animation:
+        moveMistReverse 28s linear infinite;
+}
+
+@keyframes moveMist {
+
+    from {
+        transform: translateX(-80px);
+    }
+
+    to {
+        transform: translateX(350px);
+    }
+
+}
+
+@keyframes moveMistReverse {
+
+    from {
+        transform: translateX(80px);
+    }
+
+    to {
+        transform: translateX(-350px);
+    }
+
+}
+
+
+/* =========================================================
+   CONTAINER
+========================================================= */
+
+.container {
+
+    position: relative;
+
+    z-index: 5;
+
+    width:
+        min(1100px, 100%);
+
+    margin: auto;
+}
+
+
+/* =========================================================
+   SECTION HEADER
+========================================================= */
+
+.section-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin:
+        38px 0 18px;
+}
+
+.section-number {
+
+    color: var(--gold);
+
+    font-family: Arial, sans-serif;
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+}
+
+.section-title {
+
+    color: #d5cfbf;
+
+    font-size: 14px;
+
+    letter-spacing: 4px;
+}
+
+
+/* =========================================================
+   CLUES
+========================================================= */
+
+.clues {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 10px;
+}
+
+.clue {
+
+    min-height: 90px;
+
+    padding: 17px;
+
+    display: flex;
+
+    gap: 15px;
+
+    border:
+        1px solid var(--border);
+
+    background:
+        rgba(12, 14, 15, 0.88);
+
+    transition: 0.25s;
+}
+
+.clue:hover {
+
+    border-color:
+        rgba(201,181,121,0.6);
+}
+
+.clue-number {
+
+    min-width: 28px;
+
+    color: var(--gold);
+
+    font-size: 20px;
+}
+
+.clue p {
+
+    color: #999a92;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+.clue strong {
+
+    color: #e5decd;
+}
+
+
+/* =========================================================
+   FORMATION INFO
+========================================================= */
+
+.formation-info {
+
+    color: var(--muted);
+
+    font-size: 13px;
+
+    line-height: 1.7;
+
+    margin-bottom: 16px;
+}
+
+
+/* =========================================================
+   FORMATION
+========================================================= */
+
+.formation {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 10px;
+}
+
+
+/* =========================================================
+   SLOT
+========================================================= */
+
+.slot {
+
+    min-height: 190px;
+
+    padding: 9px;
+
+    border:
+        1px dashed
+        rgba(201,181,121,0.28);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(18,20,20,0.95),
+            rgba(7,9,9,0.98)
+        );
+
+    transition:
+        0.25s ease;
+}
+
+.slot.drag-over {
+
+    border-color:
+        var(--gold);
+
+    background:
+        rgba(80,65,32,0.2);
+}
+
+.position {
+
+    text-align: center;
+
+    color: #62635c;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 8px;
+}
+
+
+/* =========================================================
+   EMPTY SLOT
+========================================================= */
+
+.empty {
+
+    min-height: 150px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    gap: 9px;
+
+    color: #44453f;
+}
+
+.empty span {
+
+    font-size: 28px;
+}
+
+.empty small {
+
+    font-family: Arial, sans-serif;
+
+    font-size: 7px;
+
+    letter-spacing: 2px;
+}
+
+
+/* =========================================================
+   PLACED WARRIOR
+========================================================= */
+
+.placed {
+
+    min-height: 150px;
+
+    border:
+        1px solid
+        rgba(201,181,121,0.15);
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    position: relative;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(130,30,30,0.1),
+            transparent 65%
+        );
+}
+
+.placed .symbol {
+
+    color: var(--gold-light);
+
+    font-size: 50px;
+
+    margin-bottom: 7px;
+}
+
+.placed .name {
+
+    font-size: 12px;
+
+    letter-spacing: 3px;
+}
+
+.remove {
+
+    position: absolute;
+
+    top: 4px;
+    right: 5px;
+
+    width: 32px;
+    height: 32px;
+
+    background: transparent;
+
+    border: none;
+
+    color: #5b5c56;
+
+    font-size: 18px;
+
+    cursor: pointer;
+}
+
+.remove:hover {
+
+    color: #b97979;
+}
+
+
+/* =========================================================
+   WARRIOR GRID
+========================================================= */
+
+.warrior-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(5, 1fr);
+
+    gap: 12px;
+}
+
+
+/* =========================================================
+   WARRIOR CARD
+========================================================= */
+
+.warrior {
+
+    min-height: 250px;
+
+    padding: 14px;
+
+    position: relative;
+
+    border:
+        1px solid var(--border);
+
+    background:
+        linear-gradient(
+            160deg,
+            rgba(23,25,25,0.96),
+            rgba(7,9,9,0.98)
+        );
+
+    cursor: grab;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.warrior:hover {
+
+    transform:
+        translateY(-3px);
+
+    border-color:
+        rgba(201,181,121,0.65);
+}
+
+.warrior:active {
+
+    cursor: grabbing;
+}
+
+.warrior.selected {
+
+    border-color:
+        var(--gold);
+
+    background:
+        rgba(57,47,27,0.35);
+
+    box-shadow:
+        0 0 0 1px
+        rgba(201,181,121,0.18);
+}
+
+.card-top {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    color: #64655e;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 2px;
+}
+
+.warrior-symbol {
+
+    text-align: center;
+
+    color: var(--gold);
+
+    font-size: 53px;
+
+    margin:
+        18px 0 6px;
+}
+
+.warrior h3 {
+
+    text-align: center;
+
+    font-size: 13px;
+
+    font-weight: 400;
+
+    letter-spacing: 3px;
+}
+
+.warrior-title {
+
+    text-align: center;
+
+    color: var(--gold);
+
+    font-size: 9px;
+
+    letter-spacing: 1px;
+
+    margin-top: 8px;
+}
+
+.warrior p {
+
+    color: #72736c;
+
+    text-align: center;
+
+    font-size: 11px;
+
+    line-height: 1.55;
+
+    margin-top: 13px;
+}
+
+.card-bottom {
+
+    position: absolute;
+
+    bottom: 10px;
+
+    left: 0;
+
+    width: 100%;
+
+    text-align: center;
+
+    color: #474842;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 7px;
+
+    letter-spacing: 2px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status {
+
+    margin:
+        35px 0 20px;
+
+    padding: 18px;
+
+    border-left:
+        2px solid var(--border);
+
+    background:
+        rgba(12,14,14,0.75);
+
+    color: #898a83;
+
+    text-align: center;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+
+    transition: 0.3s;
+}
+
+.status.correct {
+
+    border-color:
+        var(--green);
+
+    color: #afbdaf;
+}
+
+.status.wrong {
+
+    border-color:
+        var(--red);
+
+    color: #c18a8a;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    flex-wrap: wrap;
+}
+
+button {
+
+    font-family:
+        Georgia,
+        "Times New Roman",
+        serif;
+}
+
+.check {
+
+    padding:
+        15px 34px;
+
+    border:
+        1px solid var(--gold);
+
+    background: transparent;
+
+    color: var(--gold-light);
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+.check:hover {
+
+    background:
+        rgba(201,181,121,0.1);
+}
+
+.reset {
+
+    padding:
+        15px 25px;
+
+    border:
+        1px solid #363833;
+
+    background: transparent;
+
+    color: #777871;
+
+    font-size: 9px;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   CODE SECTION
+========================================================= */
+
+.code-section {
+
+    display: none;
+
+    margin-top: 35px;
+
+    padding: 35px 25px;
+
+    border:
+        1px solid
+        rgba(201,181,121,0.35);
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(120,30,30,0.13),
+            rgba(8,10,10,0.98)
+        );
+
+    text-align: center;
+
+    animation:
+        reveal 0.8s ease;
+}
+
+.code-section.show {
+
+    display: block;
+}
+
+.code-symbol {
+
+    color: var(--gold);
+
+    font-size: 40px;
+
+    margin-bottom: 12px;
+}
+
+.code-title {
+
+    color: var(--gold-light);
+
+    font-size: 17px;
+
+    letter-spacing: 4px;
+
+    margin-bottom: 10px;
+}
+
+.code-description {
+
+    color: #85867f;
+
+    font-size: 12px;
+
+    line-height: 1.7;
+
+    max-width: 520px;
+
+    margin:
+        0 auto 25px;
+}
+
+
+/* =========================================================
+   CODE INPUT
+========================================================= */
+
+.code-input {
+
+    width: 240px;
+
+    max-width: 100%;
+
+    padding:
+        15px 12px;
+
+    background:
+        rgba(4,6,6,0.95);
+
+    border:
+        1px solid
+        rgba(201,181,121,0.4);
+
+    outline: none;
+
+    color:
+        var(--gold-light);
+
+    text-align: center;
+
+    font-family:
+        Georgia,
+        serif;
+
+    font-size: 24px;
+
+    letter-spacing: 9px;
+}
+
+.code-input:focus {
+
+    border-color:
+        var(--gold);
+
+    box-shadow:
+        0 0 20px
+        rgba(201,181,121,0.08);
+}
+
+.code-input::placeholder {
+
+    color: #464741;
+
+    letter-spacing: 4px;
+}
+
+
+/* =========================================================
+   UNLOCK BUTTON
+========================================================= */
+
+.unlock {
+
+    display: block;
+
+    margin:
+        18px auto 0;
+
+    padding:
+        14px 30px;
+
+    border:
+        1px solid var(--gold);
+
+    background:
+        rgba(201,181,121,0.05);
+
+    color:
+        var(--gold-light);
+
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+.unlock:hover {
+
+    background:
+        rgba(201,181,121,0.12);
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.success {
+
+    display: none;
+
+    margin-top: 35px;
+
+    padding:
+        45px 25px;
+
+    border:
+        1px solid
+        rgba(201,181,121,0.65);
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(125,30,30,0.22),
+            rgba(7,9,9,0.98) 65%
+        );
+
+    text-align: center;
+
+    animation:
+        successReveal 1.2s ease;
+}
+
+.success.show {
+
+    display: block;
+}
+
+@keyframes successReveal {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(25px)
+            scale(0.98);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+.success-symbol {
+
+    font-size: 52px;
+
+    color: var(--gold);
+
+    margin-bottom: 12px;
+}
+
+.success-small {
+
+    color: var(--gold);
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 5px;
+}
+
+.success h2 {
+
+    margin-top: 14px;
+
+    font-size: 27px;
+
+    font-weight: 400;
+
+    letter-spacing: 5px;
+}
+
+.success p {
+
+    max-width: 570px;
+
+    margin:
+        17px auto;
+
+    color: #999a92;
+
+    font-size: 13px;
+
+    line-height: 1.8;
+}
+
+.next-clue {
+
+    margin:
+        28px auto 0;
+
+    max-width: 380px;
+
+    padding: 20px;
+
+    border-top:
+        1px solid var(--border);
+
+    border-bottom:
+        1px solid var(--border);
+}
+
+.next-label {
+
+    color: #65665f;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 10px;
+}
+
+.next-text {
+
+    color: var(--gold-light);
+
+    font-size: 20px;
+
+    letter-spacing: 3px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.footer {
+
+    text-align: center;
+
+    margin-top: 45px;
+
+    color: #41423d;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 8px;
+
+    letter-spacing: 3px;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes reveal {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(15px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .warrior-grid {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+    .formation {
+
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .page {
+
+        padding:
+            35px 14px 65px;
+    }
+
+    .clues {
+
+        grid-template-columns: 1fr;
+    }
+
+    .formation {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+    .warrior-grid {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+}
+
+
+@media (max-width: 420px) {
+
+    .formation {
+
+        grid-template-columns: 1fr;
+    }
+
+    .warrior-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .code {
+
+        font-size: 29px;
+    }
+
+}
+
+
+/* =========================================================
+   CYPHER QUEST GAMEPLAY-FRAME CONTAINMENT (desktop only)
+
+   Reduces vertical/spacing footprint so the puzzle fits the
+   available iframe/gameplay-frame area with no page-level
+   scrolling, and centers it for the fitStage() scale-to-fit
+   safety net (see script below). Overrides spacing/font-size
+   only — no structural or mechanical rule is changed.
+========================================================= */
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page {
+    width: 100%;
+    min-height: auto;
+    padding: 22px 24px 26px;
+    transform-origin: center center;
+}
+
+.section-header {
+    margin: 14px 0 8px;
+}
+
+.section-header:first-child {
+    margin-top: 0;
+}
+
+.clues {
+    gap: 8px;
+}
+
+.clue {
+    min-height: 0;
+    padding: 9px;
+    gap: 10px;
+}
+
+.clue-number {
+    font-size: 14px;
+}
+
+.clue p {
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.formation-info {
+    margin-bottom: 8px;
+    font-size: 11px;
+}
+
+.formation {
+    gap: 8px;
+}
+
+.slot {
+    min-height: 100px;
+    padding: 6px;
+}
+
+.position {
+    margin-bottom: 4px;
+}
+
+.empty {
+    min-height: 78px;
+    gap: 4px;
+}
+
+.empty span {
+    font-size: 18px;
+}
+
+.placed {
+    min-height: 78px;
+}
+
+.placed .symbol {
+    font-size: 28px;
+    margin-bottom: 3px;
+}
+
+.placed .name {
+    font-size: 10px;
+}
+
+.warrior-grid {
+    gap: 8px;
+}
+
+.warrior {
+    min-height: 140px;
+    padding: 8px;
+}
+
+.warrior-symbol {
+    font-size: 28px;
+    margin: 8px 0 3px;
+}
+
+.warrior h3 {
+    font-size: 11px;
+}
+
+.warrior-title {
+    font-size: 8px;
+    margin-top: 4px;
+}
+
+.warrior p {
+    font-size: 10px;
+    line-height: 1.3;
+    margin-top: 6px;
+}
+
+.status {
+    margin: 14px 0 10px;
+    padding: 10px;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.check {
+    padding: 9px 22px;
+}
+
+.reset {
+    padding: 9px 18px;
+}
+
+.code-section {
+    margin-top: 14px;
+    padding: 18px 16px;
+}
+
+.code-symbol {
+    font-size: 26px;
+    margin-bottom: 6px;
+}
+
+.code-title {
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.code-description {
+    font-size: 11px;
+    line-height: 1.4;
+    margin: 0 auto 12px;
+}
+
+.code-input {
+    padding: 10px 10px;
+    font-size: 18px;
+    letter-spacing: 5px;
+}
+
+.unlock {
+    margin: 10px auto 0;
+    padding: 9px 20px;
+}
+
+.success {
+    margin-top: 14px;
+    padding: 18px 16px;
+}
+
+.success-symbol {
+    font-size: 30px;
+    margin-bottom: 6px;
+}
+
+.success h2 {
+    margin-top: 6px;
+    font-size: 18px;
+}
+
+.success p {
+    margin: 8px auto;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.next-clue {
+    margin: 12px auto 0;
+    padding: 10px;
+}
+
+.next-text {
+    font-size: 15px;
+}
+
+.footer {
+    margin-top: 14px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="page">
+
+
+    <!-- ATMOSPHERE -->
+
+    <div class="moon"></div>
+
+    <div class="mist mist-one"></div>
+
+    <div class="mist mist-two"></div>
+
+
+    <div class="container">
+
+
+        <!-- =================================================
+             CLUES
+        ================================================== -->
+
+        <div class="section-header">
+
+            <span class="section-number">
+                01
+            </span>
+
+            <span class="section-title">
+                THE ANCIENT CLUES
+            </span>
+
+        </div>
+
+
+        <section class="clues">
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    一
+                </div>
+
+                <p>
+
+                    The
+                    <strong>Monk</strong>
+                    stands somewhere to the
+                    <strong>left</strong>
+                    of the Archer.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    二
+                </div>
+
+                <p>
+
+                    The
+                    <strong>Archer</strong>
+                    stands immediately before the
+                    <strong>Samurai</strong>.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    三
+                </div>
+
+                <p>
+
+                    The
+                    <strong>Samurai</strong>
+                    does not stand beside the
+                    <strong>Ninja</strong>.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    四
+                </div>
+
+                <p>
+
+                    The
+                    <strong>Ronin</strong>
+                    stands somewhere between the
+                    <strong>Samurai</strong>
+                    and the
+                    <strong>Ninja</strong>.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    五
+                </div>
+
+                <p>
+
+                    The
+                    <strong>Ninja</strong>
+                    is not standing at either end
+                    of the formation.
+
+                </p>
+
+            </div>
+
+
+
+            <div class="clue">
+
+                <div class="clue-number">
+                    六
+                </div>
+
+                <p>
+
+                    The warrior carrying the
+                    <strong>bow</strong>
+                    must stand immediately before
+                    the warrior carrying the
+                    <strong>katana</strong>.
+
+                </p>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
+             FORMATION
+        ================================================== -->
+
+        <div class="section-header">
+
+            <span class="section-number">
+                02
+            </span>
+
+            <span class="section-title">
+                RESTORE THE FORMATION
+            </span>
+
+        </div>
+
+
+        <p class="formation-info">
+
+            Drag each warrior into the five positions.
+            On mobile, tap a warrior and then tap a position.
+
+        </p>
+
+
+        <section
+            class="formation"
+            id="formation"
+        ></section>
+
+
+
+        <!-- =================================================
+             WARRIORS
+        ================================================== -->
+
+        <div class="section-header">
+
+            <span class="section-number">
+                03
+            </span>
+
+            <span class="section-title">
+                THE FIVE WARRIORS
+            </span>
+
+        </div>
+
+
+        <section
+            class="warrior-grid"
+            id="warriorGrid"
+        ></section>
+
+
+
+        <!-- =================================================
+             STATUS
+        ================================================== -->
+
+        <div
+            class="status"
+            id="status"
+        >
+
+            The spirits are watching.
+            Restore the formation to continue.
+
+        </div>
+
+
+
+        <!-- =================================================
+             FORMATION BUTTON
+        ================================================== -->
+
+        <div class="actions">
+
+            <button
+                class="check"
+                id="checkButton"
+                type="button"
+            >
+                CONFIRM FORMATION
+            </button>
+
+            <button
+                class="reset"
+                id="resetButton"
+                type="button"
+            >
+                RESET
+            </button>
+
+        </div>
+
+
+
+        <!-- =================================================
+             CODE INPUT
+        ================================================== -->
+
+        <section
+            class="code-section"
+            id="codeSection"
+        >
+
+            <div class="code-symbol">
+                印
+            </div>
+
+            <div class="code-title">
+                THE SEALS HAVE AWAKENED
+            </div>
+
+            <p class="code-description">
+
+                The formation is correct.
+
+                <br>
+
+                Each warrior carries an ancient seal.
+                Read the seals from left to right
+                and enter the five-digit number.
+
+            </p>
+
+
+            <input
+                id="codeInput"
+                class="code-input"
+                type="text"
+                inputmode="numeric"
+                maxlength="5"
+                autocomplete="off"
+                placeholder="•••••"
+                aria-label="Enter five digit code"
+            >
+
+
+            <button
+                id="unlockButton"
+                class="unlock"
+                type="button"
+            >
+
+                UNLOCK THE SHRINE
+
+            </button>
+
+
+            <div
+                class="status"
+                id="codeStatus"
+                style="display:none;"
+            ></div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             FINAL SUCCESS
+        ================================================== -->
+
+        <section
+            class="success"
+            id="success"
+        >
+
+            <div class="success-symbol">
+                刀
+            </div>
+
+            <div class="success-small">
+                THE ANCIENT SEAL HAS OPENED
+            </div>
+
+            <h2>
+                THE PATH IS REVEALED
+            </h2>
+
+            <p>
+
+                The five warriors stand exactly as
+                the ancient inscription foretold.
+
+                <br>
+
+                The seal recognizes your answer.
+
+            </p>
+
+
+            <div class="next-clue">
+
+                <div class="next-label">
+                    NEXT CLUE
+                </div>
+
+                <div class="next-text">
+                    FOLLOW THE SHADOW
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <footer class="footer">
+
+            EVERY PATH HIDES A STORY · TSUSHIMA
+
+        </footer>
+
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   WARRIOR DATA
+========================================================= */
+
+const warriors = [
+
+    {
+        id: "ronin",
+
+        name: "RONIN",
+
+        symbol: "刀",
+
+        title: "THE WANDERING BLADE",
+
+        description:
+            "A warrior without a master.",
+
+        number: 7
+    },
+
+
+    {
+        id: "archer",
+
+        name: "ARCHER",
+
+        symbol: "弓",
+
+        title: "THE SILENT EYE",
+
+        description:
+            "Sees what others cannot.",
+
+        number: 2
+    },
+
+
+    {
+        id: "ninja",
+
+        name: "NINJA",
+
+        symbol: "影",
+
+        title: "THE HIDDEN SHADOW",
+
+        description:
+            "Walks where no lantern shines.",
+
+        number: 9
+    },
+
+
+    {
+        id: "monk",
+
+        name: "MONK",
+
+        symbol: "念",
+
+        title: "THE KEEPER",
+
+        description:
+            "Guards the ancient gate.",
+
+        number: 4
+    },
+
+
+    {
+        id: "samurai",
+
+        name: "SAMURAI",
+
+        symbol: "侍",
+
+        title: "THE LAST BLADE",
+
+        description:
+            "Follows the code of the warrior.",
+
+        number: 6
+    }
+
+];
+
+
+/* =========================================================
+   CORRECT SOLUTION
+========================================================= */
+
+/*
+
+POSITION 1 → MONK
+POSITION 2 → NINJA
+POSITION 3 → RONIN
+POSITION 4 → ARCHER
+POSITION 5 → SAMURAI
+
+SEALS:
+
+MONK    = 4
+NINJA   = 9
+RONIN   = 7
+ARCHER  = 2
+SAMURAI = 6
+
+FINAL CODE:
+
+49726
+
+*/
+
+const correctFormation = [
+
+    "monk",
+    "ninja",
+    "ronin",
+    "archer",
+    "samurai"
+
+];
+
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let formation = [
+
+    null,
+    null,
+    null,
+    null,
+    null
+
+];
+
+let selectedWarrior = null;
+
+let formationConfirmed = false;
+
+let codeUnlocked = false;
+
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const formationElement =
+    document.getElementById(
+        "formation"
+    );
+
+const warriorGrid =
+    document.getElementById(
+        "warriorGrid"
+    );
+
+const statusElement =
+    document.getElementById(
+        "status"
+    );
+
+const checkButton =
+    document.getElementById(
+        "checkButton"
+    );
+
+const resetButton =
+    document.getElementById(
+        "resetButton"
+    );
+
+const codeSection =
+    document.getElementById(
+        "codeSection"
+    );
+
+const codeInput =
+    document.getElementById(
+        "codeInput"
+    );
+
+const unlockButton =
+    document.getElementById(
+        "unlockButton"
+    );
+
+const codeStatus =
+    document.getElementById(
+        "codeStatus"
+    );
+
+const successElement =
+    document.getElementById(
+        "success"
+    );
+
+
+
+/* =========================================================
+   GET WARRIOR
+========================================================= */
+
+function getWarrior(id) {
+
+    return warriors.find(
+        warrior =>
+            warrior.id === id
+    );
+
+}
+
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render() {
+
+    renderFormation();
+
+    renderWarriors();
+
+}
+
+
+
+/* =========================================================
+   RENDER FORMATION
+========================================================= */
+
+function renderFormation() {
+
+    formationElement.innerHTML = "";
+
+
+    formation.forEach(
+        (warriorId, index) => {
+
+            const slot =
+                document.createElement(
+                    "div"
+                );
+
+            slot.className =
+                "slot";
+
+            slot.dataset.index =
+                index;
+
+
+            const position =
+                document.createElement(
+                    "div"
+                );
+
+            position.className =
+                "position";
+
+            position.textContent =
+                "POSITION " +
+                (index + 1);
+
+
+            slot.appendChild(
+                position
+            );
+
+
+            /* EMPTY */
+
+            if (!warriorId) {
+
+                const empty =
+                    document.createElement(
+                        "div"
+                    );
+
+                empty.className =
+                    "empty";
+
+                empty.innerHTML = `
+                    <span>+</span>
+                    <small>PLACE WARRIOR</small>
+                `;
+
+                slot.appendChild(
+                    empty
+                );
+
+            }
+
+
+            /* OCCUPIED */
+
+            else {
+
+                const warrior =
+                    getWarrior(
+                        warriorId
+                    );
+
+
+                const placed =
+                    document.createElement(
+                        "div"
+                    );
+
+                placed.className =
+                    "placed";
+
+
+                placed.innerHTML = `
+
+                    <div class="symbol">
+                        ${warrior.symbol}
+                    </div>
+
+                    <div class="name">
+                        ${warrior.name}
+                    </div>
+
+                    <button
+                        class="remove"
+                        type="button"
+                    >
+                        ×
+                    </button>
+
+                `;
+
+
+                const removeButton =
+                    placed.querySelector(
+                        ".remove"
+                    );
+
+
+                removeButton.addEventListener(
+                    "click",
+                    function(event) {
+
+                        event.stopPropagation();
+
+                        formation[index] =
+                            null;
+
+                        selectedWarrior =
+                            null;
+
+                        formationConfirmed =
+                            false;
+
+                        codeSection.classList.remove(
+                            "show"
+                        );
+
+                        statusElement.textContent =
+                            "The warrior returns to the shadows.";
+
+                        statusElement.className =
+                            "status";
+
+                        render();
+
+                    }
+                );
+
+
+                slot.appendChild(
+                    placed
+                );
+
+            }
+
+
+            /* CLICK SLOT */
+
+            slot.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        selectedWarrior === null
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    placeWarrior(
+                        index,
+                        selectedWarrior
+                    );
+
+                }
+            );
+
+
+            /* DRAG OVER */
+
+            slot.addEventListener(
+                "dragover",
+                function(event) {
+
+                    event.preventDefault();
+
+                    slot.classList.add(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+
+            /* DRAG LEAVE */
+
+            slot.addEventListener(
+                "dragleave",
+                function() {
+
+                    slot.classList.remove(
+                        "drag-over"
+                    );
+
+                }
+            );
+
+
+            /* DROP */
+
+            slot.addEventListener(
+                "drop",
+                function(event) {
+
+                    event.preventDefault();
+
+                    slot.classList.remove(
+                        "drag-over"
+                    );
+
+
+                    const warriorId =
+                        event.dataTransfer.getData(
+                            "warrior"
+                        );
+
+
+                    if (warriorId) {
+
+                        placeWarrior(
+                            index,
+                            warriorId
+                        );
+
+                    }
+
+                }
+            );
+
+
+            formationElement.appendChild(
+                slot
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   PLACE WARRIOR
+========================================================= */
+
+function placeWarrior(
+    position,
+    warriorId
+) {
+
+    const oldPosition =
+        formation.indexOf(
+            warriorId
+        );
+
+
+    /*
+       If warrior is already placed,
+       swap positions.
+    */
+
+    if (
+        oldPosition !== -1
+    ) {
+
+        const existing =
+            formation[position];
+
+        formation[oldPosition] =
+            existing;
+
+    }
+
+
+    formation[position] =
+        warriorId;
+
+
+    selectedWarrior =
+        null;
+
+
+    formationConfirmed =
+        false;
+
+
+    codeSection.classList.remove(
+        "show"
+    );
+
+
+    statusElement.textContent =
+        "The formation shifts beneath the moon.";
+
+    statusElement.className =
+        "status";
+
+
+    render();
+
+}
+
+
+
+/* =========================================================
+   RENDER WARRIOR CARDS
+========================================================= */
+
+function renderWarriors() {
+
+    warriorGrid.innerHTML = "";
+
+
+    const available =
+        warriors.filter(
+            warrior =>
+                !formation.includes(
+                    warrior.id
+                )
+        );
+
+
+    available.forEach(
+        warrior => {
+
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "warrior";
+
+
+            if (
+                selectedWarrior ===
+                warrior.id
+            ) {
+
+                card.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            card.draggable =
+                true;
+
+
+            card.innerHTML = `
+
+                <div class="card-top">
+
+                    <span>
+                        SEAL
+                    </span>
+
+                    <span>
+                        #${warrior.number}
+                    </span>
+
+                </div>
+
+
+                <div class="warrior-symbol">
+                    ${warrior.symbol}
+                </div>
+
+
+                <h3>
+                    ${warrior.name}
+                </h3>
+
+
+                <div class="warrior-title">
+                    ${warrior.title}
+                </div>
+
+
+                <p>
+                    ${warrior.description}
+                </p>
+
+
+                <div class="card-bottom">
+                    DRAG OR SELECT
+                </div>
+
+            `;
+
+
+            /* CLICK */
+
+            card.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        selectedWarrior ===
+                        warrior.id
+                    ) {
+
+                        selectedWarrior =
+                            null;
+
+                        statusElement.textContent =
+                            "Selection cancelled.";
+
+                    }
+
+                    else {
+
+                        selectedWarrior =
+                            warrior.id;
+
+                        statusElement.textContent =
+                            warrior.name +
+                            " selected. Choose a position.";
+
+                    }
+
+
+                    renderWarriors();
+
+                }
+            );
+
+
+            /* DRAG */
+
+            card.addEventListener(
+                "dragstart",
+                function(event) {
+
+                    event.dataTransfer.setData(
+                        "warrior",
+                        warrior.id
+                    );
+
+                }
+            );
+
+
+            warriorGrid.appendChild(
+                card
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   CONFIRM FORMATION
+========================================================= */
+
+function confirmFormation() {
+
+    /* CHECK EMPTY */
+
+    if (
+        formation.some(
+            position =>
+                position === null
+        )
+    ) {
+
+        statusElement.textContent =
+            "Five warriors must stand before the gate.";
+
+        statusElement.className =
+            "status wrong";
+
+        return;
+
+    }
+
+
+    /* CHECK CORRECT */
+
+    const correct =
+        formation.every(
+            (warriorId, index) =>
+                warriorId ===
+                correctFormation[index]
+        );
+
+
+    if (!correct) {
+
+        formationConfirmed =
+            false;
+
+        codeSection.classList.remove(
+            "show"
+        );
+
+        statusElement.textContent =
+            "The spirits reject the formation. Study the ancient clues again.";
+
+        statusElement.className =
+            "status wrong";
+
+        return;
+
+    }
+
+
+    /* CORRECT FORMATION */
+
+    formationConfirmed =
+        true;
+
+
+    statusElement.textContent =
+        "The formation is correct. The seals have awakened.";
+
+    statusElement.className =
+        "status correct";
+
+
+    codeSection.classList.add(
+        "show"
+    );
+
+
+    codeInput.value = "";
+
+    codeStatus.style.display =
+        "none";
+
+
+    fitStage();
+
+    setTimeout(
+        function() {
+
+            codeInput.focus();
+
+        },
+        300
+    );
+
+}
+
+
+
+/* =========================================================
+   UNLOCK SHRINE
+========================================================= */
+
+function unlockShrine() {
+
+    if (
+        !formationConfirmed
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+       Calculate the actual expected code
+       from the sorted formation.
+    */
+
+    const correctCode =
+        formation
+            .map(
+                warriorId =>
+                    getWarrior(
+                        warriorId
+                    ).number
+            )
+            .join("");
+
+
+    /*
+       Remove spaces and non-numeric
+       characters from player's input.
+    */
+
+    const playerCode =
+        codeInput.value
+            .replace(
+                /\D/g,
+                ""
+            );
+
+
+    /* EMPTY */
+
+    if (
+        playerCode.length === 0
+    ) {
+
+        showCodeError(
+            "The seals have not been entered."
+        );
+
+        return;
+
+    }
+
+
+    /* WRONG LENGTH */
+
+    if (
+        playerCode.length !== 5
+    ) {
+
+        showCodeError(
+            "Five seals are required."
+        );
+
+        return;
+
+    }
+
+
+    /* WRONG CODE */
+
+    if (
+        playerCode !==
+        correctCode
+    ) {
+
+        showCodeError(
+            "The shrine remains sealed. The seals do not match the formation."
+        );
+
+        codeInput.value = "";
+
+        codeInput.focus();
+
+        return;
+
+    }
+
+
+    /* =====================================================
+       SUCCESS
+    ===================================================== */
+
+    codeUnlocked =
+        true;
+
+
+    codeStatus.style.display =
+        "none";
+
+
+    codeSection.classList.remove(
+        "show"
+    );
+
+
+    successElement.classList.add(
+        "show"
+    );
+
+
+    window.parent.postMessage(
+        { type: "cq:puzzle-complete", id: "samurai-puzzle" },
+        "*"
+    );
+
+
+    fitStage();
+
+
+    statusElement.textContent =
+        "The ancient seal recognizes you.";
+
+    statusElement.className =
+        "status correct";
+
+}
+
+
+
+/* =========================================================
+   CODE ERROR
+========================================================= */
+
+function showCodeError(message) {
+
+    codeStatus.textContent =
+        message;
+
+    codeStatus.className =
+        "status wrong";
+
+    codeStatus.style.display =
+        "block";
+
+}
+
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetPuzzle() {
+
+    formation = [
+
+        null,
+        null,
+        null,
+        null,
+        null
+
+    ];
+
+
+    selectedWarrior =
+        null;
+
+
+    formationConfirmed =
+        false;
+
+
+    codeUnlocked =
+        false;
+
+
+    codeSection.classList.remove(
+        "show"
+    );
+
+
+    successElement.classList.remove(
+        "show"
+    );
+
+
+    codeInput.value =
+        "";
+
+
+    codeStatus.style.display =
+        "none";
+
+
+    statusElement.textContent =
+        "The dojo returns to silence...";
+
+    statusElement.className =
+        "status";
+
+
+    render();
+
+    fitStage();
+
+}
+
+
+
+/* =========================================================
+   BUTTON EVENTS
+========================================================= */
+
+checkButton.addEventListener(
+    "click",
+    confirmFormation
+);
+
+
+unlockButton.addEventListener(
+    "click",
+    unlockShrine
+);
+
+
+resetButton.addEventListener(
+    "click",
+    resetPuzzle
+);
+
+
+/* =========================================================
+   ENTER KEY FOR CODE
+========================================================= */
+
+codeInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter"
+        ) {
+
+            unlockShrine();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   ONLY ALLOW NUMBERS
+========================================================= */
+
+codeInput.addEventListener(
+    "input",
+    function() {
+
+        this.value =
+            this.value
+                .replace(
+                    /\D/g,
+                    ""
+                )
+                .slice(
+                    0,
+                    5
+                );
+
+    }
+);
+
+
+/* =========================================================
+   FIT STAGE
+
+   Uniformly scales the puzzle's natural content size down to
+   whatever the iframe's actual available area is (fullscreen
+   and normal-browser gameplay views give different amounts of
+   room). Recalculated on resize and whenever content that
+   changes the puzzle's height is shown/hidden (code section,
+   success panel, reset).
+========================================================= */
+
+const pageElement =
+    document.querySelector(
+        ".page"
+    );
+
+function fitStage() {
+
+    pageElement.style.transform =
+        "none";
+
+    const rect =
+        pageElement.getBoundingClientRect();
+
+    const fit =
+        Math.min(
+            1,
+            window.innerWidth / rect.width,
+            window.innerHeight / rect.height
+        );
+
+    pageElement.style.transform =
+        `scale(${fit})`;
+
+}
+
+window.addEventListener(
+    "resize",
+    fitStage
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+render();
+
+fitStage();
+
+</script>
+
+</body>
+</html>
