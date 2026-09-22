@@ -131,9 +131,26 @@ export const QUEST_STEPS = [
       japanese: "金泉",
       mapLocationId: "golden-leaf-hot-spring",
     },
-    // No autoNext / next stage yet — end of the currently defined chain.
     // Golden Leaf Hot Spring becomes clickable on the map once this puzzle
-    // is solved, but no puzzle is registered at that mapLocationId yet, so
+    // is solved and its clue is translated — clicking it enters
+    // kintsugi-shrine below.
+  },
+  {
+    id: "kintsugi-shrine",
+    stage: "kintsugi-shrine",
+    mapLocationId: "golden-leaf-hot-spring",
+    // Same pattern as karakuri's riddle / forgotten-spirit's whispers: an
+    // in-puzzle clue document granted the instant the player enters the
+    // stage (see KintsugiClueViewer.jsx), not on completion.
+    onEnter: [{ type: "inventoryItem", id: "kintsugi-clue" }],
+    onComplete: [],
+    completionReveal: {
+      japanese: "防人",
+      mapLocationId: "sakimori-overlook",
+    },
+    // No autoNext / next stage yet — end of the currently defined chain.
+    // Sakimori Overlook becomes clickable on the map once this puzzle is
+    // solved, but no puzzle is registered at that mapLocationId yet, so
     // clicking it does nothing until a future puzzle is added there.
   },
 ];

@@ -7,6 +7,7 @@ const ITEM_DEFS = {
   clues: { icon: "文", label: "View discovered clues", title: "Discovered clues" },
   riddle: { icon: "謎", label: "View recovered riddle", title: "Recovered riddle" },
   whispers: { icon: "霊", label: "View Whispers of the Spirit", title: "Whispers of the Spirit" },
+  "kintsugi-clue": { icon: "金", label: "View Kintsugi Shrine clue", title: "Kintsugi Shrine clue" },
 };
 
 // Items fill slots left-to-right in the order they were unlocked
@@ -14,8 +15,20 @@ const ITEM_DEFS = {
 // order). Nothing is reserved for a specific item type, and an earlier
 // item never moves once placed — a newly discovered item simply becomes
 // the next entry in the list, landing in the next slot after it.
-function InventoryPanel({ unlockedItems, justUnlockedItem, onOpenRiddle, onOpenWhispers, onOpenClues }) {
-  const handlers = { riddle: onOpenRiddle, whispers: onOpenWhispers, clues: onOpenClues };
+function InventoryPanel({
+  unlockedItems,
+  justUnlockedItem,
+  onOpenRiddle,
+  onOpenWhispers,
+  onOpenClues,
+  onOpenKintsugiClue,
+}) {
+  const handlers = {
+    riddle: onOpenRiddle,
+    whispers: onOpenWhispers,
+    clues: onOpenClues,
+    "kintsugi-clue": onOpenKintsugiClue,
+  };
   const emptySlotCount = Math.max(0, TOTAL_SLOTS - unlockedItems.length);
 
   return (

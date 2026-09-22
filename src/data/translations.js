@@ -10,6 +10,7 @@ export const TRANSLATIONS = {
   "茶川の峡谷": { romaji: null, en: "BROWN RIVER GORGE" },
   "豆酘平原": { romaji: null, en: "TSUTSU PLAINS" },
   "金泉": { romaji: null, en: "GOLDEN LEAF HOT SPRING" },
+  "防人": { romaji: null, en: "SAKIMORI OVERLOOK" },
 
   // Location names (Japanese clues may reference these)
   "先守見晴らし": { romaji: "Sakimori Overlook", en: "Sakimori Overlook" },

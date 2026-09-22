@@ -8,6 +8,7 @@ import InventoryPanel from "./InventoryPanel";
 import GameplayArea from "./GameplayArea";
 import RiddleViewer from "./RiddleViewer";
 import WhispersViewer from "./WhispersViewer";
+import KintsugiClueViewer from "./KintsugiClueViewer";
 import ClueRevealOverlay from "./ClueRevealOverlay";
 import ClueLogViewer from "./ClueLogViewer";
 import TranslationPanel from "./TranslationPanel";
@@ -22,6 +23,7 @@ function GameplayScreen() {
   const [whispersOpen, setWhispersOpen] = useState(false);
   const [translationOpen, setTranslationOpen] = useState(false);
   const [clueLogOpen, setClueLogOpen] = useState(false);
+  const [kintsugiClueOpen, setKintsugiClueOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -31,6 +33,7 @@ function GameplayScreen() {
         setWhispersOpen(false);
         setTranslationOpen(false);
         setClueLogOpen(false);
+        setKintsugiClueOpen(false);
         dismissReveal();
       }
     };
@@ -45,6 +48,10 @@ function GameplayScreen() {
     }
   };
 
+  const handleOpenTranslation = () => {
+    setTranslationOpen(true);
+  };
+
   return (
     <div
       className="gp-tabletop"
@@ -55,7 +62,7 @@ function GameplayScreen() {
       <ToolsPanel
         translationUnlocked={quest.availableTools.includes("translator")}
         translationJustUnlocked={quest.justUnlockedTool === "translator"}
-        onOpenTranslation={() => setTranslationOpen(true)}
+        onOpenTranslation={handleOpenTranslation}
       />
 
       <GameplayArea
@@ -66,6 +73,7 @@ function GameplayScreen() {
         onLanternSwitchComplete={() => quest.completePuzzle("lantern-switch")}
         onSamuraiPuzzleComplete={() => quest.completePuzzle("samurai-puzzle")}
         onThreeHiddenDifferencesComplete={() => quest.completePuzzle("three-hidden-differences")}
+        onKintsugiShrineComplete={() => quest.completePuzzle("kintsugi-shrine")}
       />
 
       <InventoryPanel
@@ -74,6 +82,7 @@ function GameplayScreen() {
         onOpenRiddle={() => setRiddleOpen(true)}
         onOpenWhispers={() => setWhispersOpen(true)}
         onOpenClues={() => setClueLogOpen(true)}
+        onOpenKintsugiClue={() => setKintsugiClueOpen(true)}
       />
 
       <MapButton isOpen={mapOpen} onToggle={() => setMapOpen((open) => !open)} />
@@ -96,6 +105,8 @@ function GameplayScreen() {
       <RiddleViewer isOpen={riddleOpen} onClose={() => setRiddleOpen(false)} />
 
       <WhispersViewer isOpen={whispersOpen} onClose={() => setWhispersOpen(false)} />
+
+      <KintsugiClueViewer isOpen={kintsugiClueOpen} onClose={() => setKintsugiClueOpen(false)} />
 
       <ClueLogViewer
         isOpen={clueLogOpen}

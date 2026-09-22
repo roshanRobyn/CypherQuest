@@ -4,6 +4,7 @@ import ForgottenSpiritStage from "./puzzles/ForgottenSpiritStage";
 import LanternSwitchStage from "./puzzles/LanternSwitchStage";
 import SamuraiPuzzleStage from "./puzzles/SamuraiPuzzleStage";
 import ThreeHiddenDifferencesStage from "./puzzles/ThreeHiddenDifferencesStage";
+import KintsugiShrineStage from "./puzzles/KintsugiShrineStage";
 
 function GameplayArea({
   stage,
@@ -13,6 +14,7 @@ function GameplayArea({
   onLanternSwitchComplete,
   onSamuraiPuzzleComplete,
   onThreeHiddenDifferencesComplete,
+  onKintsugiShrineComplete,
 }) {
   return (
     <div className="gp-central">
@@ -45,6 +47,10 @@ function GameplayArea({
 
           {stage === "three-hidden-differences" && (
             <ThreeHiddenDifferencesStage onComplete={onThreeHiddenDifferencesComplete} />
+          )}
+
+          {stage === "kintsugi-shrine" && (
+            <KintsugiShrineStage onComplete={onKintsugiShrineComplete} />
           )}
         </div>
       </div>
