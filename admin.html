@@ -1153,6 +1153,43 @@
       });
 
       // Clear Activity Logs
+      // POST /api/admin/reset is a dev-only endpoint: in production
+      // (NODE_ENV=production, which the deployed Render backend runs
+      // under) it refuses unless the request carries the correct
+      // x-admin-reset-token header. Locally it just works with no token.
+      // Cached in sessionStorage so the organizer only has to type it once
+      // per browser tab session, not on every reset click.
+      async function resetBackend() {
+        const doReset = (token) =>
+          fetch(`${BACKEND_API_URL}/api/admin/reset`, {
+            method: 'POST',
+            headers: token ? { 'x-admin-reset-token': token } : {},
+          });
+
+        try {
+          let token = sessionStorage.getItem('cypherquest_admin_token') || '';
+          let res = await doReset(token);
+          let json = await res.json().catch(() => null);
+
+          if (res.status === 403) {
+            token = window.prompt('Production reset requires the admin token:') || '';
+            if (!token) return; // user cancelled
+            res = await doReset(token);
+            json = await res.json().catch(() => null);
+            if (res.ok && json && json.success === true) {
+              sessionStorage.setItem('cypherquest_admin_token', token);
+            }
+          }
+
+          if (!res.ok || !json || json.success !== true) {
+            sessionStorage.removeItem('cypherquest_admin_token');
+            alert('Backend refused the reset — token incorrect or reset disabled.');
+          }
+        } catch (e) {
+          alert('Could not reach backend to reset its data.');
+        }
+      }
+
       btnClear.addEventListener('click', async () => {
         if (!confirm('Are you sure you want to reset all team progress logs and activity events?')) return;
 
@@ -1165,15 +1202,7 @@
         // Also clear the real backend store — otherwise the next 3s poll
         // just re-fetches the old data and the reset looks like a no-op.
         if (backendReachable) {
-          try {
-            const res = await fetch(`${BACKEND_API_URL}/api/admin/reset`, { method: 'POST' });
-            const json = await res.json().catch(() => null);
-            if (!res.ok || !json || json.success !== true) {
-              alert('Backend refused the reset (dev-only endpoint, disabled in production).');
-            }
-          } catch (e) {
-            alert('Could not reach backend to reset its data.');
-          }
+          await resetBackend();
         }
 
         renderDashboard();
