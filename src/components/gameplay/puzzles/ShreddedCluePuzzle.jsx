@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { injectPuzzleCaretFix } from "./injectPuzzleCaretFix";
 
 function ShreddedCluePuzzle({ onComplete }) {
   const iframeRef = useRef(null);
@@ -19,7 +20,7 @@ function ShreddedCluePuzzle({ onComplete }) {
           completedRef.current = true;
           onComplete();
         }
-      } catch (err) {
+      } catch {
         // Same-origin iframe expected; ignore transient access errors during load.
       }
     }, 500);
@@ -36,6 +37,7 @@ function ShreddedCluePuzzle({ onComplete }) {
           src="/puzzles/shredded-clue.html"
           title="The Shredded Clue"
           className="gp-puzzle-iframe"
+          onLoad={(event) => injectPuzzleCaretFix(event.currentTarget)}
         />
       </div>
     </>

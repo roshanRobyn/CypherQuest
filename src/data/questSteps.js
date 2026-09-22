@@ -148,9 +148,19 @@ export const QUEST_STEPS = [
       japanese: "防人",
       mapLocationId: "sakimori-overlook",
     },
-    // No autoNext / next stage yet — end of the currently defined chain.
     // Sakimori Overlook becomes clickable on the map once this puzzle is
-    // solved, but no puzzle is registered at that mapLocationId yet, so
-    // clicking it does nothing until a future puzzle is added there.
+    // solved and 防人 is translated — clicking it enters final-treasure
+    // below, the last step of the currently defined chain.
+  },
+  {
+    id: "final-treasure",
+    stage: "final-treasure",
+    mapLocationId: "sakimori-overlook",
+    onComplete: [],
+    // The terminal step. No completionReveal (nothing left to discover)
+    // and no autoNext (nothing left to enter) — completePuzzle() already
+    // treats that combination as "record completion, do nothing further,"
+    // which is exactly the end of the quest. No special-casing needed
+    // anywhere else in the progression engine for this to be the end.
   },
 ];

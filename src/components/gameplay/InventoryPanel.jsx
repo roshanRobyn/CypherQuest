@@ -10,6 +10,16 @@ const ITEM_DEFS = {
   "kintsugi-clue": { icon: "金", label: "View Kintsugi Shrine clue", title: "Kintsugi Shrine clue" },
 };
 
+// "whispers" (the Forgotten Spirit / Shogi puzzle-solving clue) is
+// intentionally never player-facing in the Inventory anymore — it's
+// accessed exclusively through the floating parchment inside the Shogi
+// puzzle itself (ForgottenSpiritStage.jsx, reading the same shared
+// WHISPERS_CLUES content). unlockedItems/sessionStorage still contain it
+// unchanged (nothing about quest progression is touched here) — it's
+// filtered out purely at this presentation layer, and BEFORE the empty-
+// slot count below, so it never reserves a slot either.
+const HIDDEN_FROM_INVENTORY = new Set(["whispers"]);
+
 // Items fill slots left-to-right in the order they were unlocked
 // (`unlockedItems` is append-only, so its order already IS discovery
 // order). Nothing is reserved for a specific item type, and an earlier
@@ -29,13 +39,14 @@ function InventoryPanel({
     clues: onOpenClues,
     "kintsugi-clue": onOpenKintsugiClue,
   };
-  const emptySlotCount = Math.max(0, TOTAL_SLOTS - unlockedItems.length);
+  const visibleItems = unlockedItems.filter((id) => !HIDDEN_FROM_INVENTORY.has(id));
+  const emptySlotCount = Math.max(0, TOTAL_SLOTS - visibleItems.length);
 
   return (
     <div className="gp-inventory gp-inventory-open">
       <div className="gp-inventory-drawer">
         <div className="gp-inventory-body">
-          {unlockedItems.map((id) => {
+          {visibleItems.map((id) => {
             const def = ITEM_DEFS[id];
             if (!def) return null;
             return (
