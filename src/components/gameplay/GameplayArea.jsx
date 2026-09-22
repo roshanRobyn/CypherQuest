@@ -6,6 +6,7 @@ import LanternSwitchStage from "./puzzles/LanternSwitchStage";
 import SamuraiPuzzleStage from "./puzzles/SamuraiPuzzleStage";
 import ThreeHiddenDifferencesStage from "./puzzles/ThreeHiddenDifferencesStage";
 import KintsugiShrineStage from "./puzzles/KintsugiShrineStage";
+import FinalTreasureStage from "./puzzles/FinalTreasureStage";
 import MagnifierLens from "./MagnifierLens";
 
 function GameplayArea({
@@ -14,11 +15,11 @@ function GameplayArea({
   onFirstPuzzleComplete,
   onKarakuriComplete,
   onForgottenSpiritComplete,
-  forgottenSpiritClue,
   onLanternSwitchComplete,
   onSamuraiPuzzleComplete,
   onThreeHiddenDifferencesComplete,
   onKintsugiShrineComplete,
+  onFinalTreasureComplete,
 }) {
   const containerRef = useRef(null);
 
@@ -40,7 +41,7 @@ function GameplayArea({
           )}
 
           {stage === "forgotten-spirit" && (
-            <ForgottenSpiritStage onComplete={onForgottenSpiritComplete} clueJapanese={forgottenSpiritClue} />
+            <ForgottenSpiritStage onComplete={onForgottenSpiritComplete} />
           )}
 
           {stage === "lantern-switch" && (
@@ -57,6 +58,10 @@ function GameplayArea({
 
           {stage === "kintsugi-shrine" && (
             <KintsugiShrineStage onComplete={onKintsugiShrineComplete} />
+          )}
+
+          {stage === "final-treasure" && (
+            <FinalTreasureStage onComplete={onFinalTreasureComplete} />
           )}
 
           <MagnifierLens active={magnifierActive} containerRef={containerRef} />

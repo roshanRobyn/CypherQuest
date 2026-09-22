@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cypher Quest — The Final Treasure</title>
+    <style>
+      :root {
+        --ink: #17100a;
+        --deep: #090604;
+        --wood: #51270e;
+        --wood-light: #8e4d1e;
+        --gold: #f4ca62;
+        --gold-bright: #fff3a8;
+        --paper: #f5e5bd;
+        --wine: #701e18;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body { width: 100%; min-height: 100%; margin: 0; }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        overflow: hidden;
+        color: var(--paper);
+        font-family: Georgia, "Times New Roman", serif;
+        background:
+          radial-gradient(circle at 50% 38%, rgba(138, 76, 24, .36), transparent 28%),
+          radial-gradient(ellipse at center, #2d190e 0%, var(--deep) 76%);
+      }
+
+      .finale {
+        position: relative;
+        display: grid;
+        width: min(760px, 94vw);
+        min-height: min(680px, 94vh);
+        place-items: center;
+        padding: 42px 24px;
+        text-align: center;
+        isolation: isolate;
+      }
+
+      .finale::before {
+        position: absolute;
+        z-index: -1;
+        inset: 22px;
+        content: "";
+        border: 1px solid rgba(244, 202, 98, .24);
+        box-shadow: inset 0 0 64px rgba(0, 0, 0, .62), 0 0 45px rgba(244, 202, 98, .07);
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: #d9b36a;
+        font: 700 clamp(.64rem, 1.7vw, .78rem)/1.25 system-ui, sans-serif;
+        letter-spacing: .32em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 650px;
+        margin: 0;
+        color: #fff0bd;
+        font-size: clamp(1.8rem, 5.4vw, 3.3rem);
+        font-weight: 400;
+        letter-spacing: .04em;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, .7);
+      }
+
+      .instruction {
+        margin: 13px 0 22px;
+        color: #cdbb96;
+        font-size: clamp(.9rem, 2vw, 1.08rem);
+        font-style: italic;
+      }
+
+      .chest-scene {
+        position: relative;
+        width: min(360px, 72vw);
+        height: 265px;
+        margin: 6px auto 20px;
+        perspective: 850px;
+      }
+
+      .glow {
+        position: absolute;
+        top: 55px;
+        left: 50%;
+        width: 220px;
+        height: 190px;
+        border-radius: 50%;
+        opacity: 0;
+        transform: translateX(-50%) scale(.55);
+        background: radial-gradient(ellipse, rgba(255, 235, 134, .95) 0%, rgba(242, 183, 49, .43) 35%, transparent 72%);
+        filter: blur(7px);
+        transition: opacity .55s ease, transform .8s cubic-bezier(.16, 1, .3, 1);
+      }
+
+      .chest {
+        position: absolute;
+        bottom: 8px;
+        left: 50%;
+        width: 250px;
+        height: 155px;
+        transform: translateX(-50%);
+        filter: drop-shadow(0 20px 18px rgba(0, 0, 0, .5));
+      }
+
+      .lid, .base {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        border: 5px solid #251207;
+        background:
+          linear-gradient(90deg, transparent 12%, rgba(25, 10, 3, .35) 12% 15%, transparent 15% 48%, rgba(25, 10, 3, .35) 48% 52%, transparent 52% 85%, rgba(25, 10, 3, .35) 85% 88%, transparent 88%),
+          linear-gradient(180deg, var(--wood-light), var(--wood) 70%, #351807);
+      }
+
+      .lid {
+        top: 0;
+        height: 73px;
+        border-radius: 125px 125px 12px 12px / 78px 78px 12px 12px;
+        transform-origin: center bottom;
+        transition: transform 1.05s cubic-bezier(.22, .8, .2, 1);
+      }
+
+      .lid::after, .base::after {
+        position: absolute;
+        right: -5px;
+        left: -5px;
+        height: 13px;
+        content: "";
+        border: 2px solid #6c420f;
+        border-right: 0;
+        border-left: 0;
+        background: linear-gradient(#f4ca62, #9c6519);
+      }
+
+      .lid::after { bottom: 7px; }
+
+      .base {
+        bottom: 0;
+        height: 94px;
+        border-radius: 5px 5px 15px 15px;
+      }
+
+      .base::after { top: 25px; }
+
+      .lock {
+        position: absolute;
+        z-index: 2;
+        top: 57px;
+        left: 50%;
+        width: 35px;
+        height: 41px;
+        transform: translateX(-50%);
+        border: 3px solid #71460d;
+        border-radius: 5px;
+        background: linear-gradient(135deg, var(--gold-bright), #bd791b);
+        box-shadow: 0 2px 3px rgba(0, 0, 0, .4);
+        transition: opacity .25s ease .34s;
+      }
+
+      .lock::before {
+        display: block;
+        width: 9px;
+        height: 13px;
+        margin: 9px auto;
+        content: "";
+        border-radius: 50% 50% 3px 3px;
+        background: #4a2b0a;
+      }
+
+      .treasure {
+        position: absolute;
+        z-index: 1;
+        right: 25px;
+        bottom: 34px;
+        left: 25px;
+        height: 50px;
+        opacity: 0;
+        transform: translateY(18px);
+        background: radial-gradient(ellipse at 50% 50%, var(--gold-bright), #d59120 47%, transparent 50%);
+        filter: drop-shadow(0 0 10px rgba(255, 221, 94, .95));
+        transition: opacity .4s ease .45s, transform .6s ease .4s;
+      }
+
+      .sparkle {
+        position: absolute;
+        top: 20%;
+        left: var(--x);
+        width: var(--size);
+        height: var(--size);
+        opacity: 0;
+        transform: rotate(45deg) scale(0);
+        background: var(--gold-bright);
+        box-shadow: 0 0 12px 3px rgba(255, 228, 111, .7);
+      }
+
+      .sparkle:nth-of-type(1) { --x: 10%; --size: 8px; }
+      .sparkle:nth-of-type(2) { --x: 24%; --size: 12px; top: 43%; }
+      .sparkle:nth-of-type(3) { --x: 72%; --size: 9px; top: 12%; }
+      .sparkle:nth-of-type(4) { --x: 88%; --size: 14px; top: 42%; }
+      .sparkle:nth-of-type(5) { --x: 56%; --size: 7px; top: 4%; }
+
+      .message {
+        max-width: 555px;
+        max-height: 0;
+        margin: 0 auto;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: max-height .55s ease .35s, opacity .55s ease .38s, transform .55s ease .38s;
+      }
+
+      .message h2 {
+        margin: 0 0 9px;
+        color: var(--gold-bright);
+        font-size: clamp(1.25rem, 3vw, 1.75rem);
+        font-weight: 400;
+      }
+
+      .message p {
+        margin: 0;
+        color: #e7d7b7;
+        font-size: clamp(.9rem, 2vw, 1.05rem);
+        line-height: 1.55;
+      }
+
+      .finale.opened .glow { opacity: 1; transform: translateX(-50%) scale(1.3); }
+      .finale.opened .lid { transform: rotateX(-118deg) translateY(-8px); }
+      .finale.opened .lock { opacity: 0; }
+      .finale.opened .treasure { opacity: 1; transform: translateY(0); }
+      .finale.opened .sparkle { animation: twinkle 1.35s ease-in-out infinite alternate; }
+      .finale.opened .sparkle:nth-of-type(2) { animation-delay: .28s; }
+      .finale.opened .sparkle:nth-of-type(3) { animation-delay: .56s; }
+      .finale.opened .sparkle:nth-of-type(4) { animation-delay: .8s; }
+      .finale.opened .sparkle:nth-of-type(5) { animation-delay: 1.05s; }
+      .finale.opened .instruction { opacity: 0; transition: opacity .2s ease; }
+      .finale.opened .message { max-height: 180px; opacity: 1; transform: translateY(0); }
+
+      @keyframes twinkle {
+        from { opacity: .15; transform: rotate(45deg) scale(.35); }
+        to { opacity: 1; transform: rotate(45deg) scale(1); }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      }
+
+      /* =========================================================
+         CYPHER QUEST GAMEPLAY-FRAME CONTAINMENT (desktop only)
+
+         Same retrofit every other integrated puzzle gets: the finale's
+         own vw/vh-relative sizing already resolves against THIS iframe's
+         own viewport (not the top-level browser window) once embedded,
+         so it's naturally close to fitting already — this adds the same
+         scale-to-fit safety net as the others so it's guaranteed to fit
+         the actual gameplay-frame area with no scrolling, regardless of
+         how that area is sized (normal vs fullscreen, different desktop
+         resolutions). Overrides spacing only — no structural, visual, or
+         timing change to the finale itself.
+      ========================================================= */
+
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        min-height: 0;
+      }
+
+      .finale {
+        transform-origin: center center;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="finale" id="finale">
+      <section>
+        <p class="eyebrow">Cypher Quest · Final Discovery</p>
+        <h1>The treasure awaits</h1>
+        <p class="instruction" id="instruction">The final lock has yielded.</p>
+
+        <div class="chest-scene" aria-hidden="true">
+          <div class="glow"></div>
+          <i class="sparkle"></i><i class="sparkle"></i><i class="sparkle"></i><i class="sparkle"></i><i class="sparkle"></i>
+          <div class="chest">
+            <div class="treasure"></div>
+            <div class="lid"></div>
+            <div class="base"></div>
+            <div class="lock"></div>
+          </div>
+        </div>
+
+        <div class="message" id="message" role="status" aria-live="polite">
+          <h2>Quest complete</h2>
+          <p>You followed every clue, solved every cipher, and found the treasure. Thank you for playing Cypher Quest.</p>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const finale = document.getElementById("finale");
+
+      /* =========================================================
+         CYPHER QUEST GAMEPLAY-FRAME CONTAINMENT
+
+         Same technique as every other integrated puzzle: scales the
+         finale's natural size down to whatever the iframe's actual
+         available area is. Recalculated on resize and again right after
+         "opened" is added, since the revealed .message content can grow
+         .finale taller than its min-height at that moment.
+      ========================================================= */
+      function fitStage() {
+        finale.style.transform = "none";
+        const rect = finale.getBoundingClientRect();
+        const fit = Math.min(1, window.innerWidth / rect.width, window.innerHeight / rect.height);
+        finale.style.transform = `scale(${fit})`;
+      }
+
+      window.addEventListener("resize", fitStage);
+      fitStage();
+
+      window.addEventListener("load", () => {
+        window.setTimeout(() => {
+        finale.classList.add("opened");
+        fitStage();
+
+        // Lets the existing React host mark this stage complete when this
+        // standalone file is later connected as an iframe puzzle.
+        window.parent.postMessage({ type: "cq:puzzle-complete", id: "final-treasure" }, "*");
+        }, 450);
+      });
+    </script>
+  </body>
+</html>

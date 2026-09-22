@@ -85,11 +85,11 @@ function GameplayScreen({ teamName }) {
         onFirstPuzzleComplete={() => quest.completePuzzle("jigsaw")}
         onKarakuriComplete={() => quest.completePuzzle("karakuri")}
         onForgottenSpiritComplete={() => quest.completePuzzle("forgotten-spirit")}
-        forgottenSpiritClue={quest.discoveredClues.find((clue) => clue.id === "forgotten-spirit")?.japanese}
         onLanternSwitchComplete={() => quest.completePuzzle("lantern-switch")}
         onSamuraiPuzzleComplete={() => quest.completePuzzle("samurai-puzzle")}
         onThreeHiddenDifferencesComplete={() => quest.completePuzzle("three-hidden-differences")}
         onKintsugiShrineComplete={() => quest.completePuzzle("kintsugi-shrine")}
+        onFinalTreasureComplete={() => quest.completePuzzle("final-treasure")}
       />
 
       <InventoryPanel
@@ -125,20 +125,10 @@ function GameplayScreen({ teamName }) {
 
       <KintsugiClueViewer isOpen={kintsugiClueOpen} onClose={() => setKintsugiClueOpen(false)} />
 
-      {/*
-        forgotten-spirit's clue is deliberately excluded from the
-        player-facing Inventory log — it's accessed exclusively from
-        inside the Shogi puzzle itself now (see ForgottenSpiritStage /
-        GameplayArea's forgottenSpiritClue prop, a few lines up). This is
-        a display-only filter: quest.discoveredClues itself (the shared
-        source both this list and the in-puzzle button read from) still
-        includes it, so nothing about progression, session persistence,
-        or the Translator changes — only what's rendered here.
-      */}
       <ClueLogViewer
         isOpen={clueLogOpen}
         onClose={() => setClueLogOpen(false)}
-        clues={quest.discoveredClues.filter((clue) => clue.id !== "forgotten-spirit")}
+        clues={quest.discoveredClues}
       />
 
       <ClueRevealOverlay

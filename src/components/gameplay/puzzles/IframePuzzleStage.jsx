@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { injectPuzzleCaretFix } from "./injectPuzzleCaretFix";
 
 // Generic host for a standalone puzzle HTML page loaded via iframe. The
 // page notifies completion with:
@@ -21,7 +22,12 @@ function IframePuzzleStage({ puzzleId, label, title, src, onComplete, children }
     <>
       <p className="gp-puzzle-label">{label}</p>
       <div className="gp-puzzle-frame">
-        <iframe src={src} title={title} className="gp-puzzle-iframe" />
+        <iframe
+          src={src}
+          title={title}
+          className="gp-puzzle-iframe"
+          onLoad={(event) => injectPuzzleCaretFix(event.currentTarget)}
+        />
         {children}
       </div>
     </>
