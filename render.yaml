@@ -1,0 +1,24 @@
+# Render Blueprint — deploys the Cypher Quest backend as a free, always-on
+# Node service. In the Render dashboard: New -> Blueprint -> point at this
+# repo, Render reads this file and provisions the service below.
+#
+# After it's live, copy its URL (https://cypher-quest-backend.onrender.com,
+# or whatever Render assigns) into:
+#   1. Vercel project settings -> Environment Variables -> VITE_API_URL
+#   2. admin.html -> PRODUCTION_BACKEND_URL constant
+#   3. This file's CORS_ORIGIN value below -> your actual Vercel frontend URL
+services:
+  - type: web
+    name: cypher-quest-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://cypher-quest.prayag26.in,https://cypher-quest-theta.vercel.app
+      - key: ADMIN_RESET_TOKEN
+        generateValue: true

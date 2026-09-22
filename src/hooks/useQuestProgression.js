@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QUEST_STEPS } from "../data/questSteps";
 import { loadSession, saveSession } from "../data/persistence";
+import { completePuzzle as reportPuzzleComplete } from "../api/cypherQuestClient";
 
 const PULSE_MS = 3200;
 
@@ -180,6 +181,17 @@ export function useQuestProgression(teamName) {
       if (puzzle.completionReveal && !puzzle.completionReveal.skipOverlay) {
         setReveal({ japanese: puzzle.completionReveal.japanese });
       }
+
+      // Fire-and-forget: tell the backend so admin monitoring/leaderboard
+      // picks it up. Never awaited, never blocks the UI; the client itself
+      // swallows all errors (backend down, offline, etc).
+      try {
+        const teamId = window.localStorage.getItem("cypherquest_team_id");
+        if (teamId) reportPuzzleComplete(teamId, puzzleId).catch(() => {});
+      } catch {
+        // ignore storage access failures (e.g. private browsing)
+      }
+
       return [...current, puzzleId];
     });
   };
