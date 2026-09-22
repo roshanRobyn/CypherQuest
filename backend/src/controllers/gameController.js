@@ -1,7 +1,19 @@
 import * as gameplayService from "../services/gameplayService.js";
+import { isEventActive } from "../services/eventService.js";
+import { Errors } from "../utils/errors.js";
 
 export async function start(req, reply) {
   const { teamId } = req.body ?? {};
+
+  // The real gate: even a direct/crafted call to this endpoint cannot
+  // activate a session (and therefore cannot unlock puzzle-complete
+  // reporting, see gameplayService.completePuzzle's session check) before
+  // the backend's own clock says the event has started. Registration
+  // (POST /api/teams) is deliberately NOT gated — teams may sign up early.
+  if (!isEventActive()) {
+    throw Errors.eventNotStarted();
+  }
+
   const team = gameplayService.startGame({ teamId });
   reply.send({
     success: true,

@@ -11,6 +11,7 @@ import gameRoutes from "./routes/game.js";
 import puzzlesRoutes from "./routes/puzzles.js";
 import leaderboardRoutes from "./routes/leaderboard.js";
 import adminRoutes from "./routes/admin.js";
+import eventRoutes from "./routes/event.js";
 
 export function buildServer() {
   const fastify = Fastify({ logger: env.NODE_ENV !== "test" });
@@ -28,6 +29,7 @@ export function buildServer() {
   fastify.register(puzzlesRoutes);
   fastify.register(leaderboardRoutes);
   fastify.register(adminRoutes);
+  fastify.register(eventRoutes);
 
   fastify.setErrorHandler(errorHandler);
 
