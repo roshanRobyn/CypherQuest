@@ -29,7 +29,9 @@
 .gp-tabletop .gp-inventory-tab,
 .gp-tabletop .gp-slot-button,
 .gp-tabletop .gp-slot-item,
-.gp-tabletop .gp-map-close {
+.gp-tabletop .gp-map-close,
+.gp-tabletop .gp-fs-clue-note,
+.gp-tabletop .gp-fs-clue-close {
   cursor: pointer !important;
 }
 
@@ -162,6 +164,7 @@
 }
 
 .gp-puzzle-frame {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -174,6 +177,123 @@
   height: 100%;
   border: none;
   display: block;
+}
+
+/* =========================================================
+   FORGOTTEN SPIRIT — in-board discovered-clue note
+
+   Scoped to this one stage only (IframePuzzleStage's optional children
+   slot — every other puzzle stage passes none, so this never appears
+   elsewhere). Shows the SAME Japanese-only clue text the Discovered
+   Clues inventory log used to show for this puzzle (that entry is now
+   filtered out of the log itself — see GameplayScreen.jsx — this is its
+   only player-facing access) — no English, no separate state.
+
+   Position: forgotten-spirit.html's own layout (inspected directly) is
+   a single centered column — board, then status text, then the reset
+   button, stacked and centered as one group inside a max-880px panel
+   that's itself centered in the iframe. There is no board content in
+   the puzzle frame's literal corner: this sits at a 18px inset from
+   that corner, clear of the centered column in every direction, and
+   never over the board itself, which this component (a plain sibling
+   of the <iframe>, absolutely positioned by GameplayArea/React, not by
+   anything inside the iframe's own document) has no way to overlap
+   short of literally sitting where board content is rendered.
+========================================================= */
+
+.gp-fs-clue-note {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 6;
+
+  width: 30px;
+  height: 30px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #fffdf6;
+  border: 1px solid #b39b73;
+  border-radius: 2px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45), inset 0 0 0 2px rgba(201, 166, 101, 0.17);
+  transform: rotate(-3deg);
+
+  color: #16120f;
+  font-family: "Noto Serif JP", "Yu Mincho", Georgia, serif;
+  font-size: 15px;
+
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gp-fs-clue-note:hover {
+  transform: rotate(0deg) scale(1.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.55), inset 0 0 0 2px rgba(201, 166, 101, 0.17);
+}
+
+.gp-fs-clue-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(10, 8, 6, 0.55);
+}
+
+.gp-fs-clue-card {
+  position: relative;
+  width: min(260px, 82%);
+  padding: 22px 22px 18px;
+  text-align: center;
+
+  background: #fffdf6;
+  border: 1px solid #b39b73;
+  border-radius: 2px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 0 0 4px rgba(201, 166, 101, 0.17);
+  transform: rotate(-0.6deg);
+}
+
+.gp-fs-clue-eyebrow {
+  margin: 0 0 8px;
+  color: #936931;
+  font: 700 10px/1.2 system-ui, sans-serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.gp-fs-clue-japanese {
+  margin: 0;
+  color: #16120f;
+  font-family: "Noto Serif JP", "Yu Mincho", Georgia, serif;
+  font-size: 1.9rem;
+  letter-spacing: 0.1em;
+}
+
+.gp-fs-clue-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+
+  width: 26px;
+  height: 26px;
+
+  background: rgba(23, 16, 10, 0.85);
+  border: 1px solid rgba(212, 175, 120, 0.45);
+  border-radius: 50%;
+  color: rgba(230, 210, 170, 0.8);
+
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.gp-fs-clue-close:hover {
+  background: rgba(212, 175, 120, 0.18);
 }
 
 /* =========================================================

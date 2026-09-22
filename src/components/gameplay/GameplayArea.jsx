@@ -14,6 +14,7 @@ function GameplayArea({
   onFirstPuzzleComplete,
   onKarakuriComplete,
   onForgottenSpiritComplete,
+  forgottenSpiritClue,
   onLanternSwitchComplete,
   onSamuraiPuzzleComplete,
   onThreeHiddenDifferencesComplete,
@@ -39,7 +40,7 @@ function GameplayArea({
           )}
 
           {stage === "forgotten-spirit" && (
-            <ForgottenSpiritStage onComplete={onForgottenSpiritComplete} />
+            <ForgottenSpiritStage onComplete={onForgottenSpiritComplete} clueJapanese={forgottenSpiritClue} />
           )}
 
           {stage === "lantern-switch" && (
