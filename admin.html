@@ -856,12 +856,9 @@
         // Convert teamsMap to Array & Sort by highest level reached & total elapsed time
         let teamsArray = Object.values(teamsMap);
 
-        // Filter Teams (match either the displayed "Team N" label or, for
-        // convenience, the underlying free-text name teams typed in)
+        // Filter Teams
         teamsArray = teamsArray.filter(team => {
-          const teamLabel = `team ${team.teamNumber ?? ''}`;
-          const nameMatches =
-            teamLabel.includes(searchVal) || team.teamName.toLowerCase().includes(searchVal);
+          const nameMatches = team.teamName.toLowerCase().includes(searchVal);
           if (!nameMatches) return false;
 
           if (filterLvl === 'ALL') return true;
@@ -886,7 +883,7 @@
           const timeB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : Infinity;
           if (timeA !== timeB) return timeA - timeB;
 
-          return (a.teamNumber ?? 0) - (b.teamNumber ?? 0);
+          return a.teamName.localeCompare(b.teamName);
         });
 
         // Skip the DOM rebuild entirely when nothing that affects the table
@@ -930,16 +927,14 @@
               #${idx + 1}
             </td>`;
 
-          // Team Cell — shown as "Team N" (organizer-assigned number), not
-          // the free-text name teams typed in, to avoid confusion when
-          // reading the board. The real name is still in the title tooltip.
-          const teamLabel = team.teamNumber != null ? `Team ${team.teamNumber}` : escapeHTML(team.teamName);
+          // Team Cell — shows the actual name the team entered.
+          const teamInitials = team.teamName.substring(0, 2).toUpperCase();
           const teamTd = `
             <td>
-              <div class="team-name-cell" title="${escapeHTML(team.teamName)}">
-                <div class="team-avatar">${team.teamNumber != null ? team.teamNumber : '?'}</div>
+              <div class="team-name-cell">
+                <div class="team-avatar">${teamInitials}</div>
                 <div>
-                  <div>${teamLabel}</div>
+                  <div>${escapeHTML(team.teamName)}</div>
                 </div>
               </div>
             </td>`;
