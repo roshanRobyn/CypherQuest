@@ -4,6 +4,7 @@ import "./App.css";
 import outsideImage from "./assets/outside.png";
 import GameplayScreen from "./components/gameplay/GameplayScreen";
 import { useZoomLock } from "./hooks/useZoomLock";
+import { registerAndStart } from "./api/cypherQuestClient";
 
 function App() {
   const zoomLock = useZoomLock();
@@ -39,6 +40,22 @@ function App() {
     }
 
     setError("");
+
+    // Fire-and-forget: tell the backend a team is starting so gameplay
+    // monitoring/admin dashboards pick it up. Never awaited and never
+    // allowed to delay or block the existing scene transition timing —
+    // the client itself swallows all errors (backend down, offline, etc).
+    registerAndStart(name)
+      .then((result) => {
+        if (result.ok) {
+          try {
+            window.localStorage.setItem("cypherquest_team_id", result.data.team.teamId);
+          } catch {
+            // ignore storage failures (e.g. private browsing)
+          }
+        }
+      })
+      .catch(() => {});
 
     // Go to black transition
     setScene("blackout");

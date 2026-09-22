@@ -667,7 +667,8 @@
         <table class="matrix-table">
           <thead>
             <tr>
-              <th>Rank & Team</th>
+              <th>Rank</th>
+              <th>Team</th>
               <th>Status</th>
               <th>L1</th>
               <th>L2</th>
@@ -677,7 +678,6 @@
               <th>L6</th>
               <th>L7</th>
               <th>Total Time</th>
-              <th>Last Active</th>
             </tr>
           </thead>
           <tbody id="matrix-tbody">
@@ -753,6 +753,10 @@
 
       // Load Data from LocalStorage
       function loadData() {
+        // Demo/fallback mode only. While the real backend is reachable,
+        // pollBackend() owns teamsMap — running this too would overwrite it
+        // with empty localStorage data every 1.5s and flash the table.
+        if (backendReachable) return;
         try {
           eventsLog = JSON.parse(localStorage.getItem('cypherquest_events') || '[]');
           teamsMap = JSON.parse(localStorage.getItem('cypherquest_teams') || '{}');
@@ -843,18 +847,21 @@
       }
 
       // Render Leaderboard & Matrix Table
-      function renderMatrixTable() {
-        matrixTbody.innerHTML = '';
+      let lastMatrixSignature = null;
 
+      function renderMatrixTable() {
         const searchVal = searchTeamInput.value.trim().toLowerCase();
         const filterLvl = filterLevelSelect.value;
 
         // Convert teamsMap to Array & Sort by highest level reached & total elapsed time
         let teamsArray = Object.values(teamsMap);
 
-        // Filter Teams
+        // Filter Teams (match either the displayed "Team N" label or, for
+        // convenience, the underlying free-text name teams typed in)
         teamsArray = teamsArray.filter(team => {
-          const nameMatches = team.teamName.toLowerCase().includes(searchVal);
+          const teamLabel = `team ${team.teamNumber ?? ''}`;
+          const nameMatches =
+            teamLabel.includes(searchVal) || team.teamName.toLowerCase().includes(searchVal);
           if (!nameMatches) return false;
 
           if (filterLvl === 'ALL') return true;
@@ -864,13 +871,45 @@
           return team.levelsCleared && team.levelsCleared[lvlNum];
         });
 
-        // Sort teams: completed first, then highest level, then fastest total time
+        // Rank teams by furthest stage reached first (not by full completion
+        // alone — a team that never finishes the last stage still ranks
+        // above one stuck earlier). Among teams tied on stage count, the
+        // team that reached that stage FIRST (earliest lastUpdated
+        // timestamp) ranks higher — this is how "who got furthest first"
+        // is decided even when nobody finishes the whole quest.
         teamsArray.sort((a, b) => {
           const countA = Object.keys(a.levelsCleared || {}).length;
           const countB = Object.keys(b.levelsCleared || {}).length;
           if (countA !== countB) return countB - countA;
-          return a.teamName.localeCompare(b.teamName);
+
+          const timeA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : Infinity;
+          const timeB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : Infinity;
+          if (timeA !== timeB) return timeA - timeB;
+
+          return (a.teamNumber ?? 0) - (b.teamNumber ?? 0);
         });
+
+        // Skip the DOM rebuild entirely when nothing that affects the table
+        // actually changed since the last render. Live timers are ticked
+        // separately (see tickTimers()) without touching this DOM, so a
+        // routine 3s poll that found no new progress no longer causes a
+        // full table flicker/reset — only a real event (puzzle cleared,
+        // team joined, status change) triggers a rebuild.
+        const signature = JSON.stringify({
+          searchVal,
+          filterLvl,
+          teams: teamsArray.map(t => ({
+            n: t.teamName,
+            s: t.status,
+            lc: t.levelsCleared,
+            cl: t.currentLevel,
+            lu: t.lastUpdated,
+          })),
+        });
+        if (signature === lastMatrixSignature) return;
+        lastMatrixSignature = signature;
+
+        matrixTbody.innerHTML = '';
 
         if (teamsArray.length === 0) {
           matrixTbody.innerHTML = `
@@ -885,14 +924,22 @@
         teamsArray.forEach((team, idx) => {
           const tr = document.createElement('tr');
 
-          // Team Cell
-          const teamInitials = team.teamName.substring(0, 2).toUpperCase();
+          // Rank Cell
+          const rankTd = `
+            <td style="font-family:var(--font-mono); font-weight:700; color:var(--text-muted);">
+              #${idx + 1}
+            </td>`;
+
+          // Team Cell — shown as "Team N" (organizer-assigned number), not
+          // the free-text name teams typed in, to avoid confusion when
+          // reading the board. The real name is still in the title tooltip.
+          const teamLabel = team.teamNumber != null ? `Team ${team.teamNumber}` : escapeHTML(team.teamName);
           const teamTd = `
             <td>
-              <div class="team-name-cell">
-                <div class="team-avatar">${teamInitials}</div>
+              <div class="team-name-cell" title="${escapeHTML(team.teamName)}">
+                <div class="team-avatar">${team.teamNumber != null ? team.teamNumber : '?'}</div>
                 <div>
-                  <div>#${idx + 1} ${escapeHTML(team.teamName)}</div>
+                  <div>${teamLabel}</div>
                 </div>
               </div>
             </td>`;
@@ -912,8 +959,8 @@
             if (clearData) {
               levelsTds += `
                 <td>
-                  <span class="lvl-badge cleared" title="Cleared at ${clearData.formattedTime} (${clearData.elapsedTotal})">
-                    ✓ ${clearData.formattedTime || 'Cleared'}
+                  <span class="lvl-badge cleared" title="Cleared at ${clearData.formattedTime} (took ${clearData.elapsedTotal})">
+                    ✓ ${clearData.elapsedTotal || 'Cleared'}
                   </span>
                 </td>`;
             } else if (team.currentLevel === lvl) {
@@ -933,20 +980,21 @@
             }
           }
 
-          // Total Time Cell
+          // Total Time Cell — a live stopwatch, not a frozen poll snapshot.
+          // Ticks client-side every second via tickTimers() below, counting
+          // up from the moment the team clicked "Enter" (team.startedAt,
+          // set server-side by POST /api/game/start). Frozen at totalTime
+          // once the team's status is COMPLETED.
           const totalTimeTd = `
             <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-cyan);">
-              ${team.totalTime || 'In Progress'}
+              <span class="live-timer"
+                data-started-at="${team.startedAt || ''}"
+                data-status="${team.status || ''}"
+                data-frozen-time="${team.totalTime || ''}"
+              >--:--</span>
             </td>`;
 
-          // Last Active Cell
-          const lastActiveStr = team.lastUpdated ? new Date(team.lastUpdated).toLocaleTimeString() : '--:--';
-          const lastActiveTd = `
-            <td style="font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted);">
-              ${lastActiveStr}
-            </td>`;
-
-          tr.innerHTML = teamTd + statusTd + levelsTds + totalTimeTd + lastActiveTd;
+          tr.innerHTML = rankTd + teamTd + statusTd + levelsTds + totalTimeTd;
           matrixTbody.appendChild(tr);
         });
       }
@@ -1105,14 +1153,30 @@
       });
 
       // Clear Activity Logs
-      btnClear.addEventListener('click', () => {
-        if (confirm('Are you sure you want to reset all team progress logs and activity events?')) {
-          eventsLog = [];
-          teamsMap = {};
-          localStorage.removeItem('cypherquest_events');
-          localStorage.removeItem('cypherquest_teams');
-          renderDashboard();
+      btnClear.addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to reset all team progress logs and activity events?')) return;
+
+        eventsLog = [];
+        teamsMap = {};
+        localStorage.removeItem('cypherquest_events');
+        localStorage.removeItem('cypherquest_teams');
+        lastMatrixSignature = null;
+
+        // Also clear the real backend store — otherwise the next 3s poll
+        // just re-fetches the old data and the reset looks like a no-op.
+        if (backendReachable) {
+          try {
+            const res = await fetch(`${BACKEND_API_URL}/api/admin/reset`, { method: 'POST' });
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !json || json.success !== true) {
+              alert('Backend refused the reset (dev-only endpoint, disabled in production).');
+            }
+          } catch (e) {
+            alert('Could not reach backend to reset its data.');
+          }
         }
+
+        renderDashboard();
       });
 
       // Search & Filter Listeners
@@ -1133,9 +1197,145 @@
         );
       }
 
-      // Initial Load & Fallback Polling every 1.5s
+      // ---------------------------------------------------------------
+      // Optional real backend integration (additive, non-breaking).
+      //
+      // admin.html remains a fully standalone mock dashboard: it keeps
+      // reading/writing localStorage and reacting to BroadcastChannel /
+      // storage events exactly as before. If the real Cypher Quest
+      // backend is reachable, we ADDITIONALLY poll it every 3s and, when
+      // reachable, render from live backend data instead of localStorage.
+      // If the backend is unreachable (not running, CORS blocked, opened
+      // via file://, etc.) this silently does nothing extra and the
+      // existing localStorage/"Simulate Event" demo mode keeps working.
+      // ---------------------------------------------------------------
+      // This is a static HTML file — it does NOT go through Vite, so it
+      // cannot read import.meta.env.VITE_API_URL the way the React app
+      // does. Fill in PRODUCTION_BACKEND_URL below once the backend is
+      // deployed (e.g. to Render — see backend/README.md "Deployment").
+      // Locally (localhost/127.0.0.1) this always talks to localhost:3001
+      // regardless of that value, so local dev is unaffected.
+      const PRODUCTION_BACKEND_URL = 'https://REPLACE-ME.onrender.com';
+      const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+      const BACKEND_API_URL =
+        window.CYPHERQUEST_API_URL || (IS_LOCAL ? 'http://localhost:3001' : PRODUCTION_BACKEND_URL);
+      let backendReachable = false;
+
+      // Must stay in sync with QUEST_STEPS order in src/data/questSteps.js
+      // and backend/src/config/puzzles.js.
+      const PUZZLE_ID_ORDER = [
+        'jigsaw',
+        'karakuri',
+        'forgotten-spirit',
+        'lantern-switch',
+        'samurai-puzzle',
+        'three-hidden-differences',
+        'kintsugi-shrine',
+      ];
+
+      function levelFromPuzzleId(puzzleId) {
+        const idx = PUZZLE_ID_ORDER.indexOf(puzzleId);
+        return idx === -1 ? null : idx + 1;
+      }
+
+      function formatMs(ms) {
+        if (typeof ms !== 'number' || isNaN(ms)) return '00:00';
+        const totalSec = Math.round(ms / 1000);
+        const m = String(Math.floor(totalSec / 60)).padStart(2, '0');
+        const s = String(totalSec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      // Transform backend team records into the same shape renderKPIs()/
+      // renderMatrixTable() already expect from teamsMap, so no rendering
+      // code needs to change.
+      function transformBackendTeams(teams) {
+        const map = {};
+        teams.forEach(team => {
+          const levelsCleared = {};
+          (team.completedPuzzles || []).forEach(cp => {
+            const lvl = levelFromPuzzleId(cp.puzzleId);
+            if (lvl) {
+              levelsCleared[lvl] = {
+                formattedTime: cp.completedAt ? new Date(cp.completedAt).toLocaleTimeString() : '',
+                elapsedTotal: formatMs(cp.timeTakenMs),
+              };
+            }
+          });
+
+          const lastEvent =
+            team.completedPuzzles && team.completedPuzzles.length
+              ? team.completedPuzzles[team.completedPuzzles.length - 1].completedAt
+              : team.startedAt;
+
+          map[team.teamName] = {
+            teamName: team.teamName,
+            teamNumber: team.teamNumber ?? null,
+            status: team.status,
+            levelsCleared,
+            currentLevel: levelFromPuzzleId(team.currentPuzzle),
+            totalTime: team.totalTimeMs != null ? formatMs(team.totalTimeMs) : null,
+            lastUpdated: lastEvent || team.createdAt,
+            // Server-authoritative moment the team clicked "Enter" — the
+            // live stopwatch (tickTimers()) counts up from this.
+            startedAt: team.startedAt || null,
+          };
+        });
+        return map;
+      }
+
+      async function pollBackend() {
+        try {
+          const res = await fetch(`${BACKEND_API_URL}/api/teams`, { method: 'GET' });
+          if (!res.ok) throw new Error('bad status');
+          const json = await res.json();
+          if (!json || json.success !== true || !Array.isArray(json.data)) throw new Error('bad payload');
+
+          backendReachable = true;
+          teamsMap = transformBackendTeams(json.data);
+          renderDashboard();
+        } catch (e) {
+          // Backend not reachable (or CORS/offline) — fall back to
+          // whatever loadData()'s localStorage polling already rendered.
+          backendReachable = false;
+        }
+      }
+
+      // Live stopwatch ticker — counts up every second from each team's
+      // startedAt independently of the 3s poll, so the clock doesn't visibly
+      // jump/stall between polls. Only touches the timer spans' text, never
+      // the table DOM, so it never causes a layout flicker.
+      function tickTimers() {
+        document.querySelectorAll('.live-timer').forEach(el => {
+          const status = el.dataset.status;
+          const frozenTime = el.dataset.frozenTime;
+
+          if (status === 'COMPLETED' && frozenTime) {
+            el.textContent = frozenTime;
+            return;
+          }
+
+          const startedAt = el.dataset.startedAt;
+          if (!startedAt) {
+            el.textContent = '--:--';
+            return;
+          }
+
+          const elapsedMs = Date.now() - new Date(startedAt).getTime();
+          el.textContent = formatMs(Math.max(0, elapsedMs));
+        });
+      }
+
+      // Initial Load & Fallback Polling every 1.5s (localStorage demo mode)
       loadData();
       setInterval(loadData, 1500);
+
+      // Additive backend polling every 3s (real data, when reachable)
+      pollBackend();
+      setInterval(pollBackend, 3000);
+
+      tickTimers();
+      setInterval(tickTimers, 1000);
 
     })();
   </script>
