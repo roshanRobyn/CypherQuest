@@ -5,7 +5,7 @@ import { useEffect } from "react";
 //   window.parent.postMessage({ type: "cq:puzzle-complete", id: "<puzzleId>" }, "*")
 // Reused by every iframe-based puzzle stage so wiring a new one up is just
 // picking a puzzleId/src, not writing new message-listener plumbing.
-function IframePuzzleStage({ puzzleId, label, title, src, onComplete }) {
+function IframePuzzleStage({ puzzleId, label, title, src, onComplete, children }) {
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === "cq:puzzle-complete" && event.data?.id === puzzleId) {
@@ -22,6 +22,7 @@ function IframePuzzleStage({ puzzleId, label, title, src, onComplete }) {
       <p className="gp-puzzle-label">{label}</p>
       <div className="gp-puzzle-frame">
         <iframe src={src} title={title} className="gp-puzzle-iframe" />
+        {children}
       </div>
     </>
   );

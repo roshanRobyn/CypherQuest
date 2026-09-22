@@ -100,14 +100,35 @@
             drop-shadow(0 0 6px rgba(255,255,255,.9));
     }
 
-    .camp {
-        width: 9px !important;
-        height: 9px !important;
+    /*
+      The visible dot (.camp-dot, unchanged size/appearance from before)
+      sits centered inside a larger, fully invisible .camp-wrap — that
+      wrapper is the marker's actual icon element, so it's what Leaflet
+      sizes/positions and binds click/hover to. This only enlarges the
+      clickable/hoverable hit area; nothing about how the dot looks
+      changes. Shared by every quest-location dot (the only markers using
+      the camp() icon factory below) — not a per-location special case.
+    */
+    .camp-wrap {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .camp-dot {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 9px;
+        height: 9px;
+        margin-left: -4.5px;
+        margin-top: -4.5px;
         border-radius: 50%;
         border: 1.5px solid #f3eee0;
         box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 4px rgba(0,0,0,.8);
         box-sizing: border-box;
         background: #191817;
+        pointer-events: none;
     }
 
     .minor-label {
@@ -212,11 +233,15 @@
         iconAnchor: [9.5, 9.5]
     });
 
+    // 28x28 invisible hit area, centered on the same point the 9px
+    // visible dot (.camp-dot) always sat at — iconAnchor stays exactly
+    // centered on the box just like the old 9x9/4.5,4.5 pairing did, so
+    // the dot's actual map position is unchanged.
     const camp = () => L.divIcon({
-        className: "camp",
-        html: "",
-        iconSize: [9, 9],
-        iconAnchor: [4.5, 4.5]
+        className: "camp-wrap",
+        html: '<span class="camp-dot"></span>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
     });
 
     const icons = {

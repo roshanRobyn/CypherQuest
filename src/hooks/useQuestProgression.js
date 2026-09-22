@@ -1,8 +1,40 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { QUEST_STEPS } from "../data/questSteps";
+import { loadSession, saveSession } from "../data/persistence";
 import { completePuzzle as reportPuzzleComplete } from "../api/cypherQuestClient";
 
 const PULSE_MS = 3200;
+
+// Only the authoritative progression fields are persisted — never
+// justUnlockedTool/justUnlockedItem (one-shot pulse-animation triggers)
+// or reveal (a dismissible popup) — those are transient UI state, and
+// restoring them would replay animations/popups the player already
+// dismissed. discoveredClues isn't listed either: it's derived from
+// completedPuzzles + QUEST_STEPS (see below), so restoring
+// completedPuzzles alone reconstructs it.
+//
+// Defensive by construction: anything missing, the wrong type, or (for
+// completedPuzzles/currentPuzzle) naming a puzzle id that no longer
+// exists in QUEST_STEPS is dropped rather than trusted, so a corrupted or
+// stale record can never crash the app or leave it in an inconsistent
+// state — it just falls back to that one field's normal default.
+function sanitizeQuestState(rawQuest) {
+  const validPuzzleIds = new Set(QUEST_STEPS.map((puzzle) => puzzle.id));
+  const stringArray = (value) => (Array.isArray(value) ? value.filter((item) => typeof item === "string") : []);
+
+  const currentPuzzle =
+    typeof rawQuest?.currentPuzzle === "string" && validPuzzleIds.has(rawQuest.currentPuzzle)
+      ? rawQuest.currentPuzzle
+      : QUEST_STEPS[0].id;
+
+  return {
+    currentPuzzle,
+    completedPuzzles: stringArray(rawQuest?.completedPuzzles).filter((id) => validPuzzleIds.has(id)),
+    availableTools: stringArray(rawQuest?.availableTools),
+    unlockedItems: stringArray(rawQuest?.unlockedItems),
+    unlockedLocations: stringArray(rawQuest?.unlockedLocations),
+  };
+}
 
 /*
   Central, reusable sequential game-state system.
@@ -33,15 +65,43 @@ const PULSE_MS = 3200;
   adding an entry to that file; this engine and its call sites in
   GameplayScreen do not need to change.
 */
-export function useQuestProgression() {
-  const [currentPuzzle, setCurrentPuzzle] = useState(QUEST_STEPS[0].id);
-  const [completedPuzzles, setCompletedPuzzles] = useState([]);
-  const [availableTools, setAvailableTools] = useState([]);
-  const [unlockedItems, setUnlockedItems] = useState([]);
-  const [unlockedLocations, setUnlockedLocations] = useState([]);
+export function useQuestProgression(teamName) {
+  // Each lazy initializer below runs exactly once, on this hook's first
+  // mount, never again on subsequent renders — so recomputing
+  // sanitizeQuestState(loadSession()?.quest) independently per field
+  // (rather than sharing one precomputed value via a ref, which would
+  // read that ref during render) is still only ever done once per field,
+  // not per render.
+  const [currentPuzzle, setCurrentPuzzle] = useState(
+    () => sanitizeQuestState(loadSession()?.quest).currentPuzzle
+  );
+  const [completedPuzzles, setCompletedPuzzles] = useState(
+    () => sanitizeQuestState(loadSession()?.quest).completedPuzzles
+  );
+  const [availableTools, setAvailableTools] = useState(
+    () => sanitizeQuestState(loadSession()?.quest).availableTools
+  );
+  const [unlockedItems, setUnlockedItems] = useState(
+    () => sanitizeQuestState(loadSession()?.quest).unlockedItems
+  );
+  const [unlockedLocations, setUnlockedLocations] = useState(
+    () => sanitizeQuestState(loadSession()?.quest).unlockedLocations
+  );
   const [justUnlockedTool, setJustUnlockedTool] = useState(null);
   const [justUnlockedItem, setJustUnlockedItem] = useState(null);
   const [reveal, setReveal] = useState(null);
+
+  // Persist on every change to any authoritative field, so a browser
+  // refresh at literally any point (mid-puzzle, right after a completion
+  // reveal, on the map, right after translating) has nothing but the
+  // instant before it to lose. Cheap: a handful of small arrays/strings,
+  // not the whole app.
+  useEffect(() => {
+    saveSession({
+      teamName,
+      quest: { currentPuzzle, completedPuzzles, availableTools, unlockedItems, unlockedLocations },
+    });
+  }, [teamName, currentPuzzle, completedPuzzles, availableTools, unlockedItems, unlockedLocations]);
 
   const puzzleById = useRef(new Map(QUEST_STEPS.map((puzzle) => [puzzle.id, puzzle])));
   const puzzleByLocationId = useRef(

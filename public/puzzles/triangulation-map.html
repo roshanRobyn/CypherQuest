@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Three Bearings</title>
+<style>
+  :root{
+    --ink:#f1e6ce;
+    --gold:#d4af78;
+    --gold-dim:rgba(212,175,120,.35);
+    --gold-mid:rgba(212,175,120,.55);
+    --gold-bright:rgba(230,195,130,.9);
+    --paper:#fffdf6;
+    --paper-ink:#211c16;
+    --paper-border:#b39b73;
+    --amber:#c8785a;
+    --panel-a:#2a1b10;
+    --panel-b:#1a1208;
+    --panel-c:#241609;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; margin:0; overflow:hidden; }
+  * { caret-color: transparent; }
+  body{
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--ink);
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.62) 100%),
+      linear-gradient(160deg, #1a1208 0%, #0a0806 100%);
+  }
+  button{ font-family:inherit; }
+
+  #stage{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+
+  /* =========================================================
+     IDLE STATE — before the Triangulator is taken up
+  ========================================================= */
+  #idleScreen{
+    position:absolute; inset:0; z-index:5;
+    display:flex; align-items:center; justify-content:center;
+    transition: opacity .5s ease;
+  }
+  #idleScreen.hidden{ opacity:0; pointer-events:none; }
+
+  .idle-card{
+    width:min(440px,86vw);
+    padding:30px 32px 26px;
+    text-align:center;
+    background:
+      radial-gradient(ellipse at top left, rgba(224,199,150,.12), transparent 60%),
+      linear-gradient(160deg, var(--panel-a) 0%, var(--panel-b) 55%, var(--panel-c) 100%);
+    border:1px solid var(--gold-dim);
+    border-radius:6px;
+    box-shadow: 0 30px 70px rgba(0,0,0,.65), inset 0 0 50px rgba(0,0,0,.55);
+  }
+  .idle-eyebrow{
+    margin:0 0 8px; letter-spacing:.32em; font-size:.7rem;
+    text-transform:uppercase; color:rgba(230,210,170,.6);
+  }
+  .idle-title{ margin:0 0 14px; font-size:1.5rem; font-weight:500; letter-spacing:.02em; color:var(--ink); }
+  .idle-copy{ margin:0 0 22px; font-size:.88rem; line-height:1.55; color:rgba(230,210,170,.78); }
+
+  .activate-tab{
+    display:inline-flex; align-items:center; gap:10px;
+    padding:11px 26px;
+    background: linear-gradient(160deg, #3a2716, #241608);
+    border:1px solid var(--gold-mid);
+    border-radius:4px;
+    color:rgba(230,210,170,.92);
+    font-size:.78rem; letter-spacing:.18em; text-transform:uppercase;
+    cursor:pointer;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .activate-tab:hover{
+    background: linear-gradient(160deg, #4a331d, #2c1a0c);
+    border-color: var(--gold);
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(212,175,120,.25);
+  }
+  .activate-glyph{ font-size:1.05rem; line-height:1; }
+
+  /* =========================================================
+     MAP NAVIGATION MODE
+  ========================================================= */
+  #mapNav{
+    position:absolute; inset:0; z-index:2;
+    opacity:0; pointer-events:none;
+    transition: opacity .6s ease;
+  }
+  #mapNav.open{ opacity:1; pointer-events:auto; }
+
+  #mapVignette{
+    position:absolute; inset:0; pointer-events:none; z-index:3;
+    background:
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 38%, rgba(0,0,0,.66) 100%),
+      linear-gradient(rgba(5,4,2,.25), rgba(5,4,2,.4));
+  }
+
+  #mapWrap{
+    position:absolute;
+    top:50%; left:50%;
+    height:min(94vh, calc(94vw * 1536 / 1455));
+    aspect-ratio: 1455 / 1536;
+    transform: translate(-50%,-50%) scale(.94);
+    transition: transform 1s cubic-bezier(.19,1,.22,1);
+    border-radius:4px;
+    overflow:hidden;
+    box-shadow: 0 40px 90px rgba(0,0,0,.7), 0 0 0 1px rgba(212,175,120,.3);
+    background:#eee7d7;
+  }
+  #mapNav.open #mapWrap{ transform: translate(-50%,-50%) scale(1); }
+
+  #mapImg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; filter:sepia(.08) contrast(1.02); }
+
+  #linesLayer{ position:absolute; inset:0; width:100%; height:100%; z-index:4; }
+
+  .landmark{
+    position:absolute; z-index:5;
+    transform:translate(-50%,-50%);
+    width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:default;
+  }
+  .landmark-dot{
+    width:9px; height:9px; border-radius:50%;
+    background:#191817; border:1.5px solid #f3eee0;
+    box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 4px rgba(0,0,0,.8);
+    transition: box-shadow .25s ease, transform .25s ease;
+  }
+  .landmark.on-target .landmark-dot{
+    box-shadow: 0 0 0 1px rgba(20,20,20,.9), 0 0 10px rgba(230,195,130,.85);
+    transform:scale(1.25);
+  }
+  .landmark.surveyed .landmark-dot{
+    background:#2c2216; border-color: var(--gold-bright);
+  }
+  .landmark-label{
+    position:absolute; top:16px; left:50%; transform:translateX(-50%);
+    white-space:nowrap;
+    padding:4px 8px;
+    background:rgba(35,32,28,.94);
+    color:#f7f0dc; border:1px solid var(--gold-mid); border-radius:2px;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase;
+    box-shadow:0 2px 8px rgba(0,0,0,.35);
+    pointer-events:none;
+  }
+  .landmark-mark{
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    font-size:11px; color: var(--gold-bright);
+    opacity:0; transition: opacity .3s ease;
+    pointer-events:none;
+  }
+  .landmark.surveyed .landmark-mark{ opacity:1; }
+
+  /* =========================================================
+     TRIANGULATOR INSTRUMENT
+  ========================================================= */
+  #triangulator{
+    position:absolute; z-index:8;
+    width:200px; height:200px;
+    margin-left:-100px; margin-top:-100px;
+    opacity:0; transform:scale(.4);
+    transition: opacity .5s ease, transform .5s cubic-bezier(.2,1.4,.4,1);
+  }
+  #triangulator.visible{ opacity:1; transform:scale(1); }
+  #triangulator.dragging{ transition:none; }
+
+  .tri-ring{
+    position:absolute; inset:0; border-radius:50%;
+    background: radial-gradient(circle at 34% 28%, #d9ba7c 0%, #96762f 55%, #402c14 100%);
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,.55),
+      0 10px 26px rgba(0,0,0,.6),
+      inset 0 1px 2px rgba(255,245,220,.4),
+      inset 0 -4px 8px rgba(0,0,0,.55);
+    cursor: grab;
+  }
+  #triangulator.dragging .tri-ring{ cursor:grabbing; }
+
+  .tri-face{
+    position:absolute; inset:14px; border-radius:50%;
+    background: radial-gradient(circle at 38% 34%, #f1e6c4 0%, #ddc78f 55%, #b79a5e 100%);
+    box-shadow:
+      inset 0 2px 5px rgba(70,48,16,.55),
+      inset 0 0 14px rgba(90,63,22,.35),
+      0 0 0 1px rgba(60,42,16,.5);
+  }
+
+  .tri-tick{ position:absolute; top:50%; left:50%; width:1px; background:rgba(70,48,16,.4); transform-origin:center top; }
+  .tri-tick.major{ background:rgba(58,42,20,.65); width:1.5px; }
+
+  .tri-letter{
+    position:absolute; color:#3a2a14; font-family:Georgia,serif; font-weight:700;
+    font-size:11px; letter-spacing:.02em; text-shadow:0 1px 0 rgba(255,245,220,.4);
+  }
+  .tri-n{ top:9px; left:50%; transform:translateX(-50%); }
+  .tri-s{ bottom:9px; left:50%; transform:translateX(-50%); }
+  .tri-e{ right:9px; top:50%; transform:translateY(-50%); }
+  .tri-w{ left:9px; top:50%; transform:translateY(-50%); }
+
+  .tri-arm{
+    position:absolute; top:50%; left:50%; width:100%; height:100%;
+    margin-left:-50%; margin-top:-50%;
+    pointer-events:none;
+    transform: rotate(0deg);
+  }
+  .tri-arm-bar{
+    position:absolute; left:50%; top:8%; bottom:8%; width:2px; margin-left:-1px;
+    background: linear-gradient(180deg, rgba(30,20,10,.85), rgba(30,20,10,.35) 46%, rgba(30,20,10,.35) 54%, rgba(30,20,10,.85));
+    transition: box-shadow .25s ease, background .25s ease;
+  }
+  .tri-sight{
+    position:absolute; left:50%; top:8%; width:14px; height:14px; margin-left:-7px; margin-top:-7px;
+    border:2px solid rgba(30,20,10,.75); border-radius:50%;
+    background:rgba(241,230,196,.5);
+    cursor: grab;
+    pointer-events:auto;
+  }
+  #triangulator.dragging-rotate .tri-sight{ cursor:grabbing; }
+
+  #triangulator.aligned .tri-arm-bar{
+    background: linear-gradient(180deg, var(--gold-bright), rgba(230,195,130,.4) 46%, rgba(230,195,130,.4) 54%, var(--gold-bright));
+    box-shadow: 0 0 10px rgba(230,195,130,.7);
+  }
+  #triangulator.aligned .tri-sight{ border-color: var(--gold-bright); box-shadow:0 0 10px rgba(230,195,130,.6); }
+
+  .tri-hub{
+    position:absolute; top:50%; left:50%; width:26px; height:26px; margin-left:-13px; margin-top:-13px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #f1e0ac, #8a6a34);
+    box-shadow: 0 1px 3px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.5);
+    cursor: grab; z-index:2;
+  }
+  #triangulator.dragging .tri-hub{ cursor:grabbing; }
+
+  .tri-readout{
+    position:absolute; left:50%; bottom:-30px; transform:translateX(-50%);
+    padding:4px 12px;
+    background: rgba(18,12,6,.9);
+    border:1px solid var(--gold-mid); border-radius:3px;
+    font-size:.78rem; letter-spacing:.1em; color:rgba(230,210,170,.9);
+    white-space:nowrap;
+    transition: color .2s ease, border-color .2s ease;
+  }
+  #triangulator.aligned .tri-readout{ color:var(--gold-bright); border-color:var(--gold-bright); }
+
+  @keyframes tri-resist{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-4px); }
+    40%{ transform:translateX(4px); }
+    60%{ transform:translateX(-3px); }
+    80%{ transform:translateX(3px); }
+  }
+  #triangulator.resist{ animation: tri-resist .4s ease; }
+  #triangulator.resist .tri-ring{ box-shadow: 0 0 0 1px rgba(0,0,0,.55), 0 0 18px rgba(200,120,90,.55), inset 0 1px 2px rgba(255,245,220,.4), inset 0 -4px 8px rgba(0,0,0,.55); }
+
+  /* =========================================================
+     BEARING LINES (SVG)
+  ========================================================= */
+  .bearing-line{
+    stroke: rgba(58,42,20,.55);
+    stroke-width: 2.4;
+    stroke-dasharray: 3 7;
+    stroke-linecap: round;
+    fill:none;
+  }
+  .bearing-line.aligned{ stroke: rgba(230,195,130,.85); }
+  .bearing-line.locked{
+    stroke: rgba(133,49,54,.72);
+    stroke-dasharray: none;
+    stroke-width: 2.6;
+  }
+  .bearing-line.converge{ animation: line-pulse 1.6s ease-in-out infinite; }
+  @keyframes line-pulse{ 0%,100%{ opacity:.72; } 50%{ opacity:1; } }
+
+  .intersection-mark{ opacity:0; transition: opacity 1.1s ease; }
+  .intersection-mark.show{ opacity:1; }
+
+  /* =========================================================
+     FIELD NOTES PANEL
+  ========================================================= */
+  #fieldNotes{
+    position:absolute; top:26px; right:30px; z-index:9;
+    width:230px; padding:18px 18px 14px;
+    background: linear-gradient(180deg, rgba(35,24,13,.92), rgba(18,12,6,.94));
+    border:1px solid var(--gold-dim); border-radius:4px;
+    box-shadow: 0 18px 40px rgba(0,0,0,.55);
+    opacity:0; transform:translateY(-10px);
+    transition: opacity .5s ease .2s, transform .5s ease .2s;
+  }
+  #mapNav.open #fieldNotes{ opacity:1; transform:translateY(0); }
+
+  #fieldNotes h2{
+    margin:0 0 12px; font-size:.66rem; letter-spacing:.28em;
+    text-transform:uppercase; color:rgba(230,210,170,.6); text-align:center; font-weight:400;
+  }
+  .note-row{
+    display:flex; align-items:baseline; justify-content:space-between;
+    padding:8px 0; border-top:1px solid rgba(212,175,120,.12);
+    font-size:.78rem; color:rgba(230,210,170,.85);
+  }
+  .note-row:first-of-type{ border-top:none; }
+  .note-name{ letter-spacing:.02em; }
+  .note-bearing{ color: var(--gold); font-variant-numeric: tabular-nums; }
+  .note-row.done .note-name{ color: var(--gold-bright); }
+  .note-row.done .note-name::before{ content:"✓ "; }
+
+  /* =========================================================
+     STATE HUD (bottom center)
+  ========================================================= */
+  #hud{
+    position:absolute; bottom:34px; left:50%; transform:translateX(-50%);
+    z-index:9; text-align:center;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  #hudLabel{
+    padding:7px 20px;
+    background: rgba(18,12,6,.85);
+    border:1px solid var(--gold-dim); border-radius:3px;
+    font-size:.72rem; letter-spacing:.3em; text-transform:uppercase;
+    color:rgba(230,210,170,.85);
+    transition: color .25s ease, border-color .25s ease;
+  }
+  #hudLabel.good{ color:var(--gold-bright); border-color:var(--gold-bright); }
+  #hudLabel.bad{ color:#d99a86; border-color:rgba(200,120,90,.6); }
+
+  #lockBtn{
+    padding:9px 26px;
+    background: linear-gradient(160deg, #3a2716, #241608);
+    border:1px solid var(--gold-mid); border-radius:4px;
+    color:rgba(230,210,170,.92);
+    font-size:.76rem; letter-spacing:.16em; text-transform:uppercase;
+    cursor:pointer;
+    opacity:0; pointer-events:none; transform:translateY(6px);
+    transition: opacity .25s ease, transform .25s ease, background .2s ease, border-color .2s ease;
+  }
+  #lockBtn.shown{ opacity:1; pointer-events:auto; transform:translateY(0); }
+  #lockBtn:hover{ background: linear-gradient(160deg, #4a331d, #2c1a0c); border-color:var(--gold); }
+
+  /* =========================================================
+     TOP-RIGHT / TOP-LEFT CONTROLS
+  ========================================================= */
+  #exitBtn, #resetBtn{
+    position:absolute; z-index:10;
+    width:32px; height:32px;
+    background: rgba(18,12,6,.85);
+    border:1px solid var(--gold-dim); border-radius:50%;
+    color:rgba(230,210,170,.75);
+    cursor:pointer; font-size:.85rem;
+    opacity:0; pointer-events:none;
+    transition: opacity .3s ease .3s, background .2s ease, border-color .2s ease;
+  }
+  #mapNav.open #exitBtn, #mapNav.open #resetBtn{ opacity:1; pointer-events:auto; }
+  #exitBtn{ top:26px; left:30px; }
+  #resetBtn{ top:26px; left:70px; font-size:.7rem; }
+  #exitBtn:hover, #resetBtn:hover{ background: rgba(212,175,120,.16); border-color: var(--gold-mid); }
+
+  /* =========================================================
+     DISCOVERY OVERLAY
+  ========================================================= */
+  #discoveryOverlay{
+    position:fixed; inset:0; z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    background: rgba(4,3,2,.72);
+    backdrop-filter: blur(2px);
+    transition: opacity .5s ease;
+  }
+  #discoveryOverlay.show{ opacity:1; pointer-events:auto; }
+
+  .reveal-card{
+    width:min(420px,88vw);
+    padding:32px 30px 27px;
+    text-align:center;
+    background:#fffdf6;
+    border:1px solid #b39b73; border-radius:2px;
+    box-shadow: 0 20px 55px rgba(0,0,0,.5), inset 0 0 0 5px rgba(201,166,101,.17);
+    transform: rotate(-.6deg) scale(.94);
+    opacity:0;
+    transition: transform .5s cubic-bezier(.19,1,.22,1), opacity .5s ease;
+  }
+  #discoveryOverlay.show .reveal-card{ transform: rotate(-.6deg) scale(1); opacity:1; }
+
+  .reveal-eyebrow{ margin:0 0 6px; color:#936931; font:700 11px/1.2 system-ui,sans-serif; letter-spacing:.22em; text-transform:uppercase; }
+  .reveal-heading{ margin:0 0 12px; color:#211c16; font-size:1.3rem; font-weight:500; }
+  .reveal-seal{ margin:6px auto 16px; width:64px; height:64px; }
+  .reveal-note{ margin:0 0 20px; color:#6a5d4e; font-size:.85rem; font-style:italic; line-height:1.5; }
+  .reveal-btn{
+    padding:9px 24px;
+    background:#704931; border:1px solid #896d4d; border-radius:3px;
+    color:#fffdf7; font:700 12px/1 system-ui,sans-serif; letter-spacing:.09em; text-transform:uppercase;
+    cursor:pointer; box-shadow:0 2px 0 #482c1c;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .reveal-btn:hover{ background:#85583b; transform:translateY(-1px); }
+
+  /* =========================================================
+     DEV PANEL
+  ========================================================= */
+  #devToggle{
+    position:absolute; bottom:10px; left:10px; z-index:30;
+    width:22px; height:22px; border-radius:50%;
+    background:rgba(0,0,0,.3); border:1px solid rgba(212,175,120,.25);
+    color:rgba(230,210,170,.4); font-size:.65rem;
+    cursor:pointer; display:none; align-items:center; justify-content:center;
+  }
+  #devToggle.enabled{ display:flex; }
+
+  #devPanel{
+    position:absolute; bottom:40px; left:10px; z-index:30;
+    width:280px; max-height:70vh; overflow:auto;
+    padding:14px;
+    background:rgba(10,8,5,.95); border:1px solid rgba(212,175,120,.3); border-radius:4px;
+    font: 11px/1.5 "Courier New", monospace; color:#d8cba9;
+    display:none;
+  }
+  #devPanel.open{ display:block; }
+  #devPanel h3{ margin:0 0 6px; font-size:10px; letter-spacing:.1em; color:var(--gold); text-transform:uppercase; }
+  #devPanel table{ width:100%; border-collapse:collapse; margin-bottom:10px; }
+  #devPanel td{ padding:1px 0; border-bottom:1px solid rgba(212,175,120,.08); }
+  #devPanel button{
+    width:100%; margin-top:4px; padding:6px; background:#241608; border:1px solid var(--gold-dim);
+    color:#e6d2aa; cursor:pointer; font:11px monospace;
+  }
+  #devPanel button:hover{ background:#3a2716; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <div id="idleScreen">
+    <div class="idle-card">
+      <p class="idle-eyebrow">A weight in the satchel, unfamiliar</p>
+      <h1 class="idle-title">The Triangulator</h1>
+      <p class="idle-copy">A brass sighting instrument, its ring engraved with degrees long worn smooth. Three landmarks are known. Somewhere between their bearings lies a place the map itself does not name.</p>
+      <button type="button" class="activate-tab" id="activateBtn">
+        <span class="activate-glyph">&#9737;</span>
+        <span>Take Up the Triangulator</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="mapNav">
+    <div id="mapVignette"></div>
+
+    <div id="mapWrap">
+      <img id="mapImg" src="/Maps/izuhara_reference.png" alt="Izuhara reference map" draggable="false">
+      <svg id="linesLayer" viewBox="0 0 1455 1536" preserveAspectRatio="none"></svg>
+
+      <div id="landmarksLayer"></div>
+
+      <div id="triangulator" aria-label="Triangulator instrument">
+        <div class="tri-ring"></div>
+        <div class="tri-face"></div>
+        <div class="tri-ticks"></div>
+        <span class="tri-letter tri-n">N</span>
+        <span class="tri-letter tri-e">E</span>
+        <span class="tri-letter tri-s">S</span>
+        <span class="tri-letter tri-w">W</span>
+        <div class="tri-arm" id="triArm">
+          <div class="tri-arm-bar"></div>
+          <div class="tri-sight" id="triSight" title="Drag to rotate"></div>
+        </div>
+        <div class="tri-hub" id="triHub" title="Drag to move"></div>
+        <div class="tri-readout" id="triReadout">000&deg;</div>
+      </div>
+    </div>
+
+    <aside id="fieldNotes">
+      <h2>Field Notes</h2>
+      <div id="noteRows"></div>
+    </aside>
+
+    <div id="hud">
+      <div id="hudLabel">ALIGNMENT REQUIRED</div>
+      <button type="button" id="lockBtn">Lock Bearing</button>
+    </div>
+
+    <button type="button" id="exitBtn" aria-label="Exit Triangulator">&#10005;</button>
+    <button type="button" id="resetBtn" aria-label="Reset puzzle" title="Reset">&#8635;</button>
+  </div>
+
+  <div id="discoveryOverlay">
+    <div class="reveal-card">
+      <p class="reveal-eyebrow" id="revealEyebrow">Triangulation complete</p>
+      <h2 class="reveal-heading" id="revealHeading">A place the map forgot</h2>
+      <svg class="reveal-seal" viewBox="0 0 64 64" id="revealSeal">
+        <circle cx="32" cy="32" r="27" fill="none" stroke="#853136" stroke-width="1.4"/>
+        <circle cx="32" cy="32" r="20" fill="none" stroke="#853136" stroke-width="1"/>
+        <path d="M32 10 L36 28 L54 32 L36 36 L32 54 L28 36 L10 32 L28 28 Z" fill="#853136" opacity="0.85"/>
+      </svg>
+      <p class="reveal-note" id="revealNote">Three lines, three bearings, one point where they all agree. Mark it well.</p>
+      <button type="button" class="reveal-btn" id="revealConfirm">Mark the Location</button>
+    </div>
+  </div>
+
+  <button type="button" id="devToggle" title="Dev tools (Ctrl+Shift+D)">D</button>
+  <div id="devPanel"></div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================================================
+     PUZZLE CONFIGURATION
+     Everything gameplay-specific lives here. Bearings are the
+     resolved values a landmark currently requires; resolveBearing()
+     is the single seam where a future clue-decoding step would
+     replace a direct numeric bearing with one derived from a clue.
+  ========================================================= */
+  const puzzleConfig = {
+    id: "triangulation-map",
+    landmarks: [
+      {
+        id: "sakimori-overlook",
+        name: "Sakimori Overlook",
+        nx: 0.5292, ny: 0.7132,
+        bearing: 348,
+        toleranceDeg: 3,
+        clue: "The watch-log notes a heading of 348 degrees from this rise."
+      },
+      {
+        id: "kashine-hills",
+        name: "Kashine Hills",
+        nx: 0.3505, ny: 0.2891,
+        bearing: 146,
+        toleranceDeg: 3,
+        clue: "A hunter's mark on the hillside reads 146 degrees."
+      },
+      {
+        id: "isonade-coast",
+        name: "Isonade Coast",
+        nx: 0.6804, ny: 0.1734,
+        bearing: 215,
+        toleranceDeg: 3,
+        clue: "A weathered post on the coast is scored at 215 degrees."
+      }
+    ],
+    solution: { nx: 0.47, ny: 0.46, tolerance: 0.035, name: "The Silent Cairn" },
+    snapRadiusNorm: 0.035
+  };
+
+  function resolveBearing(landmark) {
+    // v1: bearings are supplied directly. A later clue system can set
+    // landmark.bearing from a decoded value before the player ever sees
+    // this instrument, without touching anything below.
+    return landmark.bearing;
+  }
+
+  /* =========================================================
+     ENGINE — math, no DOM
+  ========================================================= */
+  const MAP_W = 1455, MAP_H = 1536;
+
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function bearingFromVector(dx, dy) {
+    let deg = Math.atan2(dx, -dy) * 180 / Math.PI;
+    if (deg < 0) deg += 360;
+    return deg;
+  }
+
+  function angularDiff(a, b) {
+    const d = Math.abs(a - b) % 360;
+    return d > 180 ? 360 - d : d;
+  }
+
+  function lineFromLandmark(lm, bearingDeg) {
+    const rad = bearingDeg * Math.PI / 180;
+    return {
+      x0: lm.nx * MAP_W, y0: lm.ny * MAP_H,
+      dx: Math.sin(rad), dy: -Math.cos(rad)
+    };
+  }
+
+  function intersectLines(l1, l2) {
+    const denom = l1.dx * l2.dy - l1.dy * l2.dx;
+    if (Math.abs(denom) < 1e-9) return null;
+    const t = ((l2.x0 - l1.x0) * l2.dy - (l2.y0 - l1.y0) * l2.dx) / denom;
+    return { x: l1.x0 + t * l1.dx, y: l1.y0 + t * l1.dy };
+  }
+
+  function averageIntersection(lines) {
+    const pairs = [[0, 1], [0, 2], [1, 2]];
+    const pts = [];
+    pairs.forEach(([i, j]) => {
+      const pt = intersectLines(lines[i], lines[j]);
+      if (pt) pts.push(pt);
+    });
+    if (!pts.length) return null;
+    const x = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+    const y = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+    return { nx: x / MAP_W, ny: y / MAP_H };
+  }
+
+  /* =========================================================
+     SOUND HOOKS — synthesized, no external assets required.
+     Each function is the seam for swapping in a real audio
+     asset later (just replace the body).
+  ========================================================= */
+  const Sound = (() => {
+    let ctx = null;
+    function ensure() {
+      if (!ctx) {
+        try { ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { ctx = null; }
+      }
+      return ctx;
+    }
+    function tone(freq, dur, type, peak, delay) {
+      const c = ensure();
+      if (!c) return;
+      try {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = type || "sine";
+        osc.frequency.value = freq;
+        const t0 = c.currentTime + (delay || 0);
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(peak || 0.05, t0 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        osc.connect(gain); gain.connect(c.destination);
+        osc.start(t0); osc.stop(t0 + dur + 0.05);
+      } catch (e) { /* audio unavailable, fail silent */ }
+    }
+    return {
+      activate() { tone(300, 0.5, "sine", 0.04); tone(450, 0.5, "sine", 0.025, 0.08); },
+      rotateTick() { tone(700, 0.03, "square", 0.012); },
+      align() { tone(780, 0.15, "sine", 0.05); },
+      lock() { tone(220, 0.3, "triangle", 0.06); tone(440, 0.3, "triangle", 0.03, 0.05); },
+      error() { tone(140, 0.22, "sawtooth", 0.045); },
+      complete() { tone(392, 0.35, "sine", 0.045); tone(494, 0.35, "sine", 0.04, 0.14); tone(587, 0.5, "sine", 0.04, 0.28); },
+      discover() { tone(261, 0.9, "sine", 0.035); }
+    };
+  })();
+
+  /* =========================================================
+     STATE
+  ========================================================= */
+  const state = {
+    active: false,
+    landmarks: puzzleConfig.landmarks.map(lm => ({
+      ...lm,
+      locked: false,
+      lockedBearing: null
+    })),
+    instrument: {
+      visible: false,
+      nx: 0.5, ny: 0.88,
+      bearingDeg: 0,
+      activeLandmarkId: null,
+      aligned: false
+    },
+    dragMode: null, // "move" | "rotate" | null
+    solved: false,
+    devMode: /[?&]dev=1/.test(location.search)
+  };
+
+  /* =========================================================
+     DOM REFS
+  ========================================================= */
+  const el = {
+    idleScreen: document.getElementById("idleScreen"),
+    activateBtn: document.getElementById("activateBtn"),
+    mapNav: document.getElementById("mapNav"),
+    mapWrap: document.getElementById("mapWrap"),
+    linesLayer: document.getElementById("linesLayer"),
+    landmarksLayer: document.getElementById("landmarksLayer"),
+    triangulator: document.getElementById("triangulator"),
+    triArm: document.getElementById("triArm"),
+    triSight: document.getElementById("triSight"),
+    triHub: document.getElementById("triHub"),
+    triReadout: document.getElementById("triReadout"),
+    triTicks: document.querySelector(".tri-ticks"),
+    noteRows: document.getElementById("noteRows"),
+    hudLabel: document.getElementById("hudLabel"),
+    lockBtn: document.getElementById("lockBtn"),
+    exitBtn: document.getElementById("exitBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    discoveryOverlay: document.getElementById("discoveryOverlay"),
+    revealConfirm: document.getElementById("revealConfirm"),
+    devToggle: document.getElementById("devToggle"),
+    devPanel: document.getElementById("devPanel")
+  };
+
+  /* =========================================================
+     BUILD STATIC DOM (ticks, landmarks, lines)
+  ========================================================= */
+  (function buildTicks() {
+    for (let deg = 0; deg < 360; deg += 10) {
+      const major = deg % 90 === 0;
+      const tick = document.createElement("span");
+      tick.className = "tri-tick" + (major ? " major" : "");
+      tick.style.height = major ? "14px" : "8px";
+      tick.style.transform = `rotate(${deg}deg)`;
+      el.triTicks.appendChild(tick);
+    }
+  })();
+
+  const landmarkEls = {};
+  state.landmarks.forEach(lm => {
+    const wrap = document.createElement("div");
+    wrap.className = "landmark";
+    wrap.style.left = (lm.nx * 100) + "%";
+    wrap.style.top = (lm.ny * 100) + "%";
+    wrap.innerHTML = `
+      <span class="landmark-dot"></span>
+      <span class="landmark-label">${lm.name}</span>
+      <span class="landmark-mark">surveyed</span>
+    `;
+    el.landmarksLayer.appendChild(wrap);
+    landmarkEls[lm.id] = wrap;
+  });
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  const lineEls = {};
+  state.landmarks.forEach(lm => {
+    const line = document.createElementNS(svgNS, "line");
+    line.classList.add("bearing-line");
+    line.style.opacity = "0";
+    el.linesLayer.appendChild(line);
+    lineEls[lm.id] = line;
+  });
+  const intersectionMark = document.createElementNS(svgNS, "g");
+  intersectionMark.classList.add("intersection-mark");
+  intersectionMark.innerHTML = `
+    <circle r="10" fill="none" stroke="#853136" stroke-width="1.6" opacity="0.75"/>
+    <circle r="3.2" fill="#853136"/>
+  `;
+  el.linesLayer.appendChild(intersectionMark);
+
+  el.noteRows.innerHTML = state.landmarks.map(lm => `
+    <div class="note-row" id="note-${lm.id}">
+      <span class="note-name">${lm.name}</span>
+      <span class="note-bearing">${String(resolveBearing(lm)).padStart(3, "0")}&deg;</span>
+    </div>
+  `).join("");
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
+  function extendedPoint(x0, y0, bearingDeg, length) {
+    const rad = bearingDeg * Math.PI / 180;
+    return { x: x0 + Math.sin(rad) * length, y: y0 - Math.cos(rad) * length };
+  }
+
+  function renderInstrument() {
+    el.triangulator.style.left = (state.instrument.nx * 100) + "%";
+    el.triangulator.style.top = (state.instrument.ny * 100) + "%";
+    el.triArm.style.transform = `rotate(${state.instrument.bearingDeg}deg)`;
+    el.triReadout.innerHTML = String(Math.round(state.instrument.bearingDeg) % 360).padStart(3, "0") + "&deg;";
+    el.triangulator.classList.toggle("visible", state.instrument.visible);
+    el.triangulator.classList.toggle("aligned", state.instrument.aligned);
+  }
+
+  function renderLiveSightLine() {
+    const lm = state.instrument.activeLandmarkId
+      ? state.landmarks.find(l => l.id === state.instrument.activeLandmarkId)
+      : null;
+    state.landmarks.forEach(other => {
+      const line = lineEls[other.id];
+      if (other.locked) return; // locked lines are rendered separately below
+      if (lm && other.id === lm.id && state.instrument.visible) {
+        const x0 = lm.nx * MAP_W, y0 = lm.ny * MAP_H;
+        const tip = extendedPoint(x0, y0, state.instrument.bearingDeg, Math.max(MAP_W, MAP_H) * 1.2);
+        line.setAttribute("x1", x0); line.setAttribute("y1", y0);
+        line.setAttribute("x2", tip.x); line.setAttribute("y2", tip.y);
+        line.style.opacity = "1";
+        line.classList.toggle("aligned", state.instrument.aligned);
+      } else {
+        line.style.opacity = "0";
+      }
+    });
+  }
+
+  function renderLockedLine(lm) {
+    const line = lineEls[lm.id];
+    const x0 = lm.nx * MAP_W, y0 = lm.ny * MAP_H;
+    const tip = extendedPoint(x0, y0, lm.lockedBearing, Math.max(MAP_W, MAP_H) * 1.2);
+    line.setAttribute("x1", x0); line.setAttribute("y1", y0);
+    line.setAttribute("x2", tip.x); line.setAttribute("y2", tip.y);
+    line.style.opacity = "1";
+    line.classList.remove("aligned");
+    line.classList.add("locked");
+  }
+
+  function renderLandmarkStates() {
+    state.landmarks.forEach(lm => {
+      const wrap = landmarkEls[lm.id];
+      wrap.classList.toggle("on-target", state.instrument.activeLandmarkId === lm.id && !lm.locked);
+      wrap.classList.toggle("surveyed", lm.locked);
+    });
+  }
+
+  function setHud(text, mood) {
+    el.hudLabel.textContent = text;
+    el.hudLabel.classList.toggle("good", mood === "good");
+    el.hudLabel.classList.toggle("bad", mood === "bad");
+  }
+
+  function renderHud() {
+    if (state.solved) { setHud("TRIANGULATION COMPLETE", "good"); el.lockBtn.classList.remove("shown"); return; }
+    const activeLm = state.instrument.activeLandmarkId
+      ? state.landmarks.find(l => l.id === state.instrument.activeLandmarkId)
+      : null;
+
+    if (!state.instrument.visible) { setHud("ALIGNMENT REQUIRED"); el.lockBtn.classList.remove("shown"); return; }
+    if (!activeLm) { setHud("ALIGNMENT REQUIRED"); el.lockBtn.classList.remove("shown"); return; }
+    if (activeLm.locked) { setHud("LANDMARK SURVEYED", "good"); el.lockBtn.classList.remove("shown"); return; }
+
+    if (state.instrument.aligned) setHud("BEARING ALIGNED", "good");
+    else setHud("SEEKING BEARING");
+    el.lockBtn.classList.add("shown");
+  }
+
+  /* =========================================================
+     DEV PANEL
+  ========================================================= */
+  function renderDevPanel() {
+    if (!state.devMode || !el.devPanel.classList.contains("open")) return;
+    const inter = state.landmarks.every(l => l.locked)
+      ? averageIntersection(state.landmarks.map(l => lineFromLandmark(l, l.lockedBearing)))
+      : null;
+    const dist = inter
+      ? Math.hypot(inter.nx - puzzleConfig.solution.nx, inter.ny - puzzleConfig.solution.ny)
+      : null;
+
+    el.devPanel.innerHTML = `
+      <h3>Landmarks</h3>
+      <table>${state.landmarks.map(l => `
+        <tr><td>${l.id}</td><td>${l.nx.toFixed(3)},${l.ny.toFixed(3)}</td><td>${l.bearing}&deg;</td><td>${l.locked ? "LOCKED" : "-"}</td></tr>
+      `).join("")}</table>
+      <h3>Instrument</h3>
+      <table>
+        <tr><td>pos</td><td colspan="3">${state.instrument.nx.toFixed(3)}, ${state.instrument.ny.toFixed(3)}</td></tr>
+        <tr><td>bearing</td><td colspan="3">${state.instrument.bearingDeg.toFixed(1)}&deg;</td></tr>
+        <tr><td>active</td><td colspan="3">${state.instrument.activeLandmarkId || "-"}</td></tr>
+      </table>
+      <h3>Solution</h3>
+      <table>
+        <tr><td>target</td><td colspan="3">${puzzleConfig.solution.nx}, ${puzzleConfig.solution.ny}</td></tr>
+        <tr><td>tolerance</td><td colspan="3">${puzzleConfig.solution.tolerance}</td></tr>
+        <tr><td>intersection</td><td colspan="3">${inter ? inter.nx.toFixed(3) + ", " + inter.ny.toFixed(3) : "-"}</td></tr>
+        <tr><td>distance</td><td colspan="3">${dist !== null ? dist.toFixed(4) : "-"}</td></tr>
+      </table>
+      <button id="devReset">Reset Puzzle</button>
+      <button id="devSkip">Skip To Completion</button>
+    `;
+    document.getElementById("devReset").onclick = resetPuzzle;
+    document.getElementById("devSkip").onclick = skipToCompletion;
+  }
+
+  /* =========================================================
+     INTERACTION — activation
+  ========================================================= */
+  function activate() {
+    Sound.activate();
+    state.active = true;
+    el.idleScreen.classList.add("hidden");
+    el.mapNav.classList.add("open");
+    setTimeout(() => {
+      state.instrument.visible = true;
+      renderInstrument();
+      renderHud();
+    }, 550);
+  }
+
+  function deactivate() {
+    el.mapNav.classList.remove("open");
+    el.idleScreen.classList.remove("hidden");
+  }
+
+  el.activateBtn.addEventListener("click", activate);
+  el.exitBtn.addEventListener("click", deactivate);
+  el.resetBtn.addEventListener("click", resetPuzzle);
+
+  /* =========================================================
+     INTERACTION — drag / rotate
+  ========================================================= */
+  function pointFromEvent(e) {
+    const rect = el.mapWrap.getBoundingClientRect();
+    return {
+      nx: clamp((e.clientX - rect.left) / rect.width, 0, 1),
+      ny: clamp((e.clientY - rect.top) / rect.height, 0, 1),
+      rect
+    };
+  }
+
+  function nearestUnvisitedSnap(nx, ny, rect) {
+    let best = null, bestDist = Infinity;
+    state.landmarks.forEach(lm => {
+      const dx = (nx - lm.nx) * rect.width;
+      const dy = (ny - lm.ny) * rect.height;
+      const d = Math.hypot(dx, dy);
+      const thresholdPx = puzzleConfig.snapRadiusNorm * Math.min(rect.width, rect.height);
+      if (d < thresholdPx && d < bestDist) { best = lm; bestDist = d; }
+    });
+    return best;
+  }
+
+  function checkAlignment() {
+    const lm = state.instrument.activeLandmarkId
+      ? state.landmarks.find(l => l.id === state.instrument.activeLandmarkId)
+      : null;
+    if (!lm || lm.locked) { state.instrument.aligned = false; return; }
+    const target = resolveBearing(lm);
+    const diff = angularDiff(state.instrument.bearingDeg, target);
+    const wasAligned = state.instrument.aligned;
+    state.instrument.aligned = diff <= lm.toleranceDeg;
+    if (state.instrument.aligned && !wasAligned) Sound.align();
+  }
+
+  function onPointerDownMove(e) {
+    if (state.solved) return;
+    e.preventDefault();
+    state.dragMode = "move";
+    state.instrument.activeLandmarkId = null;
+    state.instrument.aligned = false;
+    el.triangulator.classList.add("dragging");
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  function onPointerDownRotate(e) {
+    if (state.solved) return;
+    e.preventDefault();
+    e.stopPropagation();
+    state.dragMode = "rotate";
+    el.triangulator.classList.add("dragging-rotate");
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp, { once: true });
+  }
+
+  let lastTickBearing = 0;
+
+  function onPointerMove(e) {
+    if (state.dragMode === "move") {
+      const { nx, ny } = pointFromEvent(e);
+      state.instrument.nx = nx;
+      state.instrument.ny = ny;
+      renderInstrument();
+      renderLiveSightLine();
+      renderLandmarkStates();
+      renderHud();
+    } else if (state.dragMode === "rotate") {
+      const rect = el.mapWrap.getBoundingClientRect();
+      const cx = rect.left + state.instrument.nx * rect.width;
+      const cy = rect.top + state.instrument.ny * rect.height;
+      const dx = e.clientX - cx, dy = e.clientY - cy;
+      state.instrument.bearingDeg = bearingFromVector(dx, dy);
+      checkAlignment();
+      renderInstrument();
+      renderLiveSightLine();
+      renderHud();
+      if (angularDiff(state.instrument.bearingDeg, lastTickBearing) > 8) {
+        Sound.rotateTick();
+        lastTickBearing = state.instrument.bearingDeg;
+      }
+    }
+    renderDevPanel();
+  }
+
+  function onPointerUp(e) {
+    document.removeEventListener("pointermove", onPointerMove);
+    el.triangulator.classList.remove("dragging", "dragging-rotate");
+
+    if (state.dragMode === "move") {
+      const { nx, ny, rect } = pointFromEvent(e);
+      const snap = nearestUnvisitedSnap(nx, ny, rect);
+      if (snap) {
+        state.instrument.nx = snap.nx;
+        state.instrument.ny = snap.ny;
+        state.instrument.activeLandmarkId = snap.id;
+      } else {
+        state.instrument.activeLandmarkId = null;
+      }
+      checkAlignment();
+      renderInstrument();
+      renderLiveSightLine();
+      renderLandmarkStates();
+      renderHud();
+    }
+    state.dragMode = null;
+    renderDevPanel();
+  }
+
+  el.triHub.addEventListener("pointerdown", onPointerDownMove);
+  el.triSight.addEventListener("pointerdown", onPointerDownRotate);
+
+  /* =========================================================
+     LOCK BEARING
+  ========================================================= */
+  function lockBearing() {
+    const lm = state.instrument.activeLandmarkId
+      ? state.landmarks.find(l => l.id === state.instrument.activeLandmarkId)
+      : null;
+    if (!lm || lm.locked) return;
+
+    if (!state.instrument.aligned) {
+      Sound.error();
+      el.triangulator.classList.remove("resist");
+      void el.triangulator.offsetWidth;
+      el.triangulator.classList.add("resist");
+      setHud("BEARING UNCERTAIN", "bad");
+      setTimeout(() => { if (!state.solved) renderHud(); }, 1100);
+      return;
+    }
+
+    Sound.lock();
+    lm.locked = true;
+    lm.lockedBearing = state.instrument.bearingDeg;
+    renderLockedLine(lm);
+
+    const noteRow = document.getElementById("note-" + lm.id);
+    if (noteRow) noteRow.classList.add("done");
+
+    const lockedCount = state.landmarks.filter(l => l.locked).length;
+    const roman = ["I", "II", "III"][lockedCount - 1] || String(lockedCount);
+    setHud("BEARING " + roman + " LOCKED", "good");
+
+    state.instrument.activeLandmarkId = null;
+    state.instrument.aligned = false;
+    renderInstrument();
+    renderLiveSightLine();
+    renderLandmarkStates();
+
+    if (lockedCount === state.landmarks.length) {
+      setTimeout(triangulationComplete, 900);
+    } else {
+      setTimeout(() => { if (!state.solved) renderHud(); }, 1100);
+    }
+    renderDevPanel();
+  }
+
+  el.lockBtn.addEventListener("click", lockBearing);
+
+  /* =========================================================
+     COMPLETION
+  ========================================================= */
+  function triangulationComplete() {
+    state.landmarks.forEach(lm => lineEls[lm.id].classList.add("converge"));
+
+    setTimeout(() => {
+      state.landmarks.forEach(lm => lineEls[lm.id].classList.remove("converge"));
+
+      const inter = averageIntersection(state.landmarks.map(l => lineFromLandmark(l, l.lockedBearing)));
+      const dist = Math.hypot(inter.nx - puzzleConfig.solution.nx, inter.ny - puzzleConfig.solution.ny);
+      state.solved = dist <= puzzleConfig.solution.tolerance;
+
+      intersectionMark.setAttribute("transform", `translate(${inter.nx * MAP_W}, ${inter.ny * MAP_H})`);
+      intersectionMark.classList.add("show");
+
+      Sound.complete();
+      setTimeout(Sound.discover, 500);
+      renderHud();
+
+      setTimeout(() => {
+        if (state.solved) openDiscovery();
+        else {
+          setHud("TRIANGULATION UNCLEAR", "bad");
+        }
+      }, 1400);
+    }, 1600);
+  }
+
+  function openDiscovery() {
+    document.getElementById("revealHeading").textContent = puzzleConfig.solution.name;
+    el.discoveryOverlay.classList.add("show");
+  }
+
+  el.revealConfirm.addEventListener("click", () => {
+    el.discoveryOverlay.classList.remove("show");
+    try {
+      window.parent.postMessage({ type: "cq:puzzle-complete", id: puzzleConfig.id }, "*");
+    } catch (e) { /* standalone preview, no parent listening */ }
+  });
+
+  /* =========================================================
+     RESET
+  ========================================================= */
+  function resetPuzzle() {
+    state.landmarks.forEach(lm => {
+      lm.locked = false;
+      lm.lockedBearing = null;
+      lineEls[lm.id].style.opacity = "0";
+      lineEls[lm.id].classList.remove("locked", "aligned", "converge");
+      const noteRow = document.getElementById("note-" + lm.id);
+      if (noteRow) noteRow.classList.remove("done");
+    });
+    intersectionMark.classList.remove("show");
+    state.instrument.nx = 0.5;
+    state.instrument.ny = 0.88;
+    state.instrument.bearingDeg = 0;
+    state.instrument.activeLandmarkId = null;
+    state.instrument.aligned = false;
+    state.solved = false;
+    el.discoveryOverlay.classList.remove("show");
+    renderInstrument();
+    renderLiveSightLine();
+    renderLandmarkStates();
+    renderHud();
+    renderDevPanel();
+  }
+
+  function skipToCompletion() {
+    state.landmarks.forEach(lm => {
+      lm.locked = true;
+      lm.lockedBearing = resolveBearing(lm);
+      renderLockedLine(lm);
+      const noteRow = document.getElementById("note-" + lm.id);
+      if (noteRow) noteRow.classList.add("done");
+    });
+    state.instrument.activeLandmarkId = null;
+    renderLandmarkStates();
+    triangulationComplete();
+  }
+
+  /* =========================================================
+     DEV MODE WIRING
+  ========================================================= */
+  if (state.devMode) {
+    el.devToggle.classList.add("enabled");
+  }
+  el.devToggle.addEventListener("click", () => {
+    el.devPanel.classList.toggle("open");
+    renderDevPanel();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "d") {
+      state.devMode = true;
+      el.devToggle.classList.add("enabled");
+      el.devPanel.classList.toggle("open");
+      renderDevPanel();
+    }
+  });
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  renderInstrument();
+  renderLiveSightLine();
+  renderLandmarkStates();
+  renderHud();
+})();
+</script>
+</body>
+</html>

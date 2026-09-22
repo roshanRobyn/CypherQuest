@@ -1,6 +1,12 @@
 import { useState } from "react";
 
-function ToolsPanel({ translationUnlocked, translationJustUnlocked, onOpenTranslation }) {
+function ToolsPanel({
+  translationUnlocked,
+  translationJustUnlocked,
+  onOpenTranslation,
+  magnifierActive,
+  onToggleMagnifier,
+}) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -17,7 +23,16 @@ function ToolsPanel({ translationUnlocked, translationJustUnlocked, onOpenTransl
       <div className="gp-tools-body">
         <p className="gp-tools-title">TOOLS</p>
         <div className="gp-tools-slots">
-          <span className="gp-slot" />
+          <button
+            type="button"
+            className={`gp-slot gp-slot-button ${magnifierActive ? "gp-slot-active" : ""}`}
+            aria-label={magnifierActive ? "Deactivate magnifying glass" : "Activate magnifying glass"}
+            aria-pressed={magnifierActive}
+            title="Magnifying glass"
+            onClick={onToggleMagnifier}
+          >
+            🔍
+          </button>
           <span className="gp-slot" />
           <span className="gp-slot" />
           {translationUnlocked ? (

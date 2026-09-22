@@ -4,12 +4,20 @@ import "./App.css";
 import outsideImage from "./assets/outside.png";
 import GameplayScreen from "./components/gameplay/GameplayScreen";
 import { useZoomLock } from "./hooks/useZoomLock";
+import { clearSession, loadSession } from "./data/persistence";
 import { registerAndStart } from "./api/cypherQuestClient";
+
+// Read once, before first render, so a refresh mid-game resumes straight
+// into the gameplay screen rather than flashing the team-entry screen
+// first and jumping afterward. A saved record only ever exists once a
+// game has actually started (see startQuest below), so this can only
+// ever restore into "game", never anywhere else.
+const savedSession = loadSession();
 
 function App() {
   const zoomLock = useZoomLock();
-  const [scene, setScene] = useState("home");
-  const [teamName, setTeamName] = useState("");
+  const [scene, setScene] = useState(savedSession ? "game" : "home");
+  const [teamName, setTeamName] = useState(savedSession?.teamName ?? "");
   const [error, setError] = useState("");
   const [ripples, setRipples] = useState([]);
   const cursorRef = useRef(null);
@@ -40,6 +48,10 @@ function App() {
     }
 
     setError("");
+
+    // A genuinely new session starts here — clear any previous team's
+    // saved progress so it can't accidentally carry over into this one.
+    clearSession();
 
     // Fire-and-forget: tell the backend a team is starting so gameplay
     // monitoring/admin dashboards pick it up. Never awaited and never
