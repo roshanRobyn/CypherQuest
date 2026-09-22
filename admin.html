@@ -1246,8 +1246,9 @@
       // regardless of that value, so local dev is unaffected.
       const PRODUCTION_BACKEND_URL = 'https://cypher-quest-backend.onrender.com';
       const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-      const BACKEND_API_URL =
-        window.CYPHERQUEST_API_URL || (IS_LOCAL ? 'http://localhost:3001' : PRODUCTION_BACKEND_URL);
+      const BACKEND_API_URL = (
+        window.CYPHERQUEST_API_URL || (IS_LOCAL ? 'http://localhost:3001' : PRODUCTION_BACKEND_URL)
+      ).replace(/\/+$/, '');
       let backendReachable = false;
 
       // Must stay in sync with QUEST_STEPS order in src/data/questSteps.js

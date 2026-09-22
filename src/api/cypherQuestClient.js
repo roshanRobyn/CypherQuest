@@ -6,7 +6,12 @@
 // `{ ok: false, error }`-shaped result so callers can simply ignore
 // failures (e.g. backend not running) without any try/catch of their own.
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// Strip any trailing slash(es) — VITE_API_URL is easy to typo with one
+// (e.g. "https://api.example.com/"), and combined with this file's paths
+// (which all start with "/api/...") a trailing slash produces a
+// double-slash URL that most backends 404 on, silently breaking every
+// call in a way that's invisible in the UI (this client never throws).
+const BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
 async function request(path, options = {}) {
   try {
