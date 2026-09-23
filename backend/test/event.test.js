@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { computeEventState } from "../src/services/eventService.js";
+import { computeEventState, computeHuntState, resolveHuntEndMs } from "../src/services/eventService.js";
 
 // --- Pure boundary tests (TEST1/2/3 from the feature spec) ---------------
 // No env/module-caching involved — exact millisecond control over "now"
@@ -33,6 +33,70 @@ test("after release: ACTIVE, msRemaining clamped to 0", () => {
   const state = computeEventState(EVENT_START_MS + 60_000, EVENT_START_MS);
   assert.equal(state.status, "ACTIVE");
   assert.equal(state.msRemaining, 0);
+});
+
+// --- Hunt-timer pure boundary tests (TEST 6/9/12 from the feature spec) --
+
+const HUNT_START_MS = Date.parse("2026-09-23T00:25:00+05:30");
+const HUNT_END_MS = Date.parse("2026-09-23T00:35:00+05:30");
+
+test("before hunt start: PENDING, huntMsRemaining is the full window", () => {
+  const state = computeHuntState(HUNT_START_MS - 60_000, HUNT_START_MS, HUNT_END_MS);
+  assert.equal(state.huntStatus, "PENDING");
+  assert.equal(state.huntMsRemaining, HUNT_END_MS - (HUNT_START_MS - 60_000));
+});
+
+test("exactly at hunt start: ACTIVE", () => {
+  const state = computeHuntState(HUNT_START_MS, HUNT_START_MS, HUNT_END_MS);
+  assert.equal(state.huntStatus, "ACTIVE");
+});
+
+test("one second before hunt end: still ACTIVE", () => {
+  const state = computeHuntState(HUNT_END_MS - 1000, HUNT_START_MS, HUNT_END_MS);
+  assert.equal(state.huntStatus, "ACTIVE");
+  assert.ok(state.huntMsRemaining >= 1000);
+});
+
+test("exactly at hunt end: EXPIRED, huntMsRemaining is 0", () => {
+  const state = computeHuntState(HUNT_END_MS, HUNT_START_MS, HUNT_END_MS);
+  assert.equal(state.huntStatus, "EXPIRED");
+  assert.equal(state.huntMsRemaining, 0);
+});
+
+test("after hunt end: EXPIRED, huntMsRemaining clamped to 0", () => {
+  const state = computeHuntState(HUNT_END_MS + 60_000, HUNT_START_MS, HUNT_END_MS);
+  assert.equal(state.huntStatus, "EXPIRED");
+  assert.equal(state.huntMsRemaining, 0);
+});
+
+// --- resolveHuntEndMs: the dev-override production-inertness guarantee ---
+// The specific thing this feature promises: HUNT_END_AT_DEV_OVERRIDE must
+// be a no-op in production, not just "gitignored by convention".
+
+const REAL_END = "2026-09-24T15:00:00+05:30";
+const DEV_OVERRIDE_END = "2026-09-23T10:04:00+05:30";
+
+test("dev override honored outside production", () => {
+  const ms = resolveHuntEndMs({
+    huntEndAt: REAL_END,
+    huntEndAtDevOverride: DEV_OVERRIDE_END,
+    isProduction: false,
+  });
+  assert.equal(ms, Date.parse(DEV_OVERRIDE_END));
+});
+
+test("dev override ignored in production even when set", () => {
+  const ms = resolveHuntEndMs({
+    huntEndAt: REAL_END,
+    huntEndAtDevOverride: DEV_OVERRIDE_END,
+    isProduction: true,
+  });
+  assert.equal(ms, Date.parse(REAL_END));
+});
+
+test("empty override falls through to the real value outside production too", () => {
+  const ms = resolveHuntEndMs({ huntEndAt: REAL_END, huntEndAtDevOverride: "", isProduction: false });
+  assert.equal(ms, Date.parse(REAL_END));
 });
 
 // --- Integration: the gate actually blocks /api/game/start ---------------
@@ -68,6 +132,12 @@ test("GET /api/event/state reports WAITING before release, with server time fiel
   assert.ok(body.data.serverTime);
   assert.ok(body.data.eventStartTime);
   assert.equal(typeof body.data.msRemaining, "number");
+
+  // Hunt-timer fields ride the same response/poll (see eventService.js).
+  assert.ok(["PENDING", "ACTIVE", "EXPIRED"].includes(body.data.huntStatus));
+  assert.ok(body.data.huntStartTime);
+  assert.ok(body.data.huntEndTime);
+  assert.equal(typeof body.data.huntMsRemaining, "number");
 });
 
 test("team registration still works while the event is WAITING", async () => {

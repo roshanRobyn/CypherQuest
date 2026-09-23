@@ -1,11 +1,33 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEventGate } from "../hooks/useEventGate";
+import SecretLockPopup from "./SecretLockPopup";
 import "./WaitingGate.css";
 
 const EVENT_DATE_LABEL = "24 SEPTEMBER 2026";
 const EVENT_TIME_LABEL = "1:30 PM IST";
 
 const pad = (n) => String(n).padStart(2, "0");
+
+// Hidden Easter egg — purely cosmetic, never touches the event gate. The
+// same single T (start of "THE") and single D (end of "SEALED") must be
+// clicked, in this exact order, alongside the 封 symbol. Any wrong target
+// resets the in-progress attempt to empty; nothing about this is persisted
+// or reported anywhere.
+const SECRET_SEQUENCE = ["T", "D", "T", "D", "D", "T", "封"];
+const SECRET_CODE = "1367245";
+const FLICKER_MS = 260;
+const SUCCESS_AUTOCLOSE_MS = 2600;
+
+// Local-dev-only test unlock: correct code still just shows the cosmetic
+// success view (below) and, ONLY when `import.meta.env.DEV` (statically
+// false — not a runtime process.env lookup — replaced and dead-code-
+// eliminated by Vite at build time; see backend/README-style note in the
+// final report), calls the SAME `onUnlocked` App.jsx already calls when the
+// real backend event gate reports ACTIVE. It never touches the backend,
+// never sets a fake server time, and does nothing at all in a production
+// build. Shorter delay than SUCCESS_AUTOCLOSE_MS since it's handing off to
+// the existing unsealing/blackout/game transition rather than just closing.
+const DEV_UNLOCK_DELAY_MS = 1100;
 
 function splitDuration(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -34,6 +56,88 @@ function WaitingGate({ teamName, onUnlocked }) {
 
   const { days, hours, minutes, seconds } = splitDuration(displayMsRemaining ?? 0);
 
+  // --- Hidden Easter egg state (additive, independent of the event gate) ---
+  // Only the setter is used — progress itself only ever needs to be read
+  // inside its own functional update below.
+  const [, setSecretProgress] = useState([]);
+  const [flicker, setFlicker] = useState(false);
+  const [lockOpen, setLockOpen] = useState(false);
+  // Bumped on every completed sequence so <SecretLockPopup key={lockInstance}>
+  // remounts fresh each time — the popup then owns its own blank input
+  // state internally instead of an effect resetting it.
+  const [lockInstance, setLockInstance] = useState(0);
+  const [lockResult, setLockResult] = useState("idle"); // idle | wrong | success
+  const flickerTimeoutRef = useRef(null);
+  const wrongTimeoutRef = useRef(null);
+  const successTimeoutRef = useRef(null);
+
+  useEffect(
+    () => () => {
+      clearTimeout(flickerTimeoutRef.current);
+      clearTimeout(wrongTimeoutRef.current);
+      clearTimeout(successTimeoutRef.current);
+    },
+    []
+  );
+
+  const handleSecretClick = (symbol) => {
+    if (lockOpen) return; // popup already open — ignore background clicks
+
+    setSecretProgress((prev) => {
+      const next = [...prev, symbol];
+      const isCorrectStep = SECRET_SEQUENCE[next.length - 1] === symbol;
+
+      if (!isCorrectStep) {
+        setFlicker(true);
+        clearTimeout(flickerTimeoutRef.current);
+        flickerTimeoutRef.current = setTimeout(() => setFlicker(false), FLICKER_MS);
+        return [];
+      }
+
+      if (next.length === SECRET_SEQUENCE.length) {
+        setLockOpen(true);
+        setLockInstance((n) => n + 1);
+        return [];
+      }
+
+      return next;
+    });
+  };
+
+  const handleCodeSubmit = (code) => {
+    if (code === SECRET_CODE) {
+      setLockResult("success");
+      clearTimeout(successTimeoutRef.current);
+
+      if (import.meta.env.DEV) {
+        // Dev-only local test unlock — reuses the exact same client-side
+        // transition the real event-ACTIVE path uses (see the `phase ===
+        // "active"` effect above). Never wired into production builds.
+        successTimeoutRef.current = setTimeout(() => {
+          setLockOpen(false);
+          setLockResult("idle");
+          onUnlocked();
+        }, DEV_UNLOCK_DELAY_MS);
+      } else {
+        successTimeoutRef.current = setTimeout(() => {
+          setLockOpen(false);
+          setLockResult("idle");
+        }, SUCCESS_AUTOCLOSE_MS);
+      }
+    } else {
+      setLockResult("wrong");
+      clearTimeout(wrongTimeoutRef.current);
+      wrongTimeoutRef.current = setTimeout(() => setLockResult("idle"), 500);
+    }
+  };
+
+  const handleLockClose = () => {
+    clearTimeout(successTimeoutRef.current);
+    clearTimeout(wrongTimeoutRef.current);
+    setLockOpen(false);
+    setLockResult("idle");
+  };
+
   return (
     <section className="waiting-gate">
       <div className="background-overlay"></div>
@@ -55,8 +159,10 @@ function WaitingGate({ teamName, onUnlocked }) {
         ))}
       </div>
 
-      <div className="waiting-panel">
-        <div className="waiting-symbol">封</div>
+      <div className={`waiting-panel${flicker ? " waiting-panel-flicker" : ""}`}>
+        <div className="waiting-symbol" onClick={() => handleSecretClick("封")}>
+          封
+        </div>
 
         {phase === "checking" && (
           <p className="waiting-status">Consulting the shrine keeper&hellip;</p>
@@ -71,7 +177,15 @@ function WaitingGate({ teamName, onUnlocked }) {
 
         {(phase === "waiting" || phase === "active") && (
           <>
-            <h2 className="waiting-title">THE HUNT REMAINS SEALED</h2>
+            <h2 className="waiting-title">
+              <span className="secret-glyph" onClick={() => handleSecretClick("T")}>
+                T
+              </span>
+              HE HUNT REMAINS SEALE
+              <span className="secret-glyph" onClick={() => handleSecretClick("D")}>
+                D
+              </span>
+            </h2>
 
             <p className="waiting-date">{EVENT_DATE_LABEL}</p>
             <p className="waiting-time">{EVENT_TIME_LABEL}</p>
@@ -114,6 +228,14 @@ function WaitingGate({ teamName, onUnlocked }) {
           </p>
         )}
       </div>
+
+      <SecretLockPopup
+        key={lockInstance}
+        open={lockOpen}
+        result={lockResult}
+        onSubmit={handleCodeSubmit}
+        onClose={handleLockClose}
+      />
     </section>
   );
 }

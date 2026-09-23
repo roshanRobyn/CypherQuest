@@ -158,6 +158,35 @@
   text-shadow: 0 0 18px rgba(214, 184, 120, 0.45);
 }
 
+/* Hidden Easter-egg targets — must render identically to plain text: no
+   color/underline/outline/cursor change that would hint they're clickable
+   (the app's global `cursor: none` already hides any native pointer). */
+.secret-glyph {
+  display: inline;
+}
+
+.waiting-panel-flicker {
+  animation: waitingPanelFlicker 260ms ease-in-out;
+}
+
+@keyframes waitingPanelFlicker {
+  0% {
+    filter: brightness(1);
+  }
+
+  30% {
+    filter: brightness(0.82);
+  }
+
+  60% {
+    filter: brightness(1.05);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
 .waiting-title {
   margin: 0 0 18px;
 

@@ -286,5 +286,12 @@ export function useQuestProgression(teamName) {
     completePuzzle,
     handleTranslation,
     enterLocation,
+    // Exposed only for the global Hunt Timer (GameplayScreen.jsx) to force
+    // the final-treasure stage the instant the authoritative backend hunt
+    // clock expires — regardless of map-unlock progress. Every other
+    // caller should keep going through enterLocation, which still gates on
+    // unlockedLocations exactly as before; this is the same underlying
+    // function, not a second/parallel stage-switching mechanism.
+    enterPuzzle,
   };
 }
