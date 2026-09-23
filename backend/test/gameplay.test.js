@@ -150,29 +150,82 @@ test("completing a puzzle without an active session returns SESSION_NOT_ACTIVE",
   assert.equal(body.error.code, "SESSION_NOT_ACTIVE");
 });
 
-test("completing all puzzles marks team COMPLETED with totalTimeMs", async () => {
-  const { data: team } = await registerTeam("Team Golf");
+const LEVEL_PUZZLE_IDS = [
+  "jigsaw",
+  "karakuri",
+  "forgotten-spirit",
+  "lantern-switch",
+  "samurai-puzzle",
+  "three-hidden-differences",
+  "kintsugi-shrine",
+];
+
+test("final treasure is rejected until every level is complete", async () => {
+  const { data: team } = await registerTeam("Team Kilo");
+  await startGame(team.teamId);
+  await completePuzzle(team.teamId, "jigsaw");
+
+  const { status, body } = await completePuzzle(team.teamId, "final-treasure");
+  assert.equal(status, 409);
+  assert.equal(body.error.code, "FINAL_NOT_UNLOCKED");
+
+  const progress = JSON.parse(
+    (await app.inject({ method: "GET", url: `/api/teams/${team.teamId}/progress` })).payload
+  ).data;
+  assert.equal(progress.status, "ACTIVE");
+});
+
+test("completing Level 7 alone does NOT complete the hunt", async () => {
+  const { data: team } = await registerTeam("Team Lima");
   await startGame(team.teamId);
 
-  const puzzleIds = [
-    "jigsaw",
-    "karakuri",
-    "forgotten-spirit",
-    "lantern-switch",
-    "samurai-puzzle",
-    "three-hidden-differences",
-    "kintsugi-shrine",
-  ];
-
   let last;
-  for (const id of puzzleIds) {
+  for (const id of LEVEL_PUZZLE_IDS) {
     last = await completePuzzle(team.teamId, id);
   }
 
+  assert.equal(last.body.data.status, "ACTIVE");
+  assert.equal(last.body.data.currentPuzzle, "final-treasure");
+  assert.equal(last.body.data.finishedAt ?? null, null);
+  assert.equal(last.body.data.totalTimeMs ?? null, null);
+});
+
+test("completing the Final Treasure marks team COMPLETED with server totalTimeMs", async () => {
+  const { data: team } = await registerTeam("Team Golf");
+  const started = await startGame(team.teamId);
+
+  for (const id of LEVEL_PUZZLE_IDS) {
+    await completePuzzle(team.teamId, id);
+  }
+  const last = await completePuzzle(team.teamId, "final-treasure");
+
+  assert.equal(last.status, 200);
   assert.equal(last.body.data.status, "COMPLETED");
+  assert.equal(last.body.data.alreadyCompleted, false);
   assert.ok(last.body.data.finishedAt);
-  assert.equal(typeof last.body.data.totalTimeMs, "number");
-  assert.ok(last.body.data.totalTimeMs >= 0);
+  assert.equal(
+    last.body.data.totalTimeMs,
+    new Date(last.body.data.finishedAt).getTime() -
+      new Date(started.data.session.startedAt).getTime()
+  );
+});
+
+test("repeating the Final Treasure completion (e.g. a refresh) is idempotent", async () => {
+  const teams = JSON.parse((await app.inject({ method: "GET", url: "/api/teams" })).payload).data;
+  const golf = teams.find((t) => t.teamName === "Team Golf");
+
+  const again = await completePuzzle(golf.teamId, "final-treasure");
+  assert.equal(again.status, 200);
+  assert.equal(again.body.data.alreadyCompleted, true);
+  assert.equal(again.body.data.finishedAt, golf.finishedAt);
+  assert.equal(again.body.data.totalTimeMs, golf.totalTimeMs);
+
+  const after = JSON.parse((await app.inject({ method: "GET", url: "/api/teams" })).payload).data;
+  const golfAfter = after.find((t) => t.teamName === "Team Golf");
+  assert.equal(golfAfter.completedPuzzles.filter((p) => p.puzzleId === "final-treasure").length, 1);
+
+  const board = JSON.parse((await app.inject({ method: "GET", url: "/api/leaderboard" })).payload).data;
+  assert.equal(board.completed.filter((t) => t.teamName === "Team Golf").length, 1);
 });
 
 test("leaderboard lists completed teams ranked by totalTime and separates active teams", async () => {
@@ -211,9 +264,10 @@ test("progress retrieval returns ordered puzzle statuses", async () => {
   assert.equal(progress.puzzles[2].status, "LOCKED");
 });
 
-test("puzzle catalog endpoint returns 7 puzzles in order", async () => {
+test("puzzle catalog endpoint returns 7 levels plus the Final Treasure in order", async () => {
   const res = await app.inject({ method: "GET", url: "/api/puzzles" });
   const body = JSON.parse(res.payload);
-  assert.equal(body.data.length, 7);
+  assert.equal(body.data.length, 8);
   assert.equal(body.data[0].puzzleId, "jigsaw");
+  assert.equal(body.data[7].puzzleId, "final-treasure");
 });

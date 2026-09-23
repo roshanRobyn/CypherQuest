@@ -19,6 +19,10 @@ export const PUZZLES = [
   { puzzleId: "samurai-puzzle", name: "Samurai Puzzle", file: "public/puzzles/samurai-puzzle.html" },
   { puzzleId: "three-hidden-differences", name: "Three Hidden Differences", file: "public/puzzles/three-hidden-differences.html" },
   { puzzleId: "kintsugi-shrine", name: "Kintsugi Shrine", file: "public/puzzles/kintsugi-shrine.html" },
+  // Terminal step, NOT a level (L1–L7 are the seven entries above).
+  // Completing it — and only it — marks the hunt COMPLETED, sets
+  // finishedAt, and freezes totalTimeMs (see gameplayService.completePuzzle).
+  { puzzleId: "final-treasure", name: "Final Treasure", file: "public/puzzles/final-treasure.html" },
 ];
 
 export const PUZZLE_IDS = PUZZLES.map((p) => p.puzzleId);

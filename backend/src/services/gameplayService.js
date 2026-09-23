@@ -136,6 +136,18 @@ export function completePuzzle({ teamId, puzzleId }) {
     throw Errors.sessionNotActive(teamId);
   }
 
+  const isLast = isLastPuzzle(puzzleId);
+
+  // The Final Treasure is the actual end of the hunt, so it only counts
+  // once every level before it has been recorded server-side. Loading
+  // final-treasure.html (or posting its puzzleId directly) without that
+  // progress cannot mark a team COMPLETED.
+  if (isLast) {
+    const completedIds = new Set(team.completedPuzzles.map((p) => p.puzzleId));
+    const missing = PUZZLES.slice(0, -1).some((p) => !completedIds.has(p.puzzleId));
+    if (missing) throw Errors.finalNotUnlocked(teamId);
+  }
+
   const now = new Date();
   const nowIso = now.toISOString();
 
@@ -148,13 +160,14 @@ export function completePuzzle({ teamId, puzzleId }) {
 
   const completion = { puzzleId, completedAt: nowIso, timeTakenMs };
 
-  const isLast = isLastPuzzle(puzzleId);
   const nextPuzzleId = getNextPuzzleId(puzzleId);
 
   const updated = updateTeam(teamId, (t) => {
     const completedPuzzles = [...t.completedPuzzles, completion];
+    // Total hunt time = server finishedAt - server session start. Never
+    // derived from anything the client sends.
     const totalTimeMs = isLast
-      ? completedPuzzles.reduce((sum, c) => sum + c.timeTakenMs, 0)
+      ? Math.max(0, now.getTime() - new Date(t.session.startedAt).getTime())
       : t.totalTimeMs;
 
     return {
