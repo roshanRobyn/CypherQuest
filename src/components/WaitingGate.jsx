@@ -16,17 +16,12 @@ const pad = (n) => String(n).padStart(2, "0");
 const SECRET_SEQUENCE = ["T", "D", "T", "D", "D", "T", "封"];
 const SECRET_CODE = "1367245";
 const FLICKER_MS = 260;
-const SUCCESS_AUTOCLOSE_MS = 2600;
 
-// Local-dev-only test unlock: correct code still just shows the cosmetic
-// success view (below) and, ONLY when `import.meta.env.DEV` (statically
-// false — not a runtime process.env lookup — replaced and dead-code-
-// eliminated by Vite at build time; see backend/README-style note in the
-// final report), calls the SAME `onUnlocked` App.jsx already calls when the
-// real backend event gate reports ACTIVE. It never touches the backend,
-// never sets a fake server time, and does nothing at all in a production
-// build. Shorter delay than SUCCESS_AUTOCLOSE_MS since it's handing off to
-// the existing unsealing/blackout/game transition rather than just closing.
+// Correct code shows the success view (below), then calls the SAME
+// `onUnlocked` App.jsx already calls when the real backend event gate
+// reports ACTIVE. It never touches the backend and never sets a fake server
+// time. Short delay since it hands off to the existing unsealing/blackout/
+// game transition.
 const DEV_UNLOCK_DELAY_MS = 1100;
 
 function splitDuration(ms) {
@@ -109,21 +104,17 @@ function WaitingGate({ teamName, onUnlocked }) {
       setLockResult("success");
       clearTimeout(successTimeoutRef.current);
 
-      if (import.meta.env.DEV) {
-        // Dev-only local test unlock — reuses the exact same client-side
-        // transition the real event-ACTIVE path uses (see the `phase ===
-        // "active"` effect above). Never wired into production builds.
-        successTimeoutRef.current = setTimeout(() => {
-          setLockOpen(false);
-          setLockResult("idle");
-          onUnlocked();
-        }, DEV_UNLOCK_DELAY_MS);
-      } else {
-        successTimeoutRef.current = setTimeout(() => {
-          setLockOpen(false);
-          setLockResult("idle");
-        }, SUCCESS_AUTOCLOSE_MS);
-      }
+      // Correct code unlocks gameplay in every build (dev AND production).
+      // Previously gated on `import.meta.env.DEV`, which Vite replaces with
+      // `false` at build time, so the production bundle silently dropped
+      // this onUnlocked() call. Reuses the exact same client-side
+      // transition the real event-ACTIVE path uses (see the `phase ===
+      // "active"` effect above).
+      successTimeoutRef.current = setTimeout(() => {
+        setLockOpen(false);
+        setLockResult("idle");
+        onUnlocked();
+      }, DEV_UNLOCK_DELAY_MS);
     } else {
       setLockResult("wrong");
       clearTimeout(wrongTimeoutRef.current);
