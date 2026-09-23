@@ -280,19 +280,28 @@
     /* ==========================================
        Main Dashboard Split Layout
        ========================================== */
+    /* minmax(0, 1fr), not 1fr: a plain 1fr track can't shrink below its
+       content's min-content width, so the no-wrap level matrix used to
+       stretch this column past the viewport and push the Live Clearance
+       Stream off-screen to the right (page-level horizontal scroll). */
     .dashboard-layout {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: minmax(0, 1fr) 340px;
       gap: 24px;
     }
 
-    @media (max-width: 1100px) {
+    /* Side-by-side only when the full matrix (Rank ... Final, Total Time,
+       ~1250px) fits next to the 340px stream. Below that — i.e. typical
+       laptops — the stream stacks under the matrix (as it already did
+       below 1100px), so the page scrolls vertically only. */
+    @media (max-width: 1719px) {
       .dashboard-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
       }
     }
 
     .card-panel {
+      min-width: 0;
       background: var(--bg-card);
       backdrop-filter: blur(16px);
       border: 1px solid var(--border-card);
@@ -381,13 +390,13 @@
       text-transform: uppercase;
       font-size: 0.72rem;
       letter-spacing: 0.6px;
-      padding: 14px 16px;
+      padding: 14px 8px;
       border-bottom: 1px solid var(--border-card);
       white-space: nowrap;
     }
 
     .matrix-table td {
-      padding: 14px 16px;
+      padding: 14px 8px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.04);
       white-space: nowrap;
       vertical-align: middle;
@@ -409,6 +418,14 @@
       gap: 10px;
     }
 
+    /* Very long team names are truncated (full name on hover) so one name
+       can't widen the whole matrix. */
+    .team-name-text {
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .team-avatar {
       width: 28px;
       height: 28px;
@@ -427,7 +444,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 4px 8px;
+      padding: 4px 6px;
       border-radius: 6px;
       font-size: 0.74rem;
       font-family: var(--font-mono);
@@ -1050,7 +1067,7 @@
               <div class="team-name-cell">
                 <div class="team-avatar">${teamInitials}</div>
                 <div>
-                  <div>${escapeHTML(team.teamName)}</div>
+                  <div class="team-name-text" title="${escapeHTML(team.teamName)}">${escapeHTML(team.teamName)}</div>
                 </div>
               </div>
             </td>`;
@@ -1084,8 +1101,8 @@
             } else {
               levelsTds += `
                 <td>
-                  <span class="lvl-badge locked">
-                    🔒 Locked
+                  <span class="lvl-badge locked" title="Locked" aria-label="Locked">
+                    🔒
                   </span>
                 </td>`;
             }
