@@ -83,6 +83,19 @@ export function updateTeam(teamId, updater) {
   return updated;
 }
 
+// Permanently removes one team record (its session, start time, level
+// progress, Final Treasure completion, finishedAt and totalTimeMs all live
+// on that record). Returns the removed team, or null if no such teamId.
+// nextTeamNumber is left as-is: team numbers are never reused.
+export function deleteTeam(teamId) {
+  const data = readAll();
+  const idx = data.teams.findIndex((t) => t.teamId === teamId);
+  if (idx === -1) return null;
+  const [removed] = data.teams.splice(idx, 1);
+  writeAll(data);
+  return removed;
+}
+
 export function resetAll() {
   writeAll({ teams: [], nextTeamNumber: 1 });
 }
