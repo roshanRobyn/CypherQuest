@@ -688,7 +688,7 @@
 
     <div class="status-badge">
       <span class="pulse-dot"></span>
-      <span>LIVE MONITORING ACTIVE</span>
+      <span id="data-mode-label">CONNECTING TO BACKEND…</span>
     </div>
 
     <div class="header-actions">
@@ -867,10 +867,11 @@
 
       // Load Data from LocalStorage
       function loadData() {
-        // Demo/fallback mode only. While the real backend is reachable,
-        // pollBackend() owns teamsMap — running this too would overwrite it
-        // with empty localStorage data every 1.5s and flash the table.
-        if (backendReachable) return;
+        // Demo mode only (see dataMode below). localStorage holds demo /
+        // simulated data, never live event data, so it is never read while
+        // connecting or once the real backend has answered — otherwise a
+        // stale snapshot flashes on every page load before the first poll.
+        if (dataMode !== 'demo') return;
         try {
           eventsLog = JSON.parse(localStorage.getItem('cypherquest_events') || '[]');
           teamsMap = JSON.parse(localStorage.getItem('cypherquest_teams') || '{}');
@@ -1025,6 +1026,7 @@
         // full table flicker/reset — only a real event (puzzle cleared,
         // team joined, status change) triggers a rebuild.
         const signature = JSON.stringify({
+          dataMode,
           searchVal,
           filterLvl,
           teams: teamsArray.map(t => ({
@@ -1045,7 +1047,9 @@
           matrixTbody.innerHTML = `
             <tr>
               <td colspan="13" class="empty-state">
-                No active teams match the current filters. Start a game in <a href="index.html" target="_blank" style="color:var(--accent-cyan);">index.html</a> or click "Simulate Event"!
+                ${dataMode === 'connecting'
+                  ? 'Connecting to the Cypher Quest backend…'
+                  : 'No active teams match the current filters. Start a game in <a href="index.html" target="_blank" style="color:var(--accent-cyan);">index.html</a>' + (dataMode === 'demo' ? ' or click "Simulate Event"!' : '.')}
               </td>
             </tr>`;
           return;
@@ -1160,7 +1164,9 @@
         if (eventsLog.length === 0) {
           feedContainer.innerHTML = `
             <div class="empty-state">
-              No activity logs recorded yet.<br>Events will appear here in real-time as teams clear levels.
+              ${dataMode === 'connecting'
+                ? 'Connecting to the Cypher Quest backend…'
+                : 'No activity logs recorded yet.<br>Events will appear here in real-time as teams clear levels.'}
             </div>`;
           return;
         }
@@ -1192,6 +1198,13 @@
       // Simulation Engine to test real-time monitoring
       const demoTeams = ['Cyber_Prowlers', 'Binary_Bandits', 'Quantum_Phantoms', 'Neo_Hackers', 'Cipher_Squad'];
       btnSimulate.addEventListener('click', () => {
+        // Demo-only: never mix simulated teams into (or persist) live
+        // backend data.
+        if (dataMode !== 'demo') {
+          alert('Simulate Event only works in demo mode (backend not connected). It never changes live event data.');
+          return;
+        }
+
         const randomTeam = demoTeams[Math.floor(Math.random() * demoTeams.length)];
         const nowObj = new Date();
         const formattedTime = nowObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1449,7 +1462,7 @@
         removeConfirmBtn.disabled = true;
         removeConfirmBtn.textContent = 'REMOVING…';
 
-        if (teamId) {
+        if (dataMode === 'backend' && teamId) {
           if (!backendReachable) {
             showRemoveError('Backend is not reachable right now — nothing was removed.');
             return;
@@ -1529,6 +1542,24 @@
         window.CYPHERQUEST_API_URL || (IS_LOCAL ? 'http://localhost:3001' : PRODUCTION_BACKEND_URL)
       ).replace(/\/+$/, '');
       let backendReachable = false;
+
+      // ONE source of truth at a time:
+      //   'connecting' — first backend poll still pending; nothing rendered
+      //                  from localStorage.
+      //   'backend'    — the backend answered at least once. From then on
+      //                  only GET /api/teams updates the dashboard; a failed
+      //                  poll keeps the last good backend data on screen
+      //                  instead of falling back to localStorage.
+      //   'demo'       — the backend could not be reached on load: the old
+      //                  localStorage / Simulate Event demo mode. Switches to
+      //                  'backend' as soon as a poll succeeds.
+      let dataMode = 'connecting';
+      const dataModeLabel = document.getElementById('data-mode-label');
+
+      function setDataMode(mode, label) {
+        dataMode = mode;
+        dataModeLabel.textContent = label;
+      }
 
       // Must stay in sync with QUEST_STEPS order in src/data/questSteps.js
       // and backend/src/config/puzzles.js.
@@ -1653,13 +1684,22 @@
           if (!json || json.success !== true || !Array.isArray(json.data)) throw new Error('bad payload');
 
           backendReachable = true;
+          setDataMode('backend', 'LIVE MONITORING ACTIVE');
           teamsMap = transformBackendTeams(json.data);
           eventsLog = buildBackendEvents(json.data);
           renderDashboard();
         } catch (e) {
-          // Backend not reachable (or CORS/offline) — fall back to
-          // whatever loadData()'s localStorage polling already rendered.
           backendReachable = false;
+          if (dataMode === 'backend') {
+            // Transient failure (network blip, Render restart): keep the
+            // last good backend data rather than swapping in demo data.
+            dataModeLabel.textContent = 'BACKEND UNREACHABLE — SHOWING LAST DATA';
+            return;
+          }
+          if (dataMode === 'connecting') {
+            setDataMode('demo', 'DEMO MODE — BACKEND NOT CONNECTED');
+            loadData();
+          }
         }
       }
 
@@ -1688,8 +1728,9 @@
         });
       }
 
-      // Initial Load & Fallback Polling every 1.5s (localStorage demo mode)
-      loadData();
+      // Initial render ("connecting") & demo-mode localStorage polling every
+      // 1.5s (a no-op unless dataMode === 'demo').
+      renderDashboard();
       setInterval(loadData, 1500);
 
       // Additive backend polling every 3s (real data, when reachable)
