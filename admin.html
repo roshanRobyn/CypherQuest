@@ -457,6 +457,17 @@
       border: 1px dashed rgba(255, 255, 255, 0.08);
       color: var(--text-subtle);
     }
+    /* FINAL column: Final Treasure reached (actual hunt completion) vs not. */
+    .lvl-badge.final-done {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: var(--accent-amber);
+    }
+    .lvl-badge.final-pending {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      color: var(--text-subtle);
+    }
 
     .status-pill {
       display: inline-block;
@@ -632,7 +643,7 @@
     <div class="kpi-card amber">
       <div class="kpi-title">Completed Hunts (Victories)</div>
       <div class="kpi-value" id="kpi-victories">0</div>
-      <div class="kpi-sub">Teams breaching Level 7</div>
+      <div class="kpi-sub">Final Treasure reached · Fastest hunt <span id="kpi-fastest-hunt">--:--</span></div>
     </div>
   </div>
 
@@ -657,7 +668,7 @@
             <option value="5">Level 5 Cleared</option>
             <option value="6">Level 6 Cleared</option>
             <option value="7">Level 7 Cleared</option>
-            <option value="COMPLETED">Completed Hunt</option>
+            <option value="COMPLETED">Final Treasure (Completed Hunt)</option>
           </select>
         </div>
       </div>
@@ -677,6 +688,7 @@
               <th>L5</th>
               <th>L6</th>
               <th>L7</th>
+              <th>Final</th>
               <th>Total Time</th>
             </tr>
           </thead>
@@ -716,6 +728,7 @@
       const kpiClears = document.getElementById('kpi-clears');
       const kpiFastest = document.getElementById('kpi-fastest');
       const kpiVictories = document.getElementById('kpi-victories');
+      const kpiFastestHunt = document.getElementById('kpi-fastest-hunt');
 
       const matrixTbody = document.getElementById('matrix-tbody');
       const feedContainer = document.getElementById('feed-container');
@@ -811,13 +824,18 @@
         let totalClears = 0;
         let victories = 0;
         let fastestTimeSec = Infinity;
+        let fastestHuntSec = Infinity;
 
         teamKeys.forEach(tName => {
           const tObj = teamsMap[tName];
           const clearedCount = Object.keys(tObj.levelsCleared || {}).length;
           totalClears += clearedCount;
-          if (tObj.status === 'COMPLETED' || clearedCount >= 7) {
+          // Only the Final Treasure completes a hunt — clearing Level 7
+          // alone is not a victory.
+          if (tObj.status === 'COMPLETED') {
             victories++;
+            const huntSec = mmssToSec(tObj.totalTime);
+            if (huntSec !== null && huntSec < fastestHuntSec) fastestHuntSec = huntSec;
           }
 
           // Calculate fastest level clear if recorded
@@ -836,6 +854,7 @@
 
         kpiClears.textContent = totalClears;
         kpiVictories.textContent = victories;
+        kpiFastestHunt.textContent = fastestHuntSec !== Infinity ? formatMs(fastestHuntSec * 1000) : '--:--';
 
         if (fastestTimeSec !== Infinity) {
           const m = String(Math.floor(fastestTimeSec / 60)).padStart(2, '0');
@@ -862,7 +881,7 @@
           if (!nameMatches) return false;
 
           if (filterLvl === 'ALL') return true;
-          if (filterLvl === 'COMPLETED') return team.status === 'COMPLETED' || Object.keys(team.levelsCleared || {}).length >= 7;
+          if (filterLvl === 'COMPLETED') return team.status === 'COMPLETED';
 
           const lvlNum = parseInt(filterLvl, 10);
           return team.levelsCleared && team.levelsCleared[lvlNum];
@@ -874,7 +893,19 @@
         // team that reached that stage FIRST (earliest lastUpdated
         // timestamp) ranks higher — this is how "who got furthest first"
         // is decided even when nobody finishes the whole quest.
+        // Teams that reached the Final Treasure rank above everyone else
+        // (even teams with all 7 levels cleared), fastest total time first —
+        // same order as the backend's GET /api/leaderboard.
         teamsArray.sort((a, b) => {
+          const doneA = a.status === 'COMPLETED';
+          const doneB = b.status === 'COMPLETED';
+          if (doneA !== doneB) return doneA ? -1 : 1;
+          if (doneA && doneB) {
+            const huntA = mmssToSec(a.totalTime) ?? Infinity;
+            const huntB = mmssToSec(b.totalTime) ?? Infinity;
+            if (huntA !== huntB) return huntA - huntB;
+          }
+
           const countA = Object.keys(a.levelsCleared || {}).length;
           const countB = Object.keys(b.levelsCleared || {}).length;
           if (countA !== countB) return countB - countA;
@@ -901,6 +932,7 @@
             lc: t.levelsCleared,
             cl: t.currentLevel,
             lu: t.lastUpdated,
+            tt: t.totalTime,
           })),
         });
         if (signature === lastMatrixSignature) return;
@@ -911,7 +943,7 @@
         if (teamsArray.length === 0) {
           matrixTbody.innerHTML = `
             <tr>
-              <td colspan="11" class="empty-state">
+              <td colspan="12" class="empty-state">
                 No active teams match the current filters. Start a game in <a href="index.html" target="_blank" style="color:var(--accent-cyan);">index.html</a> or click "Simulate Event"!
               </td>
             </tr>`;
@@ -975,11 +1007,29 @@
             }
           }
 
+          // FINAL column — the actual end of the hunt. 🏆 only when the
+          // backend recorded the Final Treasure (status COMPLETED, with a
+          // server finishedAt); otherwise ❌, never a fabricated time.
+          const finalTd = team.status === 'COMPLETED'
+            ? `
+                <td>
+                  <span class="lvl-badge final-done" title="Final Treasure reached${team.finishedAt ? ' at ' + new Date(team.finishedAt).toLocaleTimeString() : ''}">
+                    🏆 ${team.totalTime || 'Finished'}
+                  </span>
+                </td>`
+            : `
+                <td>
+                  <span class="lvl-badge final-pending" title="Final Treasure not reached — hunt not completed">
+                    ❌ Not finished
+                  </span>
+                </td>`;
+
           // Total Time Cell — a live stopwatch, not a frozen poll snapshot.
           // Ticks client-side every second via tickTimers() below, counting
           // up from the moment the team clicked "Enter" (team.startedAt,
           // set server-side by POST /api/game/start). Frozen at totalTime
-          // once the team's status is COMPLETED.
+          // once the team's status is COMPLETED (i.e. Final Treasure
+          // reached — finishedAt - session start, computed server-side).
           const totalTimeTd = `
             <td style="font-family:var(--font-mono); font-weight:700; color:var(--accent-cyan);">
               <span class="live-timer"
@@ -989,7 +1039,7 @@
               >--:--</span>
             </td>`;
 
-          tr.innerHTML = rankTd + teamTd + statusTd + levelsTds + totalTimeTd;
+          tr.innerHTML = rankTd + teamTd + statusTd + levelsTds + finalTd + totalTimeTd;
           matrixTbody.appendChild(tr);
         });
       }
@@ -1016,7 +1066,7 @@
           } else if (evt.eventType === 'LEVEL_CLEARED') {
             msg = `Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> successfully breached <strong style="color:var(--success-green)">Level ${evt.levelCleared}</strong> (Elapsed: ${evt.elapsedTotal || 'N/A'}).`;
           } else if (evt.eventType === 'VICTORY_REACHED') {
-            msg = `🏆 Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> completed the entire hunt! Final Time: <strong style="color:var(--accent-amber)">${evt.elapsedTotal}</strong>.`;
+            msg = `🏆 Team <span class="feed-team">${escapeHTML(evt.teamName)}</span> reached the Final Treasure and completed the hunt! ⏱ Final Time: <strong style="color:var(--accent-amber)">${evt.elapsedTotal}</strong>.`;
           }
 
           item.innerHTML = `
@@ -1064,22 +1114,26 @@
           const tObj = teamsMap[randomTeam];
           const nextLvl = tObj.currentLevel;
 
-          if (nextLvl <= 7) {
+          if (nextLvl <= 8) {
+            // Levels 1-7 are checkpoints; step 8 is the Final Treasure —
+            // the only step that completes the hunt.
             const fakeSec = nextLvl * 45 + Math.floor(Math.random() * 30);
             const m = String(Math.floor(fakeSec / 60)).padStart(2, '0');
             const s = String(fakeSec % 60).padStart(2, '0');
             const elapsed = `${m}:${s}`;
 
-            tObj.levelsCleared[nextLvl] = {
-              timestamp: nowObj.toISOString(),
-              formattedTime,
-              elapsedTotal: elapsed
-            };
+            if (nextLvl <= 7) {
+              tObj.levelsCleared[nextLvl] = {
+                timestamp: nowObj.toISOString(),
+                formattedTime,
+                elapsedTotal: elapsed
+              };
+            }
 
             tObj.currentLevel = nextLvl + 1;
             tObj.lastUpdated = nowObj.toISOString();
 
-            if (nextLvl === 7) {
+            if (nextLvl === 8) {
               tObj.status = 'COMPLETED';
               tObj.totalTime = elapsed;
             }
@@ -1088,7 +1142,7 @@
               id: 'evt_' + Date.now(),
               timestamp: nowObj.toISOString(),
               formattedTime,
-              eventType: nextLvl === 7 ? 'VICTORY_REACHED' : 'LEVEL_CLEARED',
+              eventType: nextLvl === 8 ? 'VICTORY_REACHED' : 'LEVEL_CLEARED',
               teamName: randomTeam,
               levelCleared: nextLvl,
               elapsedTotal: elapsed
@@ -1117,7 +1171,7 @@
         }
 
         let csvContent = 'data:text/csv;charset=utf-8,';
-        csvContent += 'Team Name,Status,Level 1 Cleared,Level 2 Cleared,Level 3 Cleared,Level 4 Cleared,Level 5 Cleared,Level 6 Cleared,Level 7 Cleared,Total Elapsed Time,Last Active\n';
+        csvContent += 'Team Name,Status,Level 1 Cleared,Level 2 Cleared,Level 3 Cleared,Level 4 Cleared,Level 5 Cleared,Level 6 Cleared,Level 7 Cleared,Final Treasure,Total Elapsed Time,Last Active\n';
 
         teamKeys.forEach(tName => {
           const t = teamsMap[tName];
@@ -1132,7 +1186,8 @@
             l[5] ? `"${l[5].formattedTime} (${l[5].elapsedTotal})"` : 'N/A',
             l[6] ? `"${l[6].formattedTime} (${l[6].elapsedTotal})"` : 'N/A',
             l[7] ? `"${l[7].formattedTime} (${l[7].elapsedTotal})"` : 'N/A',
-            t.totalTime || 'In Progress',
+            t.status === 'COMPLETED' ? 'COMPLETED' : 'NOT COMPLETED',
+            t.status === 'COMPLETED' ? (t.totalTime || 'N/A') : 'Not Finished',
             t.lastUpdated ? `"${new Date(t.lastUpdated).toLocaleString()}"` : 'N/A'
           ];
           csvContent += row.join(',') + '\n';
@@ -1257,10 +1312,22 @@
         'three-hidden-differences',
         'kintsugi-shrine',
       ];
+      // Terminal step after Level 7 — not a level. The backend marks the
+      // team COMPLETED (finishedAt + totalTimeMs) only when this is recorded.
+      const FINAL_PUZZLE_ID = 'final-treasure';
 
       function levelFromPuzzleId(puzzleId) {
         const idx = PUZZLE_ID_ORDER.indexOf(puzzleId);
         return idx === -1 ? null : idx + 1;
+      }
+
+      // 'mm:ss' (as produced by formatMs) -> seconds, or null.
+      function mmssToSec(str) {
+        if (!str) return null;
+        const parts = String(str).split(':');
+        if (parts.length !== 2) return null;
+        const sec = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        return isNaN(sec) ? null : sec;
       }
 
       function formatMs(ms) {
@@ -1304,9 +1371,47 @@
             // Server-authoritative moment the team clicked "Enter" — the
             // live stopwatch (tickTimers()) counts up from this.
             startedAt: team.startedAt || null,
+            finishedAt: team.finishedAt || null,
           };
         });
         return map;
+      }
+
+      // Live Clearance Stream in backend mode: rebuilt on every poll from
+      // the server-recorded timestamps only (session start, each level's
+      // completedAt, and finishedAt for the Final Treasure), newest first.
+      function buildBackendEvents(teams) {
+        const events = [];
+        const push = (team, eventType, iso, extra) => {
+          if (!iso) return;
+          events.push({
+            id: `${team.teamId}_${eventType}_${extra.levelCleared || ''}`,
+            timestamp: iso,
+            formattedTime: new Date(iso).toLocaleTimeString(),
+            eventType,
+            teamName: team.teamName,
+            ...extra,
+          });
+        };
+
+        teams.forEach(team => {
+          push(team, 'HUNT_STARTED', (team.session && team.session.startedAt) || team.startedAt, { level: 1 });
+          (team.completedPuzzles || []).forEach(cp => {
+            const lvl = levelFromPuzzleId(cp.puzzleId);
+            if (lvl) {
+              push(team, 'LEVEL_CLEARED', cp.completedAt, {
+                levelCleared: lvl,
+                elapsedTotal: formatMs(cp.timeTakenMs),
+              });
+            } else if (cp.puzzleId === FINAL_PUZZLE_ID && team.status === 'COMPLETED') {
+              push(team, 'VICTORY_REACHED', team.finishedAt || cp.completedAt, {
+                elapsedTotal: formatMs(team.totalTimeMs),
+              });
+            }
+          });
+        });
+
+        return events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       }
 
       async function pollBackend() {
@@ -1318,6 +1423,7 @@
 
           backendReachable = true;
           teamsMap = transformBackendTeams(json.data);
+          eventsLog = buildBackendEvents(json.data);
           renderDashboard();
         } catch (e) {
           // Backend not reachable (or CORS/offline) — fall back to

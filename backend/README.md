@@ -163,8 +163,11 @@ Request: `{ "teamId": "team_abc123", "puzzleId": "puzzle-01" }`
 - **Idempotent**: calling this again with the same `teamId`+`puzzleId`
   returns the *original* recorded completion (`alreadyCompleted: true`) —
   it never errors and never records a duplicate.
-- On the last puzzle, marks the team `COMPLETED`, sets `finishedAt` and
-  `totalTimeMs` (sum of all `timeTakenMs`).
+- Level 7 (`kintsugi-shrine`) is NOT the end of the hunt. Only the terminal
+  `final-treasure` step marks the team `COMPLETED`, sets `finishedAt` and
+  `totalTimeMs` (`finishedAt` minus the server session start).
+- `final-treasure` is rejected with `409 FINAL_NOT_UNLOCKED` unless all
+  seven levels are already recorded for the team.
 
 Response:
 ```json
