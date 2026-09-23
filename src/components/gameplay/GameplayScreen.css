@@ -1354,3 +1354,70 @@
   letter-spacing: 0.04em;
   color: rgba(200, 120, 100, 0.85);
 }
+
+/* =========================================================
+   HUNT TIMER — global HUD, bottom-left. Same layer/z-index family as
+   .gp-tools (4) / .gp-map-button /.gp-compass (5); outside .gp-central,
+   never inside a puzzle iframe. The only genuinely open HUD corner —
+   map+compass sit top-right, tools left-center, inventory bottom-center.
+========================================================= */
+
+.gp-hunt-timer {
+  position: absolute;
+  bottom: 18px;
+  left: 24px;
+  z-index: 4;
+
+  padding: 10px 18px;
+
+  background: linear-gradient(180deg, rgba(35, 24, 13, 0.92), rgba(18, 12, 6, 0.94));
+  border: 1px solid rgba(212, 175, 120, 0.3);
+  border-radius: 4px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+
+  text-align: left;
+  pointer-events: none;
+
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.gp-hunt-timer-label {
+  margin: 0 0 4px;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(230, 210, 170, 0.6);
+}
+
+.gp-hunt-timer-value {
+  margin: 0;
+  font-size: 0.98rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: rgba(241, 230, 206, 0.95);
+}
+
+.gp-hunt-timer-warning {
+  border-color: rgba(196, 96, 60, 0.65);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 18px rgba(196, 96, 60, 0.25);
+  animation: huntTimerWarningPulse 2.4s ease-in-out infinite;
+}
+
+.gp-hunt-timer-warning .gp-hunt-timer-label {
+  color: rgba(224, 140, 100, 0.95);
+}
+
+.gp-hunt-timer-warning .gp-hunt-timer-value {
+  color: #e8b598;
+}
+
+@keyframes huntTimerWarningPulse {
+  0%,
+  100% {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 12px rgba(196, 96, 60, 0.18);
+  }
+
+  50% {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55), 0 0 24px rgba(196, 96, 60, 0.4);
+  }
+}

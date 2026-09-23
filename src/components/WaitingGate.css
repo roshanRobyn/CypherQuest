@@ -1,0 +1,335 @@
+/* =========================================================
+   WAITING GATE — sealed shrine / pre-hunt chamber
+   Reuses the entrance's mist/fog-ribbon atmosphere (App.css) and gold/
+   parchment/bronze palette. No spinners, no SaaS chrome.
+========================================================= */
+
+.waiting-gate {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #1a1510 0%,
+      #0c0906 55%,
+      #000000 100%
+    );
+}
+
+.waiting-gate .background-overlay {
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+
+.waiting-gate .mist,
+.waiting-gate .fog-ribbon {
+  z-index: 2;
+}
+
+/* =========================================================
+   LANTERN GLOW — extremely subtle, breathing warm light
+========================================================= */
+
+.shrine-lantern {
+  position: absolute;
+  top: 38%;
+  width: 180px;
+  height: 260px;
+  pointer-events: none;
+  z-index: 3;
+  border-radius: 50%;
+  filter: blur(50px);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(214, 184, 120, 0.16) 0%,
+    rgba(180, 110, 40, 0.08) 45%,
+    transparent 75%
+  );
+  animation: lanternBreathe 6s ease-in-out infinite;
+}
+
+.shrine-lantern-left {
+  left: 12%;
+  animation-delay: 0.4s;
+}
+
+.shrine-lantern-right {
+  right: 12%;
+  animation-delay: 2.1s;
+}
+
+@keyframes lanternBreathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* =========================================================
+   EMBERS — restrained rising particles
+========================================================= */
+
+.ember-field {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.ember {
+  position: absolute;
+  bottom: 8%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #d6b878;
+  box-shadow: 0 0 6px 1px rgba(214, 184, 120, 0.7);
+  opacity: 0;
+  animation: emberRise 8s ease-in infinite;
+}
+
+@keyframes emberRise {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0);
+  }
+
+  10% {
+    opacity: 0.75;
+  }
+
+  85% {
+    opacity: 0.25;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -320px, 0);
+  }
+}
+
+/* =========================================================
+   PANEL
+========================================================= */
+
+.waiting-panel {
+  position: relative;
+  z-index: 9;
+
+  width: 620px;
+  max-width: calc(var(--gp-vw, 1vw) * 88);
+
+  padding: 46px 50px 40px;
+
+  text-align: center;
+
+  background: rgba(10, 7, 4, 0.72);
+
+  border: 1px solid rgba(214, 184, 120, 0.4);
+  border-radius: 3px;
+
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.7),
+    inset 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
+.waiting-symbol {
+  margin-bottom: 10px;
+
+  color: #d6b878;
+  font-size: 40px;
+  line-height: 1;
+
+  text-shadow: 0 0 18px rgba(214, 184, 120, 0.45);
+}
+
+/* Hidden Easter-egg targets — must render identically to plain text: no
+   color/underline/outline/cursor change that would hint they're clickable
+   (the app's global `cursor: none` already hides any native pointer). */
+.secret-glyph {
+  display: inline;
+}
+
+.waiting-panel-flicker {
+  animation: waitingPanelFlicker 260ms ease-in-out;
+}
+
+@keyframes waitingPanelFlicker {
+  0% {
+    filter: brightness(1);
+  }
+
+  30% {
+    filter: brightness(0.82);
+  }
+
+  60% {
+    filter: brightness(1.05);
+  }
+
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.waiting-title {
+  margin: 0 0 18px;
+
+  color: #f2e7cf;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 5px;
+
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.9);
+}
+
+.waiting-title-warn {
+  color: #e0b98f;
+}
+
+.waiting-date {
+  margin: 0;
+  color: #ffffff;
+  font-size: 15px;
+  letter-spacing: 4px;
+}
+
+.waiting-time {
+  margin: 4px 0 0;
+  color: #d6b878;
+  font-size: 15px;
+  letter-spacing: 4px;
+}
+
+.waiting-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: 20px auto;
+}
+
+.waiting-divider span {
+  width: 60px;
+  height: 1px;
+  background: rgba(214, 184, 120, 0.5);
+}
+
+.waiting-divider b {
+  color: #d6b878;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.waiting-label {
+  margin: 0 0 14px;
+  color: rgba(242, 231, 207, 0.75);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  letter-spacing: 5px;
+}
+
+/* =========================================================
+   COUNTDOWN
+========================================================= */
+
+.waiting-countdown {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+}
+
+.countdown-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 62px;
+}
+
+.countdown-segment span {
+  color: #f2e7cf;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 40px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  text-shadow: 0 0 20px rgba(214, 184, 120, 0.3);
+}
+
+.countdown-segment small {
+  margin-top: 4px;
+  color: rgba(214, 184, 120, 0.7);
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+}
+
+.countdown-colon {
+  color: rgba(214, 184, 120, 0.55);
+  font-size: 32px;
+  font-weight: normal;
+  transform: translateY(-8px);
+}
+
+.waiting-team {
+  margin: 30px 0 0;
+  color: rgba(255, 255, 255, 0.65);
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+}
+
+.waiting-team strong {
+  color: #d6b878;
+  font-weight: normal;
+}
+
+/* =========================================================
+   TABLET / MOBILE — same frozen-baseline gate as App.css
+========================================================= */
+
+.app-tablet .waiting-panel {
+  width: calc(var(--gp-vw, 1vw) * 88);
+  padding: 36px 30px 32px;
+}
+
+.app-tablet .countdown-segment span {
+  font-size: 32px;
+}
+
+.app-mobile .waiting-title {
+  font-size: 19px;
+  letter-spacing: 3px;
+}
+
+.app-mobile .waiting-countdown {
+  gap: 6px;
+}
+
+.app-mobile .countdown-segment {
+  min-width: 48px;
+}
+
+.app-mobile .countdown-segment span {
+  font-size: 26px;
+}
+
+.app-mobile .countdown-colon {
+  font-size: 22px;
+}

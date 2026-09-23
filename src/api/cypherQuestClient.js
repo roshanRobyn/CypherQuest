@@ -64,6 +64,13 @@ export function getPuzzleCatalog() {
   return request("/api/puzzles");
 }
 
+// Authoritative WAITING/ACTIVE event-gate state, server clock only — see
+// useEventGate.js, the only caller. { status, serverTime, eventStartTime,
+// msRemaining }.
+export function getEventState() {
+  return request("/api/event/state");
+}
+
 // Convenience: register (or re-find by name) a team and immediately start
 // its game session in one call. Used by App.jsx's startQuest(). Never
 // throws; safe to fire-and-forget.
@@ -86,6 +93,7 @@ const CypherQuestAPI = {
   getTeams,
   getPuzzleCatalog,
   registerAndStart,
+  getEventState,
 };
 
 // Also exposed on window so standalone puzzle HTML pages (loaded outside

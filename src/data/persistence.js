@@ -1,7 +1,10 @@
-// Single, clearly-named Cypher Quest persistence key. The progression
-// system (useQuestProgression) owns writing to it; App.jsx only reads it
-// once, at startup, to decide whether to resume straight into gameplay or
-// show the normal team-entry screen.
+// Single, clearly-named Cypher Quest persistence key. Two writers: App.jsx
+// saves a minimal { teamName } record right after team confirmation (so a
+// refresh while waiting on the event gate resumes into "waiting" without
+// re-entering the name), and the progression system (useQuestProgression)
+// later overwrites it with the full { teamName, quest } shape once the
+// event gate unlocks and gameplay actually starts. App.jsx reads it once,
+// at startup, to pick the right scene to resume into — see App.jsx.
 //
 // Backed by sessionStorage, not localStorage: sessionStorage is scoped to
 // this one browser tab and is cleared by the browser itself when that tab

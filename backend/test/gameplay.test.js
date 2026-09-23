@@ -9,6 +9,9 @@ import path from "node:path";
 const tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "cypherquest-test-"));
 process.env.DATA_DIR = tmpDataDir;
 process.env.NODE_ENV = "test";
+// This suite exercises gameplay mechanics, not the event gate itself (see
+// event.test.js for that) — force ACTIVE so /api/game/start isn't rejected.
+process.env.EVENT_STATE_OVERRIDE = "ACTIVE";
 
 const { buildServer } = await import("../src/server.js");
 
