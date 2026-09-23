@@ -19,7 +19,7 @@ export function buildServer() {
   const allowedOrigins = env.CORS_ORIGIN.split(",").map((o) => o.trim());
   fastify.register(cors, {
     origin: allowedOrigins,
-    methods: ["GET", "POST", "OPTIONS"],
+    methods: ["GET", "POST", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "x-admin-reset-token"],
   });
 

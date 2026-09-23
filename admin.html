@@ -469,6 +469,76 @@
       color: var(--text-subtle);
     }
 
+    /* Row-level "Remove Team" action (surgical; Reset Logs stays the
+       nuclear option in the header). */
+    .row-remove-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: var(--error-red);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .row-remove-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .admin-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(3, 5, 10, 0.72);
+      backdrop-filter: blur(4px);
+    }
+    .admin-modal-overlay.open {
+      display: flex;
+    }
+    .admin-modal {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-dark);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: 0 20px 50px -15px rgba(239, 68, 68, 0.35);
+    }
+    .admin-modal h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: var(--text-main);
+    }
+    .admin-modal p {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+    .admin-modal-error {
+      display: none;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--error-red);
+      font-size: 0.82rem;
+    }
+    .admin-modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
     .status-pill {
       display: inline-block;
       padding: 4px 10px;
@@ -690,6 +760,7 @@
               <th>L7</th>
               <th>Final</th>
               <th>Total Time</th>
+              <th title="Remove a single team">Admin</th>
             </tr>
           </thead>
           <tbody id="matrix-tbody">
@@ -712,6 +783,19 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Remove Team confirmation (row-level 🗑 action) -->
+  <div class="admin-modal-overlay" id="remove-team-overlay" aria-hidden="true">
+    <div class="admin-modal" role="alertdialog" aria-modal="true" aria-labelledby="remove-team-title">
+      <h3 id="remove-team-title">Remove Team?</h3>
+      <p>This will permanently remove this team's registration/gameplay session, level progress, completion data and leaderboard record.</p>
+      <div class="admin-modal-error" id="remove-team-error"></div>
+      <div class="admin-modal-actions">
+        <button type="button" class="btn" id="remove-team-cancel">CANCEL</button>
+        <button type="button" class="btn btn-danger" id="remove-team-confirm">🗑️ REMOVE TEAM</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -943,7 +1027,7 @@
         if (teamsArray.length === 0) {
           matrixTbody.innerHTML = `
             <tr>
-              <td colspan="12" class="empty-state">
+              <td colspan="13" class="empty-state">
                 No active teams match the current filters. Start a game in <a href="index.html" target="_blank" style="color:var(--accent-cyan);">index.html</a> or click "Simulate Event"!
               </td>
             </tr>`;
@@ -1039,7 +1123,15 @@
               >--:--</span>
             </td>`;
 
-          tr.innerHTML = rankTd + teamTd + statusTd + levelsTds + finalTd + totalTimeTd;
+          // Admin Cell — row-level Remove Team action (see openRemoveModal).
+          const removeTd = `
+            <td>
+              <button type="button" class="row-remove-btn" data-team-name="${escapeHTML(team.teamName)}" title="Remove ${escapeHTML(team.teamName)}">
+                🗑
+              </button>
+            </td>`;
+
+          tr.innerHTML = rankTd + teamTd + statusTd + levelsTds + finalTd + totalTimeTd + removeTd;
           matrixTbody.appendChild(tr);
         });
       }
@@ -1258,6 +1350,126 @@
         renderDashboard();
       });
 
+      // ---------------------------------------------------------------
+      // Remove ONE team (surgical). Reset Logs above is unchanged and
+      // still clears everything. Backend mode deletes by the team's
+      // authoritative teamId via DELETE /api/admin/teams/:teamId, using
+      // the same x-admin-reset-token as Reset Logs; demo mode removes the
+      // team from the localStorage mock data only.
+      // ---------------------------------------------------------------
+      const removeOverlay = document.getElementById('remove-team-overlay');
+      const removeTitle = document.getElementById('remove-team-title');
+      const removeError = document.getElementById('remove-team-error');
+      const removeCancelBtn = document.getElementById('remove-team-cancel');
+      const removeConfirmBtn = document.getElementById('remove-team-confirm');
+      let pendingRemoval = null; // { teamName, teamId }
+
+      function openRemoveModal(teamName) {
+        const team = teamsMap[teamName];
+        if (!team) return;
+        pendingRemoval = { teamName, teamId: team.teamId || null };
+        removeTitle.textContent = `Remove Team ${teamName}?`;
+        removeError.style.display = 'none';
+        removeError.textContent = '';
+        removeConfirmBtn.disabled = false;
+        removeConfirmBtn.textContent = '🗑️ REMOVE TEAM';
+        removeOverlay.classList.add('open');
+        removeOverlay.setAttribute('aria-hidden', 'false');
+        removeCancelBtn.focus();
+      }
+
+      function closeRemoveModal() {
+        pendingRemoval = null;
+        removeOverlay.classList.remove('open');
+        removeOverlay.setAttribute('aria-hidden', 'true');
+      }
+
+      function showRemoveError(message) {
+        removeError.textContent = message;
+        removeError.style.display = 'block';
+        removeConfirmBtn.disabled = false;
+        removeConfirmBtn.textContent = '🗑️ REMOVE TEAM';
+      }
+
+      // Same token handling as resetBackend(): cached in sessionStorage,
+      // prompted for once on a 403. Returns { ok } or { ok: false, error }.
+      async function removeTeamOnBackend(teamId) {
+        const doRemove = (token) =>
+          fetch(`${BACKEND_API_URL}/api/admin/teams/${encodeURIComponent(teamId)}`, {
+            method: 'DELETE',
+            headers: token ? { 'x-admin-reset-token': token } : {},
+          });
+
+        try {
+          let token = sessionStorage.getItem('cypherquest_admin_token') || '';
+          let res = await doRemove(token);
+          let json = await res.json().catch(() => null);
+
+          if (res.status === 403) {
+            token = window.prompt('Removing a team requires the admin token:') || '';
+            if (!token) return { ok: false, error: 'Cancelled — the admin token is required to remove a team.' };
+            res = await doRemove(token);
+            json = await res.json().catch(() => null);
+          }
+
+          if (res.ok && json && json.success === true) {
+            if (token) sessionStorage.setItem('cypherquest_admin_token', token);
+            return { ok: true };
+          }
+
+          if (res.status === 403) sessionStorage.removeItem('cypherquest_admin_token');
+          const message = (json && json.error && json.error.message) || `Request failed with status ${res.status}`;
+          return { ok: false, error: `Backend refused the removal: ${message}` };
+        } catch (e) {
+          return { ok: false, error: 'Could not reach the backend to remove this team.' };
+        }
+      }
+
+      async function confirmRemoveTeam() {
+        if (!pendingRemoval) return;
+        const { teamName, teamId } = pendingRemoval;
+
+        removeConfirmBtn.disabled = true;
+        removeConfirmBtn.textContent = 'REMOVING…';
+
+        if (teamId) {
+          if (!backendReachable) {
+            showRemoveError('Backend is not reachable right now — nothing was removed.');
+            return;
+          }
+          const result = await removeTeamOnBackend(teamId);
+          if (!result.ok) {
+            showRemoveError(result.error);
+            return;
+          }
+          closeRemoveModal();
+          lastMatrixSignature = null;
+          await pollBackend();
+          return;
+        }
+
+        // Demo mode (localStorage mock data, no backend teamId).
+        delete teamsMap[teamName];
+        eventsLog = eventsLog.filter(evt => evt.teamName !== teamName);
+        saveData();
+        closeRemoveModal();
+        lastMatrixSignature = null;
+        renderDashboard();
+      }
+
+      matrixTbody.addEventListener('click', (e) => {
+        const btn = e.target.closest('.row-remove-btn');
+        if (btn) openRemoveModal(btn.dataset.teamName);
+      });
+      removeCancelBtn.addEventListener('click', closeRemoveModal);
+      removeConfirmBtn.addEventListener('click', confirmRemoveTeam);
+      removeOverlay.addEventListener('click', (e) => {
+        if (e.target === removeOverlay && !removeConfirmBtn.disabled) closeRemoveModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && pendingRemoval && !removeConfirmBtn.disabled) closeRemoveModal();
+      });
+
       // Search & Filter Listeners
       searchTeamInput.addEventListener('input', renderMatrixTable);
       filterLevelSelect.addEventListener('change', renderMatrixTable);
@@ -1372,6 +1584,8 @@
             // live stopwatch (tickTimers()) counts up from this.
             startedAt: team.startedAt || null,
             finishedAt: team.finishedAt || null,
+            // Authoritative id used by the row-level Remove Team action.
+            teamId: team.teamId,
           };
         });
         return map;

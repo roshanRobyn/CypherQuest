@@ -5,6 +5,7 @@ import {
   listTeams as repoListTeams,
   updateTeam,
   resetAll as repoResetAll,
+  deleteTeam as repoDeleteTeam,
 } from "./teamRepository.js";
 import {
   PUZZLES,
@@ -226,6 +227,18 @@ export function getLeaderboard() {
     });
 
   return { completed, active };
+}
+
+// Admin-only: removes exactly one team by its authoritative teamId. The
+// leaderboard and the dashboard's progress/stream are all derived from the
+// team records, so nothing else needs cleaning up.
+export function removeTeam(teamId) {
+  if (!teamId || typeof teamId !== "string") {
+    throw Errors.validation("teamId is required");
+  }
+  const removed = repoDeleteTeam(teamId);
+  if (!removed) throw Errors.teamNotFound(teamId);
+  return removed;
 }
 
 export function resetAllData() {

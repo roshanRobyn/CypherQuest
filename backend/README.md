@@ -24,7 +24,7 @@ Server listens on `http://localhost:3001` by default (`PORT` in `.env`).
 | `PORT`               | `3001`                   | HTTP port                                                             |
 | `NODE_ENV`           | `development`            | `development` \| `production` \| `test`                              |
 | `CORS_ORIGIN`        | `http://localhost:5173`  | Comma-separated list of allowed origins (Vite dev server)             |
-| `ADMIN_RESET_TOKEN`  | (empty)                  | Required header value for `/api/admin/reset` when `NODE_ENV=production` |
+| `ADMIN_RESET_TOKEN`  | (empty)                  | Required header value for `/api/admin/*` (reset, team removal) when `NODE_ENV=production` |
 
 See `.env.example`.
 
@@ -207,6 +207,16 @@ separately in `active`, never mixed into the completed ranking.
 Clears all team/session data. In `development`/`test` it always works. In
 `production` it requires header `x-admin-reset-token: <ADMIN_RESET_TOKEN>`
 matching the configured env var, otherwise `403 FORBIDDEN`.
+
+### `DELETE /api/admin/teams/:teamId` — admin only
+Permanently removes ONE team by its `teamId` (session, start time, level
+progress, Final Treasure completion, `finishedAt`, `totalTimeMs`). The
+leaderboard is derived from team records, so the team drops out of it too.
+Other teams are untouched and team numbers are never reused. Same auth as
+reset: in `production` it requires `x-admin-reset-token`, otherwise
+`403 FORBIDDEN`. Unknown/already-removed `teamId` returns `404 TEAM_NOT_FOUND`.
+Any later request from a removed team's still-open browser also gets
+`404 TEAM_NOT_FOUND` and cannot touch another team.
 
 ## Data storage & the DB-swap point
 
