@@ -1,4 +1,5 @@
 import * as gameplayService from "../services/gameplayService.js";
+import { setEventStartOverride } from "../services/eventService.js";
 import { env, isProduction } from "../config/env.js";
 import { Errors } from "../utils/errors.js";
 
@@ -20,6 +21,18 @@ export async function reset(req, reply) {
 
   gameplayService.resetAllData();
   reply.send({ success: true, data: { message: "All gameplay data cleared" } });
+}
+
+// Body: { eventStartAt: "<ISO with timezone>" } to override, or
+// { eventStartAt: null } to go back to the configured EVENT_START_AT.
+export async function setEventStart(req, reply) {
+  assertAdmin(req, "Changing the event start");
+
+  const body = req.body ?? {};
+  if (!("eventStartAt" in body)) {
+    throw Errors.validation("eventStartAt is required (ISO date-time with timezone, or null)");
+  }
+  reply.send({ success: true, data: setEventStartOverride(body.eventStartAt) });
 }
 
 export async function removeTeam(req, reply) {

@@ -22,6 +22,12 @@ export const Errors = {
       "FINAL_NOT_UNLOCKED",
       `Team "${teamId}" must complete every level before the Final Treasure`
     ),
+  eventAlreadyStarted: () =>
+    new ApiError(
+      409,
+      "EVENT_ALREADY_STARTED",
+      "The event has already started — its start time can no longer be changed"
+    ),
   forbidden: (message) => new ApiError(403, "FORBIDDEN", message),
   notFound: (message) => new ApiError(404, "NOT_FOUND", message),
 };
