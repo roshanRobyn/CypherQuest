@@ -123,12 +123,16 @@ after(async () => {
   fs.rmSync(tmpDataDir, { recursive: true, force: true });
 });
 
-test("GET /api/event/state reports WAITING before release, with server time fields", async () => {
+test("GET /api/event/state reports the server-clock gate state with server time fields", async () => {
   const res = await app.inject({ method: "GET", url: "/api/event/state" });
   assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.payload);
   assert.equal(body.success, true);
-  assert.equal(body.data.status, "WAITING");
+  // Compared against the server's own clock, so this holds before and after
+  // the configured start (env is loaded before this file sets any override).
+  const expected =
+    Date.parse(body.data.serverTime) >= Date.parse(body.data.eventStartTime) ? "ACTIVE" : "WAITING";
+  assert.equal(body.data.status, expected);
   assert.ok(body.data.serverTime);
   assert.ok(body.data.eventStartTime);
   assert.equal(typeof body.data.msRemaining, "number");
@@ -152,7 +156,7 @@ test("team registration still works while the event is WAITING", async () => {
   assert.equal(body.data.status, "NOT_STARTED");
 });
 
-test("POST /api/game/start is rejected with EVENT_LOCKED while WAITING, even for a real team", async () => {
+test("POST /api/game/start is allowed even while the event state is WAITING (gameplay is always open)", async () => {
   const registerRes = await app.inject({
     method: "POST",
     url: "/api/teams",
@@ -165,13 +169,14 @@ test("POST /api/game/start is rejected with EVENT_LOCKED while WAITING, even for
     url: "/api/game/start",
     payload: { teamId: team.teamId },
   });
-  assert.equal(res.statusCode, 403);
+  assert.equal(res.statusCode, 200);
   const body = JSON.parse(res.payload);
-  assert.equal(body.success, false);
-  assert.equal(body.error.code, "EVENT_LOCKED");
+  assert.equal(body.success, true);
+  assert.equal(body.data.status, "ACTIVE");
+  assert.ok(body.data.startedAt);
 });
 
-test("puzzle-complete still reports SESSION_NOT_ACTIVE (never got a session) while WAITING", async () => {
+test("puzzle-complete still reports SESSION_NOT_ACTIVE for a team that never started", async () => {
   const registerRes = await app.inject({
     method: "POST",
     url: "/api/teams",

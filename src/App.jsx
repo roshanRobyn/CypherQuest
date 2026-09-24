@@ -1,26 +1,20 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 
 import outsideImage from "./assets/outside.png";
 import GameplayScreen from "./components/gameplay/GameplayScreen";
-import WaitingGate from "./components/WaitingGate";
 import { useZoomLock } from "./hooks/useZoomLock";
 import { clearSession, loadSession, saveSession } from "./data/persistence";
 import { registerTeam, startGame } from "./api/cypherQuestClient";
 
 // Read once, before first render, so a refresh resumes into the right
-// scene instead of flashing the team-entry screen first. Two saved shapes:
-//  - { teamName, quest: {...} }  — a game that had actually started
-//    (useQuestProgression writes this once GameplayScreen mounts, which
-//    only ever happens after the backend's event gate reported ACTIVE —
-//    see handleUnlocked below) => resume straight into "game".
-//  - { teamName }                — team confirmed, still waiting on the
-//    event gate (see startQuest below) => resume into "waiting" rather
-//    than forcing the team to re-enter their name.
-// Either way this can never resume into "game" before the real event
-// start, because that saved shape is only ever written after unlock.
+// scene instead of flashing the team-entry screen first:
+//  - { teamName, quest: {...} } — a game in progress (useQuestProgression
+//    writes this once GameplayScreen mounts) => resume straight into "game".
+//  - { teamName } or nothing   => "home" (team name pre-filled if known).
+// Gameplay is always open — there is no event gate or waiting screen.
 const savedSession = loadSession();
-const initialScene = savedSession?.quest ? "game" : savedSession ? "waiting" : "home";
+const initialScene = savedSession?.quest ? "game" : "home";
 
 function App() {
   const zoomLock = useZoomLock();
@@ -61,50 +55,32 @@ function App() {
     // saved progress so it can't accidentally carry over into this one.
     clearSession();
 
-    // Fire-and-forget: register the team so admin dashboards pick it up.
-    // Never awaited and never allowed to delay the scene transition below —
-    // the client itself swallows all errors (backend down, offline, etc).
-    // Deliberately NOT starting the game session here — that only happens
-    // in handleUnlocked, once the backend's event gate actually reports
-    // ACTIVE (see gameController.start's server-side enforcement).
+    // Fire-and-forget: register the team, THEN start its game session with
+    // the id the backend just returned (chained, so the session always
+    // belongs to this team — never a stale id from an earlier team on this
+    // browser). Never awaited and never allowed to delay the transition
+    // below — the client itself swallows all errors (backend down, etc).
     registerTeam(name)
       .then((result) => {
-        if (result.ok) {
-          try {
-            window.localStorage.setItem("cypherquest_team_id", result.data.teamId);
-          } catch {
-            // ignore storage failures (e.g. private browsing)
-          }
+        if (!result.ok) return;
+        const { teamId } = result.data;
+        try {
+          window.localStorage.setItem("cypherquest_team_id", teamId);
+        } catch {
+          // ignore storage failures (e.g. private browsing)
         }
+        startGame(teamId).catch(() => {});
       })
       .catch(() => {});
 
-    // Marks this team as "confirmed, waiting on the gate" so a refresh
-    // before unlock resumes straight into "waiting" (see initialScene
-    // above) instead of forcing the team to re-enter their name.
     saveSession({ teamName: name });
 
-    setScene("waiting");
-  };
-
-  // Fires exactly once, from WaitingGate, the moment the backend's event
-  // gate reports ACTIVE. Starts the real game session server-side (now
-  // that it will actually be accepted) and plays the existing blackout
-  // transition into gameplay — unchanged in spirit from the old fixed
-  // 1.5s timer, just now triggered by the authoritative unlock instead.
-  const handleUnlocked = useCallback(() => {
-    try {
-      const teamId = window.localStorage.getItem("cypherquest_team_id");
-      if (teamId) startGame(teamId).catch(() => {});
-    } catch {
-      // ignore storage access failures (e.g. private browsing)
-    }
-
+    // Gameplay is always open: straight into the existing unsealing ->
+    // blackout -> game transition.
     setScene("unsealing");
-
     setTimeout(() => setScene("blackout"), 1200);
     setTimeout(() => setScene("game"), 1200 + 1500);
-  }, []);
+  };
 
   return (
     <main
@@ -340,15 +316,6 @@ function App() {
           </div>
 
         </section>
-      )}
-
-
-      {/* =====================================================
-          WAITING GATE — team confirmed, sealed shrine / countdown
-      ===================================================== */}
-
-      {scene === "waiting" && (
-        <WaitingGate teamName={teamName} onUnlocked={handleUnlocked} />
       )}
 
 
