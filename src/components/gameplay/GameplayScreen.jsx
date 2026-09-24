@@ -7,8 +7,6 @@ import MapOverlay from "./MapOverlay";
 import ToolsPanel from "./ToolsPanel";
 import InventoryPanel from "./InventoryPanel";
 import GameplayArea from "./GameplayArea";
-import HuntTimer from "./HuntTimer";
-import HuntExpiredScreen from "./HuntExpiredScreen";
 import RiddleViewer from "./RiddleViewer";
 import WhispersViewer from "./WhispersViewer";
 import KintsugiClueViewer from "./KintsugiClueViewer";
@@ -16,7 +14,6 @@ import ClueRevealOverlay from "./ClueRevealOverlay";
 import ClueLogViewer from "./ClueLogViewer";
 import TranslationPanel from "./TranslationPanel";
 import { useQuestProgression } from "../../hooks/useQuestProgression";
-import { useHuntTimer } from "../../hooks/useHuntTimer";
 import "./GameplayScreen.css";
 
 function GameplayScreen({ teamName }) {
@@ -48,48 +45,8 @@ function GameplayScreen({ teamName }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [dismissReveal]);
 
-  // The ONE true completion marker (see questSteps.js / GameplayArea's
-  // onFinalTreasureComplete below): set only when the player actually
-  // solves the final-treasure.html iframe's own win condition, never by
-  // merely reaching that stage. Reaching Kintsugi Shrine, Sakimori
-  // Overlook, or even the final-treasure stage itself is NOT completion.
-  const questCompleted = quest.completedPuzzles.includes("final-treasure");
-
-  // Fired by useHuntTimer itself, exactly once, the instant the backend
-  // authoritatively reports the hunt EXPIRED (never from a local countdown
-  // reaching zero — see useHuntTimer.js). Closes every open overlay/tool
-  // the same way Escape already does above, then branches on
-  // questCompleted:
-  //   - completed: forces the SAME final-treasure stage the map's last
-  //     location normally leads to (quest.enterPuzzle, the existing
-  //     stage-switch function — no second/parallel ending page); harmless
-  //     no-op if already there.
-  //   - not completed: leaves the current stage alone — HuntExpiredScreen
-  //     (rendered below, gated on huntExpired && !questCompleted) covers
-  //     the whole screen regardless of what's mounted underneath.
-  // Also covers "already expired on mount": a refresh (or the dev-unlock
-  // path) after the hunt has ended fires this the same way, on that first
-  // poll, using whatever completedPuzzles sessionStorage restored.
-  const huntTimer = useHuntTimer({
-    onExpire: () => {
-      setMapOpen(false);
-      setRiddleOpen(false);
-      setWhispersOpen(false);
-      setTranslationOpen(false);
-      setClueLogOpen(false);
-      setKintsugiClueOpen(false);
-      setMagnifierActive(false);
-      dismissReveal();
-      if (quest.completedPuzzles.includes("final-treasure")) {
-        quest.enterPuzzle("final-treasure");
-      }
-    },
-  });
-  const huntExpired = huntTimer.isExpired;
-  const huntFailed = huntExpired && !questCompleted;
-
+  // Gameplay is always open: no hunt timer and no expiry screen.
   const handleLocationClick = (locationId) => {
-    if (huntExpired) return;
     if (quest.enterLocation(locationId)) {
       setMapOpen(false);
     }
@@ -99,13 +56,11 @@ function GameplayScreen({ teamName }) {
   // convention: selecting either one turns the other off, rather than
   // building a separate tool-selection system.
   const handleToggleMagnifier = () => {
-    if (huntExpired) return;
     setMagnifierActive((active) => !active);
     setTranslationOpen(false);
   };
 
   const handleOpenTranslation = () => {
-    if (huntExpired) return;
     setMagnifierActive(false);
     setTranslationOpen(true);
   };
@@ -141,15 +96,14 @@ function GameplayScreen({ teamName }) {
       <InventoryPanel
         unlockedItems={quest.unlockedItems}
         justUnlockedItem={quest.justUnlockedItem}
-        onOpenRiddle={() => !huntExpired && setRiddleOpen(true)}
-        onOpenWhispers={() => !huntExpired && setWhispersOpen(true)}
-        onOpenClues={() => !huntExpired && setClueLogOpen(true)}
-        onOpenKintsugiClue={() => !huntExpired && setKintsugiClueOpen(true)}
+        onOpenRiddle={() => setRiddleOpen(true)}
+        onOpenWhispers={() => setWhispersOpen(true)}
+        onOpenClues={() => setClueLogOpen(true)}
+        onOpenKintsugiClue={() => setKintsugiClueOpen(true)}
       />
 
-      <MapButton isOpen={mapOpen} onToggle={() => !huntExpired && setMapOpen((open) => !open)} />
+      <MapButton isOpen={mapOpen} onToggle={() => setMapOpen((open) => !open)} />
       <Compass />
-      <HuntTimer status={huntTimer.status} displayMsRemaining={huntTimer.displayMsRemaining} />
 
       {/*
         The map has its own independent internal zoom (Leaflet). It is
@@ -190,7 +144,6 @@ function GameplayScreen({ teamName }) {
         onTranslated={quest.handleTranslation}
       />
 
-      {huntFailed && <HuntExpiredScreen />}
     </div>
   );
 }

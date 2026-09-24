@@ -94,7 +94,9 @@ export function startGame({ teamId }) {
   const now = new Date().toISOString();
 
   // Idempotent: if a session is already active, just return current state.
-  if (team.status === "ACTIVE" && team.session) {
+  // A COMPLETED team is also returned unchanged — re-entering the team name
+  // must never reset a finished hunt back to ACTIVE.
+  if ((team.status === "ACTIVE" && team.session) || team.status === "COMPLETED") {
     return team;
   }
 

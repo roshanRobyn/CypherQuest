@@ -210,6 +210,21 @@ test("completing the Final Treasure marks team COMPLETED with server totalTimeMs
   );
 });
 
+test("starting again after completing (e.g. re-entering the team name) keeps the team COMPLETED", async () => {
+  const teams = JSON.parse((await app.inject({ method: "GET", url: "/api/teams" })).payload).data;
+  const golf = teams.find((t) => t.teamName === "Team Golf");
+
+  const again = await startGame(golf.teamId);
+  assert.equal(again.data.status, "COMPLETED");
+
+  const after = JSON.parse((await app.inject({ method: "GET", url: "/api/teams" })).payload).data;
+  const golfAfter = after.find((t) => t.teamName === "Team Golf");
+  assert.equal(golfAfter.status, "COMPLETED");
+  assert.equal(golfAfter.finishedAt, golf.finishedAt);
+  assert.equal(golfAfter.totalTimeMs, golf.totalTimeMs);
+  assert.equal(golfAfter.startedAt, golf.startedAt);
+});
+
 test("repeating the Final Treasure completion (e.g. a refresh) is idempotent", async () => {
   const teams = JSON.parse((await app.inject({ method: "GET", url: "/api/teams" })).payload).data;
   const golf = teams.find((t) => t.teamName === "Team Golf");
