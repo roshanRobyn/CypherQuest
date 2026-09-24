@@ -1,4 +1,6 @@
 import { env, isProduction } from "../config/env.js";
+import { getEventStartOverride, saveEventStartOverride } from "./eventRepository.js";
+import { Errors } from "../utils/errors.js";
 
 /**
  * Pure boundary computation, kept free of env/process access so it can be
@@ -62,9 +64,29 @@ export function resolveHuntEndMs({ huntEndAt, huntEndAtDevOverride, isProduction
  * half; env.HUNT_END_AT_DEV_OVERRIDE (via resolveHuntEndMs) is the
  * equivalent for the hunt-timer half — both are no-ops in production.
  */
+// The authoritative event start: an admin override (set from the admin
+// dashboard, see setEventStartOverride) if present, otherwise the configured
+// EVENT_START_AT. The client countdown never decides anything — only
+// getEventState()/isEventActive() below, on the server clock.
+function resolveEventStart() {
+  const override = getEventStartOverride();
+  return override
+    ? { iso: override, source: "admin" }
+    : { iso: env.EVENT_START_AT, source: "config" };
+}
+
 export function getEventState() {
-  const eventStartMs = new Date(env.EVENT_START_AT).getTime();
-  const huntStartMs = new Date(env.HUNT_START_AT).getTime();
+  const eventStart = resolveEventStart();
+  const eventStartMs = new Date(eventStart.iso).getTime();
+  // Hunt start coincides with the event start (see env.js), so it follows
+  // an admin override too. Purely cosmetic (PENDING vs ACTIVE HUD state).
+  const huntStartMs = new Date(
+    eventStart.source === "admin" ? eventStart.iso : env.HUNT_START_AT
+  ).getTime();
+  const startMeta = {
+    eventStartSource: eventStart.source,
+    configuredEventStartTime: new Date(env.EVENT_START_AT).toISOString(),
+  };
   const huntEndMs = resolveHuntEndMs({
     huntEndAt: env.HUNT_END_AT,
     huntEndAtDevOverride: env.HUNT_END_AT_DEV_OVERRIDE,
@@ -80,11 +102,41 @@ export function getEventState() {
       serverTime: new Date(nowMs).toISOString(),
       eventStartTime: new Date(eventStartMs).toISOString(),
       msRemaining: status === "ACTIVE" ? 0 : Math.max(0, eventStartMs - nowMs),
+      ...startMeta,
       ...huntState,
     };
   }
 
-  return { ...computeEventState(nowMs, eventStartMs), ...huntState };
+  return { ...computeEventState(nowMs, eventStartMs), ...startMeta, ...huntState };
+}
+
+// Explicit offset required ("Z" or "+05:30"), so a value is never
+// reinterpreted against the server's or the admin browser's timezone.
+const EXPLICIT_TZ = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Admin-only: set (ISO string with explicit timezone) or clear (null) the
+ * event start override. Refused once the event is ACTIVE, so a live event
+ * can never be re-locked or have its start moved mid-hunt.
+ */
+export function setEventStartOverride(eventStartAt) {
+  if (isEventActive()) throw Errors.eventAlreadyStarted();
+
+  if (eventStartAt === null) {
+    saveEventStartOverride(null);
+    return getEventState();
+  }
+
+  if (typeof eventStartAt !== "string" || !EXPLICIT_TZ.test(eventStartAt)) {
+    throw Errors.validation(
+      'eventStartAt must be null or an ISO date-time with an explicit timezone, e.g. "2026-09-24T13:30:00+05:30"'
+    );
+  }
+  const ms = Date.parse(eventStartAt);
+  if (Number.isNaN(ms)) throw Errors.validation("eventStartAt is not a valid date-time");
+
+  saveEventStartOverride(new Date(ms).toISOString());
+  return getEventState();
 }
 
 export function isEventActive() {

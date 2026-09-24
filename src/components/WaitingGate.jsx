@@ -3,8 +3,35 @@ import { useEventGate } from "../hooks/useEventGate";
 import SecretLockPopup from "./SecretLockPopup";
 import "./WaitingGate.css";
 
+// Fallback labels while the first /api/event/state poll is in flight. Once
+// it answers, the labels show the backend's authoritative eventStartTime
+// (which an admin may have changed), formatted in IST.
 const EVENT_DATE_LABEL = "24 SEPTEMBER 2026";
 const EVENT_TIME_LABEL = "1:30 PM IST";
+
+const IST_DATE = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Asia/Kolkata",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+const IST_TIME = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Asia/Kolkata",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true,
+});
+
+function startLabels(eventStartTime) {
+  const date = eventStartTime ? new Date(eventStartTime) : null;
+  if (!date || Number.isNaN(date.getTime())) {
+    return { dateLabel: EVENT_DATE_LABEL, timeLabel: EVENT_TIME_LABEL };
+  }
+  return {
+    dateLabel: IST_DATE.format(date).toUpperCase(),
+    timeLabel: `${IST_TIME.format(date)} IST`,
+  };
+}
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -39,7 +66,8 @@ function splitDuration(ms) {
 // fires exactly once, the moment the backend itself reports ACTIVE; it is
 // never triggered by the countdown reaching zero locally.
 function WaitingGate({ teamName, onUnlocked }) {
-  const { phase, displayMsRemaining } = useEventGate();
+  const { phase, displayMsRemaining, eventStartTime } = useEventGate();
+  const { dateLabel, timeLabel } = startLabels(eventStartTime);
   const firedRef = useRef(false);
 
   useEffect(() => {
@@ -178,8 +206,8 @@ function WaitingGate({ teamName, onUnlocked }) {
               </span>
             </h2>
 
-            <p className="waiting-date">{EVENT_DATE_LABEL}</p>
-            <p className="waiting-time">{EVENT_TIME_LABEL}</p>
+            <p className="waiting-date">{dateLabel}</p>
+            <p className="waiting-time">{timeLabel}</p>
 
             <div className="waiting-divider">
               <span></span>
