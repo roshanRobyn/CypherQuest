@@ -90,49 +90,6 @@
       margin-bottom: 24px;
     }
 
-    /* Event start bar: shows the backend's authoritative start time and gate
-       status; admins can change the start while the event is WAITING. */
-    .event-bar {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 20px 32px;
-      background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-card);
-      border-radius: var(--radius-lg);
-      padding: 16px 24px;
-      margin-bottom: 24px;
-    }
-    .event-bar-block {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .event-bar-value {
-      font-family: var(--font-mono);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .event-bar-value.waiting { color: var(--accent-amber); }
-    .event-bar-value.active { color: var(--success-green); }
-    .event-bar-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    #event-start-input {
-      width: auto;
-      color-scheme: dark;
-    }
-    .event-bar .btn:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .brand-group {
       display: flex;
       align-items: center;
@@ -749,28 +706,6 @@
       </a>
     </div>
   </header>
-
-  <!-- Event start: backend-authoritative gate (display + admin control) -->
-  <section class="event-bar" aria-label="Event start">
-    <div class="event-bar-block">
-      <div class="kpi-title">Event Start (backend)</div>
-      <div class="event-bar-value" id="event-start-label">—</div>
-      <div class="kpi-sub" id="event-start-meta">Connecting to backend…</div>
-    </div>
-    <div class="event-bar-block">
-      <div class="kpi-title">Gameplay Gate</div>
-      <div class="event-bar-value" id="event-gate-status">—</div>
-      <div class="kpi-sub" id="event-countdown">&nbsp;</div>
-    </div>
-    <div class="event-bar-block">
-      <label class="kpi-title" for="event-start-input">Change Start (IST)</label>
-      <div class="event-bar-row">
-        <input type="datetime-local" id="event-start-input" class="search-input" step="60">
-        <button type="button" class="btn btn-accent" id="btn-event-start-set">Set Start</button>
-        <button type="button" class="btn" id="btn-event-start-revert">Revert to Configured</button>
-      </div>
-    </div>
-  </section>
 
   <!-- Key Metrics KPI Overview Bar -->
   <div class="kpi-grid">
@@ -1793,181 +1728,6 @@
         });
       }
 
-      // ---------------------------------------------------------------
-      // Event start (display + admin control). The backend is the ONLY
-      // authority: GET /api/event/state decides WAITING/ACTIVE on the
-      // server clock. The countdown below is display-only and never
-      // unlocks anything. Changes go through POST /api/admin/event-start
-      // (admin token), are allowed only while WAITING, and a null value
-      // reverts to the configured EVENT_START_AT (13:30 IST by default).
-      // ---------------------------------------------------------------
-      const eventStartLabel = document.getElementById('event-start-label');
-      const eventStartMeta = document.getElementById('event-start-meta');
-      const eventGateStatus = document.getElementById('event-gate-status');
-      const eventCountdown = document.getElementById('event-countdown');
-      const eventStartInput = document.getElementById('event-start-input');
-      const btnEventStartSet = document.getElementById('btn-event-start-set');
-      const btnEventStartRevert = document.getElementById('btn-event-start-revert');
-
-      let eventState = null; // last good GET /api/event/state payload
-      let eventClockOffset = 0; // serverTime - Date.now(), display only
-      let eventStartInputDirty = false;
-
-      const IST_DATE_FMT = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
-      const IST_TIME_FMT = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit', hour12: true });
-      const IST_OFFSET_MS = 330 * 60 * 1000;
-
-      function formatIST(iso) {
-        const d = new Date(iso);
-        return `${IST_DATE_FMT.format(d)}, ${IST_TIME_FMT.format(d)} IST`;
-      }
-
-      // ISO instant -> "YYYY-MM-DDTHH:MM" in IST, for the datetime-local input.
-      function toISTInputValue(iso) {
-        return new Date(new Date(iso).getTime() + IST_OFFSET_MS).toISOString().slice(0, 16);
-      }
-
-      function renderEventBar() {
-        if (!eventState) {
-          eventStartLabel.textContent = '—';
-          eventStartMeta.textContent = dataMode === 'demo' ? 'Backend not connected' : 'Connecting to backend…';
-          eventGateStatus.textContent = '—';
-          eventGateStatus.className = 'event-bar-value';
-          btnEventStartSet.disabled = true;
-          btnEventStartRevert.disabled = true;
-          return;
-        }
-
-        const active = eventState.status === 'ACTIVE';
-        const fromAdmin = eventState.eventStartSource === 'admin';
-
-        eventStartLabel.textContent = formatIST(eventState.eventStartTime);
-        eventStartMeta.textContent = fromAdmin
-          ? `Changed by admin · configured: ${formatIST(eventState.configuredEventStartTime)}`
-          : 'Configured start (EVENT_START_AT)';
-
-        eventGateStatus.textContent = active ? 'ACTIVE — gameplay open' : 'WAITING — locked';
-        eventGateStatus.className = `event-bar-value ${active ? 'active' : 'waiting'}`;
-
-        btnEventStartSet.disabled = active;
-        btnEventStartRevert.disabled = active || !fromAdmin;
-        eventStartInput.disabled = active;
-        btnEventStartSet.title = active ? 'The event has started — its start time is locked' : '';
-
-        if (!eventStartInputDirty) {
-          eventStartInput.value = toISTInputValue(eventState.eventStartTime);
-        }
-        tickEventCountdown();
-      }
-
-      // Display-only countdown, synced to the server clock offset. Reaching
-      // zero here does NOT open anything — only the next backend poll does.
-      function tickEventCountdown() {
-        if (!eventState) {
-          eventCountdown.innerHTML = '&nbsp;';
-          return;
-        }
-        if (eventState.status === 'ACTIVE') {
-          eventCountdown.textContent = 'Start time locked while the event is live';
-          return;
-        }
-        const ms = new Date(eventState.eventStartTime).getTime() - (Date.now() + eventClockOffset);
-        if (ms <= 0) {
-          eventCountdown.textContent = 'Opening — waiting for the backend to confirm…';
-          return;
-        }
-        const total = Math.floor(ms / 1000);
-        const h = Math.floor(total / 3600);
-        const m = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-        const s = String(total % 60).padStart(2, '0');
-        eventCountdown.textContent = `Opens in ${h}:${m}:${s} (display only)`;
-      }
-
-      async function pollEventState() {
-        try {
-          const res = await fetch(`${BACKEND_API_URL}/api/event/state`, { method: 'GET' });
-          const json = await res.json();
-          if (!res.ok || !json || json.success !== true || !json.data) throw new Error('bad payload');
-          eventState = json.data;
-          eventClockOffset = new Date(eventState.serverTime).getTime() - Date.now();
-          renderEventBar();
-        } catch (e) {
-          // Keep the last good state on screen (same rule as team data).
-          if (eventState) {
-            eventStartMeta.textContent = 'Backend unreachable — showing last known start';
-          } else {
-            renderEventBar();
-          }
-        }
-      }
-
-      // Same token handling as the other admin actions: cached in
-      // sessionStorage, prompted for once on a 403.
-      async function postEventStart(eventStartAt) {
-        const doPost = (token) =>
-          fetch(`${BACKEND_API_URL}/api/admin/event-start`, {
-            method: 'POST',
-            headers: Object.assign({ 'Content-Type': 'application/json' }, token ? { 'x-admin-reset-token': token } : {}),
-            body: JSON.stringify({ eventStartAt }),
-          });
-
-        try {
-          let token = sessionStorage.getItem('cypherquest_admin_token') || '';
-          let res = await doPost(token);
-          let json = await res.json().catch(() => null);
-
-          if (res.status === 403) {
-            token = window.prompt('Changing the event start requires the admin token:') || '';
-            if (!token) return;
-            res = await doPost(token);
-            json = await res.json().catch(() => null);
-          }
-
-          if (res.ok && json && json.success === true) {
-            if (token) sessionStorage.setItem('cypherquest_admin_token', token);
-            eventStartInputDirty = false;
-            eventState = json.data;
-            renderEventBar();
-            await pollEventState();
-            return;
-          }
-
-          if (res.status === 403) sessionStorage.removeItem('cypherquest_admin_token');
-          const message = (json && json.error && json.error.message) || `Request failed with status ${res.status}`;
-          alert(`Backend refused the change: ${message}`);
-        } catch (e) {
-          alert('Could not reach the backend — the event start was not changed.');
-        }
-      }
-
-      eventStartInput.addEventListener('input', () => { eventStartInputDirty = true; });
-
-      btnEventStartSet.addEventListener('click', () => {
-        if (!eventStartInput.value) return;
-        // The input is IST wall-clock time; send it with an explicit
-        // +05:30 offset so neither browser nor server timezone matters.
-        const iso = `${eventStartInput.value}:00+05:30`;
-        const ms = Date.parse(iso);
-        if (Number.isNaN(ms)) {
-          alert('Please enter a valid date and time.');
-          return;
-        }
-        const inPast = ms <= Date.now() + eventClockOffset;
-        const msg = `Change the event start to ${formatIST(iso)}?\n\n` +
-          (inPast
-            ? 'This time is NOW or in the PAST: the backend will open gameplay immediately, and the start time will then be locked.'
-            : 'The backend will keep gameplay locked until then.') +
-          (eventState ? `\n\nConfigured start: ${formatIST(eventState.configuredEventStartTime)}` : '');
-        if (!confirm(msg)) return;
-        postEventStart(iso);
-      });
-
-      btnEventStartRevert.addEventListener('click', () => {
-        if (!eventState) return;
-        if (!confirm(`Revert the event start to the configured ${formatIST(eventState.configuredEventStartTime)}?`)) return;
-        postEventStart(null);
-      });
-
       // Initial render ("connecting") & demo-mode localStorage polling every
       // 1.5s (a no-op unless dataMode === 'demo').
       renderDashboard();
@@ -1976,12 +1736,6 @@
       // Additive backend polling every 3s (real data, when reachable)
       pollBackend();
       setInterval(pollBackend, 3000);
-
-      // Event start / gate status (backend-authoritative), same cadence.
-      renderEventBar();
-      pollEventState();
-      setInterval(pollEventState, 3000);
-      setInterval(tickEventCountdown, 1000);
 
       tickTimers();
       setInterval(tickTimers, 1000);

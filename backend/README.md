@@ -218,17 +218,6 @@ reset: in `production` it requires `x-admin-reset-token`, otherwise
 Any later request from a removed team's still-open browser also gets
 `404 TEAM_NOT_FOUND` and cannot touch another team.
 
-### `POST /api/admin/event-start` — admin only
-Body: `{ "eventStartAt": "2026-09-24T13:30:00+05:30" }` (ISO date-time with an
-explicit timezone — `Z` or `±hh:mm` — otherwise `400 VALIDATION_ERROR`), or
-`{ "eventStartAt": null }` to revert to the configured `EVENT_START_AT`.
-Overrides the backend event gate; `GET /api/event/state` then reports
-`eventStartSource: "admin"` plus `configuredEventStartTime`. Refused with
-`409 EVENT_ALREADY_STARTED` once the event is ACTIVE, so a live event can never
-be re-locked. Same auth as reset. Stored in `data/event.json` (not cleared by
-reset; on hosts with ephemeral disks it is lost on restart, which falls back
-to the configured start). The client countdown never unlocks anything.
-
 ## Data storage & the DB-swap point
 
 All data is stored as JSON in `backend/data/teams.json` (gitignored;
